@@ -24,7 +24,7 @@ export default function VenderPage() {
         Abra sua loja
       </h1>
       <p className="mt-4 text-base text-taupe">
-        Venda no mercado aberto da Nkateko. Crie sua vitrine, publique produtos
+        Venda no mercado aberto do iShoppine. Crie sua vitrine, publique produtos
         e receba pedidos de compradores em todo o Brasil.
       </p>
       <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">

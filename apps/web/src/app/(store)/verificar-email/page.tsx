@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { api } from "@/lib/api";
+import { api, DEV_CODE_STORAGE_KEY } from "@/lib/api";
 import { postLoginPath, useAuthStore } from "@/lib/auth-store";
 import type { AuthResponse } from "@/lib/types";
 
@@ -24,7 +24,7 @@ function VerifyEmailForm() {
 
   useEffect(() => {
     setEmail(emailParam);
-    const stored = sessionStorage.getItem("nkateko-dev-code");
+    const stored = sessionStorage.getItem(DEV_CODE_STORAGE_KEY);
     if (stored) setDevCode(stored);
   }, [emailParam]);
 
@@ -37,7 +37,7 @@ function VerifyEmailForm() {
         token: null,
         body: JSON.stringify({ email, code }),
       });
-      sessionStorage.removeItem("nkateko-dev-code");
+      sessionStorage.removeItem(DEV_CODE_STORAGE_KEY);
       setAuth(data.accessToken, data.user);
       toast.success("E-mail verificado!");
       router.push(postLoginPath(data.user));
@@ -66,7 +66,7 @@ function VerifyEmailForm() {
         },
       );
       if (data.devCode) {
-        sessionStorage.setItem("nkateko-dev-code", data.devCode);
+        sessionStorage.setItem(DEV_CODE_STORAGE_KEY, data.devCode);
         setDevCode(data.devCode);
       }
       toast.success(data.message || "Novo código enviado.");

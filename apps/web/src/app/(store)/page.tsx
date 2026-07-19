@@ -40,7 +40,7 @@ export default async function HomePage() {
       <section className="relative min-h-[100svh] w-full overflow-hidden">
         <Image
           src={HERO_IMAGE}
-          alt="Mercado aberto Nkateko"
+          alt="iShoppine — mercado aberto, compre e venda"
           fill
           priority
           className="object-cover"
@@ -50,14 +50,14 @@ export default async function HomePage() {
         <div className="relative z-10 flex min-h-[100svh] flex-col justify-end px-4 pb-16 pt-28 sm:px-8 sm:pb-20 lg:px-16">
           <div className="max-w-xl text-white">
             <p className="animate-hero-in text-5xl font-bold tracking-tight sm:text-6xl md:text-7xl">
-              Nkateko
+              iShoppine
             </p>
             <h1 className="animate-hero-in-delay mt-4 text-2xl font-semibold leading-snug sm:text-3xl">
-              Mercado aberto de bens — compre e venda
+              Compre e venda no mercado aberto
             </h1>
             <p className="animate-hero-in-delay-2 mt-3 max-w-md text-base text-white/90 sm:text-lg">
-              Nkateko Investment and Service: um mercado onde qualquer pessoa
-              compra e vende com segurança.
+              Marketplace aberto onde qualquer pessoa compra e vende bens com
+              segurança.
             </p>
             <div className="animate-hero-in-delay-2 mt-8 flex flex-wrap gap-3">
               <Button asChild size="lg" className="shadow-none">
@@ -159,7 +159,7 @@ export default async function HomePage() {
                 Lojas
               </h2>
               <p className="mt-2 text-sm text-taupe">
-                Conheça vendedores do Nkateko.
+                Conheça vendedores do iShoppine.
               </p>
             </div>
             <Button variant="outline" size="sm" asChild>

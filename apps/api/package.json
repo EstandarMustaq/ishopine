@@ -1,7 +1,7 @@
 {
-  "name": "@nkateko/api",
+  "name": "@ishoppine/api",
   "version": "0.0.1",
-  "description": "Nkateko Investment and Service — Marketplace API",
+  "description": "iShoppine API by Nkateko Investment and Service",
   "author": "",
   "private": true,
   "license": "UNLICENSED",

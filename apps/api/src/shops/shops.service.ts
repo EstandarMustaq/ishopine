@@ -25,7 +25,7 @@ export class ShopsService {
   ) {}
 
   private async organizationId() {
-    const slug = this.config.get<string>('PLATFORM_ORG_SLUG', 'nkateko');
+    const slug = this.config.get<string>('PLATFORM_ORG_SLUG', 'ishoppine');
     const org = await this.prisma.organization.findUnique({ where: { slug } });
     if (!org) {
       throw new NotFoundException('Organização da plataforma não encontrada');
@@ -237,5 +237,31 @@ export class ShopsService {
       where: { id: shopId },
       data,
     });
+  }
+
+  async follow(userId: string, shopId: string) {
+    const shop = await this.prisma.shop.findFirst({
+      where: { id: shopId, status: ShopStatus.ACTIVE },
+    });
+    if (!shop) {
+      throw new NotFoundException('Loja não encontrada');
+    }
+    return this.prisma.shopFollow.upsert({
+      where: { userId_shopId: { userId, shopId } },
+      create: { userId, shopId },
+      update: {},
+    });
+  }
+
+  async unfollow(userId: string, shopId: string) {
+    await this.prisma.shopFollow.deleteMany({ where: { userId, shopId } });
+    return { ok: true };
+  }
+
+  async isFollowing(userId: string, shopId: string) {
+    const follow = await this.prisma.shopFollow.findUnique({
+      where: { userId_shopId: { userId, shopId } },
+    });
+    return { following: Boolean(follow) };
   }
 }

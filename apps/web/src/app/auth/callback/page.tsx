@@ -50,7 +50,7 @@ function AuthCallbackInner() {
   if (error) {
     return (
       <div className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center px-4 text-center">
-        <h1 className="text-2xl font-bold text-[#61005D]">Nkateko</h1>
+        <h1 className="text-2xl font-bold text-[#61005D]">iShoppine</h1>
         <p className="mt-4 text-sm text-taupe">{error}</p>
         <Button asChild className="mt-6">
           <Link href="/entrar">Tentar novamente</Link>

@@ -1,11 +1,12 @@
-# Nkateko Web
+# iShoppine Web
 
-Frontend Next.js do **Nkateko Investment and Service** — mercado aberto de bens (compre e venda).
+Frontend Next.js do **iShoppine** — mercado aberto de bens (compre e venda).  
+Operado por **Nkateko Investment and Service**.
 
 ## Desenvolvimento
 
 ```bash
-pnpm --filter @nkateko/web dev
+pnpm --filter @ishoppine/web dev
 ```
 
 Abra [http://localhost:3000](http://localhost:3000).
@@ -32,8 +33,14 @@ NEXT_PUBLIC_API_URL=http://localhost:4000
 | `/auth/callback` | Retorno Google (`accessToken`) |
 | `/auth/2fa` | 2FA pós-Google |
 | `/conta` | Pedidos de compra |
+| `/conta/disputas` | Disputas do comprador |
+| `/favoritos` | Wishlist |
+| `/notificacoes` | Notificações |
+| `/mensagens` | Conversas buyer↔seller |
 | `/painel` | Painel (vendedores / staff) |
 | `/painel/loja` | Criar/gerenciar loja |
+| `/painel/cupons` | Cupons (admin) |
+| `/painel/disputas` | Disputas (admin) |
 | `/painel/seguranca` | Setup 2FA |
 
-Demo: `admin@nkateko.com` / `Nkateko@2026`
+Demo: `admin@ishoppine.com` / `IShoppine@2026`

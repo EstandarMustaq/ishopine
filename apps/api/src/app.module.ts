@@ -7,14 +7,20 @@ import { AppController } from './app.controller';
 import { AuthModule } from './auth/auth.module';
 import { CartModule } from './cart/cart.module';
 import { CatalogModule } from './catalog/catalog.module';
+import { CouponsModule } from './coupons/coupons.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { DisputesModule } from './disputes/disputes.module';
 import { InventoryModule } from './inventory/inventory.module';
 import { MailModule } from './mail/mail.module';
+import { MessagesModule } from './messages/messages.module';
+import { NotificationsModule } from './notifications/notifications.module';
 import { OrdersModule } from './orders/orders.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { ReviewsModule } from './reviews/reviews.module';
 import { ShopsModule } from './shops/shops.module';
 import { UploadsModule } from './uploads/uploads.module';
 import { UsersModule } from './users/users.module';
+import { WishlistModule } from './wishlist/wishlist.module';
 
 @Module({
   imports: [
@@ -37,6 +43,12 @@ import { UsersModule } from './users/users.module';
     AccountingModule,
     UploadsModule,
     DashboardModule,
+    WishlistModule,
+    ReviewsModule,
+    NotificationsModule,
+    MessagesModule,
+    CouponsModule,
+    DisputesModule,
   ],
   controllers: [AppController],
   providers: [

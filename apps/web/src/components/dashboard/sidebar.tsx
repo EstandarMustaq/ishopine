@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
+  AlertTriangle,
   Boxes,
   LayoutDashboard,
   LogOut,
@@ -12,6 +13,7 @@ import {
   Shield,
   ShoppingBag,
   Store,
+  Ticket,
   Users,
 } from "lucide-react";
 import { useAuthStore } from "@/lib/auth-store";
@@ -41,6 +43,17 @@ const links: Array<{
     icon: Users,
     adminOnly: true,
   },
+  {
+    href: "/painel/cupons",
+    label: "Cupons",
+    icon: Ticket,
+    adminOnly: true,
+  },
+  {
+    href: "/painel/disputas",
+    label: "Disputas",
+    icon: AlertTriangle,
+  },
   { href: "/painel/loja", label: "Loja", icon: Store },
   { href: "/painel/seguranca", label: "Segurança", icon: Shield },
   {
@@ -62,7 +75,7 @@ export function DashboardSidebar() {
     <aside className="flex h-full w-64 flex-col border-r border-[var(--brand-nav-divider)] bg-beige">
       <div className="border-b border-[var(--brand-nav-divider)] px-5 py-5">
         <Link href="/" className="text-xl font-bold text-[#61005D]">
-          Nkateko
+          iShoppine
         </Link>
         <p className="mt-1 text-xs text-taupe">Painel do mercado</p>
       </div>
