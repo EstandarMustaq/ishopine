@@ -36,14 +36,14 @@ export class MailService {
     const from =
       this.config.get<string>('SMTP_FROM') ||
       this.config.get<string>('SMTP_USER') ||
-      'noreply@nkateko.com';
-    const subject = `Nkateko — código de ${purpose}`;
-    const text = `Seu código é ${code}. Ele expira em 15 minutos.\n\nNkateko Investment and Service`;
+      'noreply@ishopine.com';
+    const subject = `iShopine — código de ${purpose}`;
+    const text = `O seu código é ${code}. Expira em 15 minutos.\n\niShopine`;
     const html = `
-      <p>Seu código de ${purpose} é:</p>
+      <p>O seu código de ${purpose} é:</p>
       <p style="font-size:28px;letter-spacing:6px;font-weight:700">${code}</p>
-      <p>Ele expira em 15 minutos.</p>
-      <p>— Nkateko Investment and Service</p>
+      <p>Expira em 15 minutos.</p>
+      <p>— iShopine</p>
     `;
 
     if (!this.transporter) {

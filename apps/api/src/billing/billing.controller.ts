@@ -10,65 +10,140 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import type { RawBodyRequest } from '@nestjs/common';
+import { PlatformRole } from '@prisma/client';
 import type { Request } from 'express';
 import { BillingService } from './billing.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../common/guards/roles.guard';
+import { TwoFactorGuard } from '../common/guards/two-factor.guard';
+import { Roles } from '../common/decorators/roles.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { AuthUser } from '../common/decorators/current-user.decorator';
 import {
-  MpesaC2bDto,
-  MpesaCallbackDto,
-  StripeCheckoutDto,
+  CreatePayoutDto,
+  CreateRefundDto,
+  PaysuiteCheckoutDto,
 } from './dto/billing.dto';
+import type { PaysuitePaymentMethod } from './paysuite';
 
 @Controller('billing')
 export class BillingController {
   constructor(private readonly billing: BillingService) {}
 
+  /** Primary checkout — PaySuite hosted page (M-Pesa, e-Mola, cartão) */
   @UseGuards(JwtAuthGuard)
-  @Post('stripe/checkout')
-  stripeCheckout(
+  @Post('paysuite/checkout')
+  paysuiteCheckout(
     @CurrentUser() user: AuthUser,
-    @Body() body: StripeCheckoutDto,
+    @Body() body: PaysuiteCheckoutDto,
   ) {
-    return this.billing.createStripeCheckout(user.id, body.orderIds);
-  }
-
-  @Post('stripe/webhook')
-  stripeWebhook(
-    @Req() req: RawBodyRequest<Request>,
-    @Headers('stripe-signature') signature: string | undefined,
-  ) {
-    const rawBody = req.rawBody;
-    if (!rawBody) {
-      throw new BadRequestException('Raw body em falta para webhook Stripe');
-    }
-    return this.billing.handleStripeWebhook(rawBody, signature);
+    return this.billing.createPaysuiteCheckout(
+      user.id,
+      body.orderIds,
+      body.method as PaysuitePaymentMethod,
+      body.msisdn,
+    );
   }
 
   @UseGuards(JwtAuthGuard)
-  @Post('mpesa/c2b')
-  mpesaC2b(@CurrentUser() user: AuthUser, @Body() body: MpesaC2bDto) {
-    return this.billing.initiateMpesaC2b(user.id, body.orderIds, body.msisdn);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Get('mpesa/status/:paymentId')
-  mpesaStatus(
+  @Get('paysuite/status/:paymentId')
+  paysuiteStatus(
     @CurrentUser() user: AuthUser,
     @Param('paymentId') paymentId: string,
   ) {
-    return this.billing.getMpesaStatus(user.id, paymentId);
+    return this.billing.syncPaysuiteStatus(user.id, paymentId);
   }
 
-  @Post('mpesa/callback')
-  mpesaCallback(@Body() body: MpesaCallbackDto) {
-    return this.billing.handleMpesaCallback(body);
+  /**
+   * PaySuite webhooks (payment.success / payment.failed).
+   * Configure URL in merchant dashboard + PAYSUITE_WEBHOOK_SECRET.
+   * Also accepted as payment callback_url.
+   */
+  @Post('paysuite/webhook')
+  paysuiteWebhook(
+    @Req() req: RawBodyRequest<Request>,
+    @Headers('x-webhook-signature') signature: string | undefined,
+    @Headers('x-account-id') accountId: string | undefined,
+  ) {
+    const rawBody = req.rawBody;
+    if (!rawBody) {
+      throw new BadRequestException('Raw body em falta para webhook PaySuite');
+    }
+    return this.billing.handlePaysuiteWebhook(rawBody, signature, accountId);
   }
 
   @UseGuards(JwtAuthGuard)
   @Get('payments')
   listPayments(@CurrentUser() user: AuthUser) {
     return this.billing.listPayments(user.id);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard, TwoFactorGuard)
+  @Roles(PlatformRole.PLATFORM_ADMIN, PlatformRole.PLATFORM_OPERATOR)
+  @Post('paysuite/payouts')
+  createPayout(@CurrentUser() user: AuthUser, @Body() body: CreatePayoutDto) {
+    return this.billing.createSellerPayout(
+      { id: user.id, platformRole: user.platformRole },
+      {
+        reference: body.reference,
+        amountCents: Number(body.amountCents),
+        method: body.method,
+        phone: body.phone,
+        holder: body.holder,
+        description: body.description,
+      },
+    );
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard, TwoFactorGuard)
+  @Roles(PlatformRole.PLATFORM_ADMIN, PlatformRole.PLATFORM_OPERATOR)
+  @Post('paysuite/refunds')
+  createRefund(@CurrentUser() user: AuthUser, @Body() body: CreateRefundDto) {
+    return this.billing.createRefund(
+      { id: user.id, platformRole: user.platformRole },
+      {
+        paymentId: body.paymentId,
+        amountCents: Number(body.amountCents),
+        reason: body.reason,
+      },
+    );
+  }
+
+  // ---- Compatibility aliases (previous Stripe / direct M-Pesa routes) ----
+
+  @UseGuards(JwtAuthGuard)
+  @Post('stripe/checkout')
+  legacyStripe(
+    @CurrentUser() user: AuthUser,
+    @Body() body: { orderIds: string[] },
+  ) {
+    return this.billing.createPaysuiteCheckout(
+      user.id,
+      body.orderIds,
+      'credit_card',
+    );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('mpesa/c2b')
+  legacyMpesa(
+    @CurrentUser() user: AuthUser,
+    @Body() body: { orderIds: string[]; msisdn?: string },
+  ) {
+    return this.billing.createPaysuiteCheckout(
+      user.id,
+      body.orderIds,
+      'mpesa',
+      body.msisdn,
+    );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('mpesa/status/:paymentId')
+  legacyMpesaStatus(
+    @CurrentUser() user: AuthUser,
+    @Param('paymentId') paymentId: string,
+  ) {
+    return this.billing.syncPaysuiteStatus(user.id, paymentId);
   }
 }

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { CreditCard, Smartphone } from "lucide-react";
+import { CreditCard, Smartphone, Wallet } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -17,19 +17,17 @@ import {
 } from "@/components/ui/select";
 import { api } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
-import { formatBRL } from "@/lib/format";
+import { formatMZN } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type {
   Address,
   Cart,
   CheckoutResult,
   CouponValidation,
-  MpesaC2bResponse,
-  MpesaStatusResponse,
-  StripeCheckoutResponse,
+  PaysuiteCheckoutResponse,
+  PaysuiteMethod,
+  PaysuiteStatusResponse,
 } from "@/lib/types";
-
-type CheckoutPayMethod = "STRIPE" | "MPESA";
 
 function normalizeMsisdn(raw: string): string {
   const digits = raw.replace(/\D/g, "");
@@ -38,16 +36,42 @@ function normalizeMsisdn(raw: string): string {
   return digits;
 }
 
+const METHODS: {
+  id: PaysuiteMethod;
+  title: string;
+  subtitle: string;
+  icon: typeof CreditCard;
+}[] = [
+  {
+    id: "mpesa",
+    title: "M-Pesa",
+    subtitle: "Vodacom Moçambique",
+    icon: Smartphone,
+  },
+  {
+    id: "emola",
+    title: "e-Mola",
+    subtitle: "Carteira móvel",
+    icon: Wallet,
+  },
+  {
+    id: "credit_card",
+    title: "Cartão",
+    subtitle: "Visa / Mastercard",
+    icon: CreditCard,
+  },
+];
+
 export default function CheckoutPage() {
   const router = useRouter();
   const accessToken = useAuthStore((s) => s.accessToken);
   const [cart, setCart] = useState<Cart | null>(null);
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [addressId, setAddressId] = useState<string>("");
-  const [payMethod, setPayMethod] = useState<CheckoutPayMethod>("STRIPE");
+  const [payMethod, setPayMethod] = useState<PaysuiteMethod>("mpesa");
   const [msisdn, setMsisdn] = useState("");
-  const [mpesaPaymentId, setMpesaPaymentId] = useState<string | null>(null);
-  const [mpesaStatus, setMpesaStatus] = useState<string | null>(null);
+  const [paymentId, setPaymentId] = useState<string | null>(null);
+  const [paymentStatus, setPaymentStatus] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [showNewAddress, setShowNewAddress] = useState(false);
@@ -112,10 +136,10 @@ export default function CheckoutPage() {
       setAddresses((prev) => [...prev, created]);
       setAddressId(created.id);
       setShowNewAddress(false);
-      toast.success("Endereço salvo");
+      toast.success("Endereço guardado");
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Erro ao salvar endereço",
+        error instanceof Error ? error.message : "Erro ao guardar endereço",
       );
     }
   }
@@ -142,7 +166,7 @@ export default function CheckoutPage() {
       setCoupon(result);
       toast.success(
         result.message ||
-          `Cupom aplicado: −${formatBRL(result.discountCents)}`,
+          `Cupom aplicado: −${formatMZN(result.discountCents)}`,
       );
     } catch (error) {
       setCoupon(null);
@@ -154,17 +178,17 @@ export default function CheckoutPage() {
     }
   }
 
-  function startMpesaPolling(paymentId: string) {
+  function startStatusPolling(id: string) {
     stopPolling();
     let attempts = 0;
     pollRef.current = setInterval(() => {
       attempts += 1;
       void (async () => {
         try {
-          const status = await api<MpesaStatusResponse>(
-            `/billing/mpesa/status/${paymentId}`,
+          const status = await api<PaysuiteStatusResponse>(
+            `/billing/paysuite/status/${id}`,
           );
-          setMpesaStatus(status.status);
+          setPaymentStatus(status.status);
           const done =
             status.status === "PAID" ||
             status.status === "FAILED" ||
@@ -172,18 +196,20 @@ export default function CheckoutPage() {
           if (done) {
             stopPolling();
             if (status.status === "PAID") {
-              toast.success("Pagamento M-Pesa confirmado!");
+              toast.success("Pagamento confirmado!");
               router.push("/pagamento/sucesso");
             } else {
-              toast.error(status.message || "Pagamento M-Pesa não concluído");
+              toast.error(status.message || "Pagamento não concluído");
             }
           }
         } catch {
-          // keep polling briefly
+          // keep polling
         }
         if (attempts >= 40) {
           stopPolling();
-          toast.message("Aguardando confirmação M-Pesa. Verifique em Pagamentos.");
+          toast.message(
+            "Aguardando confirmação PaySuite. Veja em Pagamentos.",
+          );
         }
       })();
     }, 3000);
@@ -191,24 +217,31 @@ export default function CheckoutPage() {
 
   async function handleCheckout() {
     if (!addressId) {
-      toast.error("Selecione ou cadastre um endereço");
+      toast.error("Seleccione ou cadastre um endereço");
       return;
     }
-    if (payMethod === "MPESA") {
+    if (payMethod === "mpesa" || payMethod === "emola") {
       const phone = normalizeMsisdn(msisdn);
-      if (phone.length < 9) {
-        toast.error("Informe um número M-Pesa válido");
+      if (msisdn && phone.length < 9) {
+        toast.error("Informe um número moçambicano válido");
         return;
       }
     }
 
     setSubmitting(true);
     try {
+      const orderPaymentMethod =
+        payMethod === "mpesa"
+          ? "MPESA"
+          : payMethod === "emola"
+            ? "EMOLA"
+            : "CREDIT_CARD";
+
       const checkout = await api<CheckoutResult>("/orders/checkout", {
         method: "POST",
         body: JSON.stringify({
           addressId,
-          paymentMethod: payMethod === "STRIPE" ? "STRIPE" : "MPESA",
+          paymentMethod: orderPaymentMethod,
           couponCode: coupon?.valid ? coupon.code : undefined,
         }),
       });
@@ -219,40 +252,42 @@ export default function CheckoutPage() {
           ? checkout.orders[0].orderNumber
           : `${checkout.orderCount} pedidos`;
 
-      if (payMethod === "STRIPE") {
-        const session = await api<StripeCheckoutResponse>(
-          "/billing/stripe/checkout",
-          {
-            method: "POST",
-            body: JSON.stringify({ orderIds }),
-          },
-        );
-        const url = session.url ?? session.checkoutUrl;
-        if (!url) {
-          throw new Error("URL de checkout Stripe não recebida");
-        }
-        toast.success(`${orderLabel} criado — redirecionando…`);
+      const session = await api<PaysuiteCheckoutResponse>(
+        "/billing/paysuite/checkout",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            orderIds,
+            method: payMethod,
+            msisdn:
+              payMethod === "mpesa" || payMethod === "emola"
+                ? normalizeMsisdn(msisdn) || undefined
+                : undefined,
+          }),
+        },
+      );
+
+      const url = session.checkoutUrl ?? session.url;
+      if (url && !session.simulated) {
+        toast.success(`${orderLabel} criado — a redireccionar ao PaySuite…`);
         window.location.href = url;
         return;
       }
 
-      const phone = normalizeMsisdn(msisdn);
-      const mpesa = await api<MpesaC2bResponse>("/billing/mpesa/c2b", {
-        method: "POST",
-        body: JSON.stringify({ orderIds, msisdn: phone }),
-      });
-      setMpesaPaymentId(mpesa.paymentId);
-      setMpesaStatus(mpesa.status ?? "PENDING");
-      toast.success(
-        mpesa.message ||
-          `${orderLabel} criado. Confirme o pagamento no telemóvel.`,
-      );
-      if (String(mpesa.status).toUpperCase() === "PAID") {
-        stopPolling();
+      if (session.simulated && url) {
+        toast.success(session.message || "Pagamento simulado");
+        window.location.href = url;
+        return;
+      }
+
+      setPaymentId(session.paymentId);
+      setPaymentStatus(session.status ?? "PROCESSING");
+      toast.success(session.message || `${orderLabel} — confirme o pagamento`);
+      if (String(session.status).toUpperCase() === "PAID") {
         router.push("/pagamento/sucesso");
         return;
       }
-      startMpesaPolling(mpesa.paymentId);
+      startStatusPolling(session.paymentId);
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Erro ao finalizar pedido",
@@ -279,7 +314,7 @@ export default function CheckoutPage() {
   if (loading) {
     return (
       <div className="py-20 text-center text-[13px] text-zinc-500">
-        Carregando...
+        A carregar...
       </div>
     );
   }
@@ -287,10 +322,9 @@ export default function CheckoutPage() {
   if (!cart?.items?.length) {
     return (
       <div className="mx-auto max-w-lg px-4 py-20 text-center">
-        <h1 className="text-2xl font-semibold tracking-tight">Checkout</h1>
-        <p className="mt-3 text-[13px] text-zinc-500">Seu carrinho está vazio.</p>
+        <h1 className="text-2xl font-semibold tracking-tight">Carrinho vazio</h1>
         <Button asChild className="mt-6">
-          <Link href="/produtos">Ver produtos</Link>
+          <Link href="/produtos">Explorar mercado</Link>
         </Button>
       </div>
     );
@@ -301,50 +335,44 @@ export default function CheckoutPage() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
-      <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl">
+      <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">
         Checkout
       </h1>
-      <p className="mt-1.5 text-[13px] text-zinc-500">
-        Confirme o endereço e a forma de pagamento.
+      <p className="mt-1 text-[13px] text-zinc-500">
+        Pagamentos em meticais (MZN) via PaySuite — M-Pesa, e-Mola e cartões.
       </p>
 
       <div className="mt-8 space-y-4">
         <section className="glass-panel animate-slide-up p-5">
-          <div className="flex items-center justify-between gap-3">
-            <h2 className="text-[14px] font-semibold text-zinc-900">
-              Endereço de entrega
-            </h2>
-            {addresses.length > 0 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowNewAddress((v) => !v)}
-              >
-                {showNewAddress ? "Usar existente" : "Novo endereço"}
-              </Button>
-            )}
-          </div>
-
-          {!showNewAddress && addresses.length > 0 ? (
-            <div className="mt-4">
+          <h2 className="text-[14px] font-semibold text-zinc-900">Entrega</h2>
+          {addresses.length > 0 && !showNewAddress && (
+            <div className="mt-3">
+              <Label>Endereço</Label>
               <Select value={addressId} onValueChange={setAddressId}>
-                <SelectTrigger className="h-9 rounded-xl">
-                  <SelectValue placeholder="Selecione um endereço" />
+                <SelectTrigger className="mt-1.5">
+                  <SelectValue placeholder="Seleccione" />
                 </SelectTrigger>
                 <SelectContent>
-                  {addresses.map((addr) => (
-                    <SelectItem key={addr.id} value={addr.id}>
-                      {addr.label}: {addr.street}, {addr.number} — {addr.city}/
-                      {addr.state}
+                  {addresses.map((a) => (
+                    <SelectItem key={a.id} value={a.id}>
+                      {a.street} {a.number}, {a.city}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              <button
+                type="button"
+                className="mt-2 text-[12px] font-medium text-zinc-600 underline"
+                onClick={() => setShowNewAddress(true)}
+              >
+                Novo endereço
+              </button>
             </div>
-          ) : (
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          )}
+          {(showNewAddress || addresses.length === 0) && (
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
               <div className="sm:col-span-2">
-                <Label htmlFor="street">Rua</Label>
+                <Label htmlFor="street">Avenida / Rua</Label>
                 <Input
                   id="street"
                   value={newAddress.street}
@@ -354,25 +382,12 @@ export default function CheckoutPage() {
                 />
               </div>
               <div>
-                <Label htmlFor="number">Número</Label>
+                <Label htmlFor="number">Nº</Label>
                 <Input
                   id="number"
                   value={newAddress.number}
                   onChange={(e) =>
                     setNewAddress((s) => ({ ...s, number: e.target.value }))
-                  }
-                />
-              </div>
-              <div>
-                <Label htmlFor="complement">Complemento</Label>
-                <Input
-                  id="complement"
-                  value={newAddress.complement}
-                  onChange={(e) =>
-                    setNewAddress((s) => ({
-                      ...s,
-                      complement: e.target.value,
-                    }))
                   }
                 />
               </div>
@@ -397,17 +412,18 @@ export default function CheckoutPage() {
                 />
               </div>
               <div>
-                <Label htmlFor="state">Estado</Label>
+                <Label htmlFor="state">Província</Label>
                 <Input
                   id="state"
                   value={newAddress.state}
                   onChange={(e) =>
                     setNewAddress((s) => ({ ...s, state: e.target.value }))
                   }
+                  placeholder="ex: Maputo"
                 />
               </div>
               <div>
-                <Label htmlFor="zipCode">CEP</Label>
+                <Label htmlFor="zipCode">Código postal</Label>
                 <Input
                   id="zipCode"
                   value={newAddress.zipCode}
@@ -418,7 +434,7 @@ export default function CheckoutPage() {
               </div>
               <div className="sm:col-span-2">
                 <Button type="button" variant="outline" onClick={createAddress}>
-                  Salvar endereço
+                  Guardar endereço
                 </Button>
               </div>
             </div>
@@ -428,75 +444,69 @@ export default function CheckoutPage() {
         <section className="glass-panel animate-slide-up p-5">
           <h2 className="text-[14px] font-semibold text-zinc-900">Pagamento</h2>
           <p className="mt-1 text-[12px] text-zinc-500">
-            Escolha cartão (Stripe) ou M-Pesa.
+            Processado por{" "}
+            <a
+              href="https://paysuite.co.mz"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline underline-offset-2"
+            >
+              PaySuite
+            </a>{" "}
+            (Moçambique). Transacções reais em produção.
           </p>
-          <div className="mt-4 grid gap-2 sm:grid-cols-2">
-            <button
-              type="button"
-              onClick={() => setPayMethod("STRIPE")}
-              className={cn(
-                "flex items-start gap-3 rounded-xl border px-3.5 py-3 text-left transition-all duration-200",
-                payMethod === "STRIPE"
-                  ? "border-zinc-900 bg-white shadow-soft"
-                  : "border-zinc-200/80 bg-white/40 hover:border-zinc-300",
-              )}
-            >
-              <CreditCard className="mt-0.5 size-4 shrink-0 text-zinc-700" />
-              <span>
-                <span className="block text-[13px] font-semibold text-zinc-900">
-                  Cartão · Stripe
-                </span>
-                <span className="mt-0.5 block text-[12px] text-zinc-500">
-                  Visa, Mastercard e outros
-                </span>
-              </span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setPayMethod("MPESA")}
-              className={cn(
-                "flex items-start gap-3 rounded-xl border px-3.5 py-3 text-left transition-all duration-200",
-                payMethod === "MPESA"
-                  ? "border-zinc-900 bg-white shadow-soft"
-                  : "border-zinc-200/80 bg-white/40 hover:border-zinc-300",
-              )}
-            >
-              <Smartphone className="mt-0.5 size-4 shrink-0 text-zinc-700" />
-              <span>
-                <span className="block text-[13px] font-semibold text-zinc-900">
-                  M-Pesa
-                </span>
-                <span className="mt-0.5 block text-[12px] text-zinc-500">
-                  Pagamento via telemóvel
-                </span>
-              </span>
-            </button>
+          <div className="mt-4 grid gap-2 sm:grid-cols-3">
+            {METHODS.map((m) => {
+              const Icon = m.icon;
+              return (
+                <button
+                  key={m.id}
+                  type="button"
+                  onClick={() => setPayMethod(m.id)}
+                  className={cn(
+                    "flex items-start gap-3 rounded-xl border px-3.5 py-3 text-left transition-all duration-200",
+                    payMethod === m.id
+                      ? "border-zinc-900 bg-white shadow-soft"
+                      : "border-zinc-200/80 bg-white/40 hover:border-zinc-300",
+                  )}
+                >
+                  <Icon className="mt-0.5 size-4 shrink-0 text-zinc-700" />
+                  <span>
+                    <span className="block text-[13px] font-semibold text-zinc-900">
+                      {m.title}
+                    </span>
+                    <span className="mt-0.5 block text-[12px] text-zinc-500">
+                      {m.subtitle}
+                    </span>
+                  </span>
+                </button>
+              );
+            })}
           </div>
 
-          {payMethod === "MPESA" && (
+          {(payMethod === "mpesa" || payMethod === "emola") && (
             <div className="mt-4 animate-fade-in">
-              <Label htmlFor="msisdn">Número M-Pesa</Label>
+              <Label htmlFor="msisdn">Telemóvel (opcional)</Label>
               <Input
                 id="msisdn"
                 inputMode="tel"
-                placeholder="ex: 84xxxxxxx ou 25884xxxxxxx"
+                placeholder="84xxxxxxx ou 25884xxxxxxx"
                 value={msisdn}
                 onChange={(e) => setMsisdn(e.target.value)}
                 className="mt-1.5"
               />
               <p className="mt-1.5 text-[12px] text-zinc-500">
-                Receberá o pedido de confirmação no telemóvel.
+                Será redireccionado ao checkout PaySuite para confirmar.
               </p>
-              {mpesaPaymentId && (
-                <p className="mt-3 rounded-xl border border-zinc-200/60 bg-white/60 px-3 py-2 text-[12px] text-zinc-600">
-                  Pagamento{" "}
-                  <span className="font-mono text-zinc-900">
-                    {mpesaPaymentId}
-                  </span>
-                  {mpesaStatus ? ` · ${mpesaStatus}` : ""} — a aguardar…
-                </p>
-              )}
             </div>
+          )}
+
+          {paymentId && (
+            <p className="mt-3 rounded-xl border border-zinc-200/60 bg-white/60 px-3 py-2 text-[12px] text-zinc-600">
+              Pagamento{" "}
+              <span className="font-mono text-zinc-900">{paymentId}</span>
+              {paymentStatus ? ` · ${paymentStatus}` : ""}
+            </p>
           )}
         </section>
 
@@ -518,12 +528,12 @@ export default function CheckoutPage() {
               disabled={validatingCoupon}
               onClick={() => void validateCoupon()}
             >
-              {validatingCoupon ? "Validando..." : "Aplicar"}
+              {validatingCoupon ? "A validar..." : "Aplicar"}
             </Button>
           </div>
           {coupon?.valid && (
             <p className="mt-2 text-[13px] font-medium text-zinc-900">
-              Cupom {coupon.code} aplicado (−{formatBRL(coupon.discountCents)})
+              Cupom {coupon.code} aplicado (−{formatMZN(coupon.discountCents)})
             </p>
           )}
         </section>
@@ -532,38 +542,33 @@ export default function CheckoutPage() {
           <div className="flex justify-between text-[13px]">
             <span className="text-zinc-500">Subtotal</span>
             <span className="font-semibold text-zinc-900">
-              {formatBRL(cart.subtotalCents)}
+              {formatMZN(cart.subtotalCents)}
             </span>
           </div>
           {discountCents > 0 && (
             <div className="mt-2 flex justify-between text-[13px]">
               <span className="text-zinc-500">Desconto</span>
               <span className="font-semibold text-zinc-900">
-                −{formatBRL(discountCents)}
+                −{formatMZN(discountCents)}
               </span>
             </div>
           )}
           <div className="mt-2 flex justify-between text-[13px]">
             <span className="text-zinc-500">Total</span>
             <span className="font-semibold text-zinc-900">
-              {formatBRL(totalCents)}
+              {formatMZN(totalCents)}
             </span>
           </div>
-          <p className="mt-2 text-[12px] text-zinc-500">
-            O frete será calculado pela loja no pedido.
-          </p>
           <Button
             className="mt-5 w-full"
-            disabled={submitting || Boolean(mpesaPaymentId)}
+            disabled={submitting || Boolean(paymentId)}
             onClick={() => void handleCheckout()}
           >
             {submitting
-              ? "Processando..."
-              : payMethod === "STRIPE"
-                ? "Pagar com cartão"
-                : mpesaPaymentId
-                  ? "Aguardando M-Pesa…"
-                  : "Pagar com M-Pesa"}
+              ? "A processar..."
+              : paymentId
+                ? "Aguardando pagamento…"
+                : `Pagar com ${METHODS.find((m) => m.id === payMethod)?.title}`}
           </Button>
         </section>
       </div>

@@ -1,8 +1,9 @@
 # iShopine — agent notes
 
-- Marketplace product: **iShopine** (`ishopine.com`), operated by **Nkateko Investment and Service**.
-- Monorepo packages: `@ishopine/api` (NestJS), `@ishopine/web` (Next.js).
-- Local DB: Postgres. Prefer `apps/api/.env` `DATABASE_URL`. Use `pnpm db:push` then `pnpm db:seed` (avoid `--force-reset` without explicit user consent).
-- Demo password: `IShopine@2026` — accounts `admin@ishopine.com`, `operador@ishopine.com`, `vendedor1@ishopine.com`, `vendedor2@ishopine.com`, `comprador@ishopine.com`.
-- Billing: Stripe Checkout + Vodacom M-Pesa MZ C2B are **parallel** providers (`BillingModule`). M-Pesa is not a Stripe payment method. Without keys, API simulates success.
-- Health: `GET /api/health`. E2E: `pnpm --filter @ishopine/api test:e2e`.
+- Product: **iShopine** (`ishopine.com`) — marketplace for Mozambique (MZN). Not operated by Nkateko.
+- Packages: `@ishopine/api` (NestJS), `@ishopine/web` (Next.js).
+- Payments: **PaySuite** only (`apps/api/src/billing/paysuite/` — TS client mirroring hypertech/paysuite-php-sdk). Methods: `mpesa`, `emola`, `credit_card`.
+- PaySuite has **no sandbox** — use `PAYSUITE_SIMULATE=true` only for local demos without a token. Production requires `PAYSUITE_TOKEN` + `PAYSUITE_WEBHOOK_SECRET`.
+- Webhooks: verify `X-Webhook-Signature` HMAC-SHA256; idempotent via `BillingWebhookEvent.requestId`.
+- Demo password: `IShopine@2026` — `admin@ishopine.com`, etc.
+- Health: `GET /api/health`.

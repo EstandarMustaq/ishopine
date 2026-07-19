@@ -53,12 +53,12 @@ export class AuthService {
         data: {
           name: 'iShopine',
           slug,
-          legalName: 'Nkateko Investment and Service',
-          supportEmail: 'contato@ishopine.com',
+          legalName: 'iShopine, Lda',
+          supportEmail: 'contacto@ishopine.com',
           settings: {
             create: {
               marketplaceName: 'iShopine',
-              tagline: 'Mercado aberto — compre e venda com confiança',
+              tagline: 'Mercado moçambicano — compre e venda com confiança',
             },
           },
         },
@@ -436,7 +436,7 @@ export class AuthService {
     }
 
     const secret = generateSecret();
-    const issuer = 'Nkateko';
+    const issuer = 'iShopine';
     const uri = generateURI({
       issuer,
       label: user.email,

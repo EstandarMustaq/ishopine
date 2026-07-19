@@ -27,6 +27,8 @@ async function main() {
   await prisma.orderEvent.deleteMany();
   await prisma.accountingEntry.deleteMany();
   await prisma.payment.deleteMany();
+  await prisma.billingWebhookEvent.deleteMany();
+  await prisma.billingPayment.deleteMany();
   await prisma.orderItem.deleteMany();
   await prisma.order.deleteMany();
   await prisma.cartItem.deleteMany();
@@ -51,16 +53,16 @@ async function main() {
     data: {
       name: 'iShopine',
       slug: 'ishopine',
-      legalName: 'Nkateko Investment and Service',
-      supportEmail: 'contato@ishopine.com',
-      supportPhone: '+55 11 4000-2026',
-      primaryColor: '#61005D',
+      legalName: 'iShopine, Lda',
+      supportEmail: 'contacto@ishopine.com',
+      supportPhone: '+258 84 000 2026',
+      primaryColor: '#111111',
       settings: {
         create: {
           marketplaceName: 'iShopine',
-          tagline: 'Mercado aberto — compre e venda com confiança',
-          shippingFlatCents: 4900,
-          freeShippingCents: 99900,
+          tagline: 'Mercado moçambicano — compre e venda com confiança',
+          shippingFlatCents: 15000,
+          freeShippingCents: 250000,
           requireSeller2fa: true,
           requireEmailVerify: true,
           commissionBps: 500,
@@ -542,7 +544,7 @@ async function main() {
   });
 
   console.log('Seed iShopine concluído');
-  console.log('Org: iShopine (slug=ishopine) · operado por Nkateko Investment and Service');
+  console.log('Org: iShopine (slug=ishopine) · Moçambique · MZN · PaySuite');
   console.log('Admin: admin@ishopine.com / IShopine@2026 (2FA desativado no seed)');
   console.log('Operador: operador@ishopine.com / IShopine@2026');
   console.log('Vendedor 1: vendedor1@ishopine.com / IShopine@2026 (loja Casa Atlas)');

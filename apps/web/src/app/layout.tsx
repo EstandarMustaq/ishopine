@@ -11,11 +11,11 @@ const jakarta = Plus_Jakarta_Sans({
 
 export const metadata: Metadata = {
   title: {
-    default: "iShopine — mercado aberto de bens",
+    default: "iShopine — mercado de Moçambique",
     template: "%s · iShopine",
   },
   description:
-    "iShopine — mercado aberto de bens. Compre e venda com segurança. Operado por Nkateko Investment and Service.",
+    "iShopine — mercado moçambicano de bens. Compre e venda em MZN com M-Pesa, e-Mola e cartões via PaySuite.",
   metadataBase: new URL("https://ishopine.com"),
 };
 
