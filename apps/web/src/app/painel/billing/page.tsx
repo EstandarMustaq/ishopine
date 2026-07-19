@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
-import { formatBRL } from "@/lib/format";
+import { formatMoney } from "@/lib/format";
 import type { BillingPayment, Paginated } from "@/lib/types";
 
 function statusTone(status: string) {
@@ -117,7 +117,11 @@ export default function PainelBillingPage() {
                   </td>
                   <td className="px-4 py-3 font-medium text-zinc-900">
                     {typeof p.amountCents === "number"
-                      ? formatBRL(p.amountCents)
+                      ? formatMoney(
+                          p.amountCents,
+                          p.currency ||
+                            (p.provider === "STRIPE" ? "USD" : "MZN"),
+                        )
                       : "—"}
                   </td>
                   <td className="px-4 py-3 text-zinc-500">

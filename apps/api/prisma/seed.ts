@@ -49,15 +49,15 @@ async function main() {
 
   const org = await prisma.organization.create({
     data: {
-      name: 'iShoppine',
-      slug: 'ishoppine',
+      name: 'iShopine',
+      slug: 'ishopine',
       legalName: 'Nkateko Investment and Service',
-      supportEmail: 'contato@ishoppine.com',
+      supportEmail: 'contato@ishopine.com',
       supportPhone: '+55 11 4000-2026',
       primaryColor: '#61005D',
       settings: {
         create: {
-          marketplaceName: 'iShoppine',
+          marketplaceName: 'iShopine',
           tagline: 'Mercado aberto — compre e venda com confiança',
           shippingFlatCents: 4900,
           freeShippingCents: 99900,
@@ -69,7 +69,7 @@ async function main() {
     },
   });
 
-  const passwordHash = await bcrypt.hash('IShoppine@2026', 10);
+  const passwordHash = await bcrypt.hash('IShopine@2026', 10);
   const now = new Date();
 
   /**
@@ -82,8 +82,8 @@ async function main() {
   const admin = await prisma.user.create({
     data: {
       organizationId: org.id,
-      email: 'admin@ishoppine.com',
-      name: 'Admin iShoppine',
+      email: 'admin@ishopine.com',
+      name: 'Admin iShopine',
       passwordHash,
       platformRole: PlatformRole.PLATFORM_ADMIN,
       phone: '+55 11 90000-0001',
@@ -98,7 +98,7 @@ async function main() {
   const operator = await prisma.user.create({
     data: {
       organizationId: org.id,
-      email: 'operador@ishoppine.com',
+      email: 'operador@ishopine.com',
       name: 'Operador Plataforma',
       passwordHash,
       platformRole: PlatformRole.PLATFORM_OPERATOR,
@@ -114,7 +114,7 @@ async function main() {
   const seller1 = await prisma.user.create({
     data: {
       organizationId: org.id,
-      email: 'vendedor1@ishoppine.com',
+      email: 'vendedor1@ishopine.com',
       name: 'Casa Atlas',
       passwordHash,
       platformRole: PlatformRole.SELLER,
@@ -130,7 +130,7 @@ async function main() {
   const seller2 = await prisma.user.create({
     data: {
       organizationId: org.id,
-      email: 'vendedor2@ishoppine.com',
+      email: 'vendedor2@ishopine.com',
       name: 'Studio Horizonte',
       passwordHash,
       platformRole: PlatformRole.SELLER,
@@ -146,7 +146,7 @@ async function main() {
   const buyer = await prisma.user.create({
     data: {
       organizationId: org.id,
-      email: 'comprador@ishoppine.com',
+      email: 'comprador@ishopine.com',
       name: 'Ana Compradora',
       passwordHash,
       platformRole: PlatformRole.BUYER,
@@ -535,21 +535,21 @@ async function main() {
     data: {
       userId: buyer.id,
       type: 'SYSTEM',
-      title: 'Bem-vindo ao iShoppine',
+      title: 'Bem-vindo ao iShopine',
       body: 'Explore o mercado, favorite produtos e converse com vendedores.',
       href: '/produtos',
     },
   });
 
-  console.log('Seed iShoppine concluído');
-  console.log('Org: iShoppine (slug=ishoppine) · operado por Nkateko Investment and Service');
-  console.log('Admin: admin@ishoppine.com / IShoppine@2026 (2FA desativado no seed)');
-  console.log('Operador: operador@ishoppine.com / IShoppine@2026');
-  console.log('Vendedor 1: vendedor1@ishoppine.com / IShoppine@2026 (loja Casa Atlas)');
+  console.log('Seed iShopine concluído');
+  console.log('Org: iShopine (slug=ishopine) · operado por Nkateko Investment and Service');
+  console.log('Admin: admin@ishopine.com / IShopine@2026 (2FA desativado no seed)');
+  console.log('Operador: operador@ishopine.com / IShopine@2026');
+  console.log('Vendedor 1: vendedor1@ishopine.com / IShopine@2026 (loja Casa Atlas)');
   console.log(
-    'Vendedor 2: vendedor2@ishoppine.com / IShoppine@2026 (loja Studio Horizonte)',
+    'Vendedor 2: vendedor2@ishopine.com / IShopine@2026 (loja Studio Horizonte)',
   );
-  console.log('Comprador: comprador@ishoppine.com / IShoppine@2026');
+  console.log('Comprador: comprador@ishopine.com / IShopine@2026');
   console.log(
     'Para ativar 2FA: POST /api/auth/2fa/setup → POST /api/auth/2fa/enable',
   );

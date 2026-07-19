@@ -2,9 +2,22 @@ import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 export function formatBRL(cents: number): string {
-  return new Intl.NumberFormat("pt-BR", {
+  return formatMoney(cents, "BRL");
+}
+
+/** Default marketplace display currency (Moçambique). */
+export function formatMZN(cents: number): string {
+  return formatMoney(cents, "MZN");
+}
+
+export function formatMoney(
+  cents: number,
+  currency: string = "MZN",
+  locale = "pt-MZ",
+): string {
+  return new Intl.NumberFormat(locale, {
     style: "currency",
-    currency: "BRL",
+    currency,
   }).format(cents / 100);
 }
 

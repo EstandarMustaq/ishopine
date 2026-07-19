@@ -246,6 +246,12 @@ export interface Order {
   sellerShopId?: string | null;
 }
 
+export interface CheckoutResult {
+  orders: Order[];
+  orderCount: number;
+  totalCents: number;
+}
+
 export interface InventoryMovement {
   id: string;
   productId: string;

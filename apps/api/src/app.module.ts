@@ -5,6 +5,7 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AccountingModule } from './accounting/accounting.module';
 import { AppController } from './app.controller';
 import { AuthModule } from './auth/auth.module';
+import { BillingModule } from './billing/billing.module';
 import { CartModule } from './cart/cart.module';
 import { CatalogModule } from './catalog/catalog.module';
 import { CouponsModule } from './coupons/coupons.module';
@@ -39,6 +40,7 @@ import { WishlistModule } from './wishlist/wishlist.module';
     CatalogModule,
     CartModule,
     OrdersModule,
+    BillingModule,
     InventoryModule,
     AccountingModule,
     UploadsModule,

@@ -22,10 +22,10 @@ import { cn } from "@/lib/utils";
 import type {
   Address,
   Cart,
+  CheckoutResult,
   CouponValidation,
   MpesaC2bResponse,
   MpesaStatusResponse,
-  Order,
   StripeCheckoutResponse,
 } from "@/lib/types";
 
@@ -204,16 +204,20 @@ export default function CheckoutPage() {
 
     setSubmitting(true);
     try {
-      const order = await api<Order>("/orders/checkout", {
+      const checkout = await api<CheckoutResult>("/orders/checkout", {
         method: "POST",
         body: JSON.stringify({
           addressId,
-          paymentMethod: payMethod === "STRIPE" ? "CREDIT_CARD" : "PIX",
+          paymentMethod: payMethod === "STRIPE" ? "STRIPE" : "MPESA",
           couponCode: coupon?.valid ? coupon.code : undefined,
         }),
       });
 
-      const orderIds = [order.id];
+      const orderIds = checkout.orders.map((o) => o.id);
+      const orderLabel =
+        checkout.orders.length === 1
+          ? checkout.orders[0].orderNumber
+          : `${checkout.orderCount} pedidos`;
 
       if (payMethod === "STRIPE") {
         const session = await api<StripeCheckoutResponse>(
@@ -227,7 +231,7 @@ export default function CheckoutPage() {
         if (!url) {
           throw new Error("URL de checkout Stripe não recebida");
         }
-        toast.success(`Pedido ${order.orderNumber} criado — redirecionando…`);
+        toast.success(`${orderLabel} criado — redirecionando…`);
         window.location.href = url;
         return;
       }
@@ -241,8 +245,13 @@ export default function CheckoutPage() {
       setMpesaStatus(mpesa.status ?? "PENDING");
       toast.success(
         mpesa.message ||
-          `Pedido ${order.orderNumber} criado. Confirme o pagamento no telemóvel.`,
+          `${orderLabel} criado. Confirme o pagamento no telemóvel.`,
       );
+      if (String(mpesa.status).toUpperCase() === "PAID") {
+        stopPolling();
+        router.push("/pagamento/sucesso");
+        return;
+      }
       startMpesaPolling(mpesa.paymentId);
     } catch (error) {
       toast.error(

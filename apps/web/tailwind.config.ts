@@ -60,8 +60,8 @@ export default {
         },
       },
       fontFamily: {
-        sans: ["var(--font-montserrat)", "system-ui", "sans-serif"],
-        heading: ["var(--font-montserrat)", "system-ui", "sans-serif"],
+        sans: ["var(--font-jakarta)", "ui-sans-serif", "sans-serif"],
+        heading: ["var(--font-jakarta)", "ui-sans-serif", "sans-serif"],
       },
       borderRadius: {
         button: "12px",

@@ -77,7 +77,7 @@ export class OrdersService {
       }
     }
 
-    const orgSlug = this.config.get<string>('PLATFORM_ORG_SLUG', 'ishoppine');
+    const orgSlug = this.config.get<string>('PLATFORM_ORG_SLUG', 'ishopine');
     const settings = await this.prisma.platformSettings.findFirst({
       where: { organization: { slug: orgSlug } },
     });
@@ -183,7 +183,7 @@ export class OrdersService {
             events: {
               create: {
                 status: OrderStatus.PENDING,
-                note: 'Pedido criado no iShoppine',
+                note: 'Pedido criado no iShopine',
               },
             },
             ...(coupon && appliedCode
@@ -354,6 +354,16 @@ export class OrdersService {
     }
 
     return order;
+  }
+
+  /** Called by billing after Stripe / M-Pesa confirmation */
+  async settlePaidOrders(orderIds: string[]) {
+    for (const id of orderIds) {
+      const order = await this.prisma.order.findUnique({ where: { id } });
+      if (!order) continue;
+      if (order.paymentStatus === PaymentStatus.PAID) continue;
+      await this.updateStatus(id, OrderStatus.CONFIRMED, order.buyerId);
+    }
   }
 
   async updateStatus(id: string, status: OrderStatus, operatorId: string) {

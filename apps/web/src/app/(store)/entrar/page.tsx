@@ -177,7 +177,7 @@ function LoginForm() {
       <p className="mt-4 rounded-[12px] bg-beige px-3 py-2 text-center text-xs text-taupe">
         Demo:{" "}
         <span className="font-medium text-charcoal">admin@ishopine.com</span> /{" "}
-        <span className="font-medium text-charcoal">IShoppine@2026</span>
+        <span className="font-medium text-charcoal">IShopine@2026</span>
       </p>
     </div>
   );

@@ -6,7 +6,9 @@ import { join } from 'path';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    rawBody: true,
+  });
   const config = app.get(ConfigService);
 
   app.setGlobalPrefix('api');
@@ -30,7 +32,7 @@ async function bootstrap() {
   const port = Number(config.get('API_PORT', 4000));
   await app.listen(port);
   // eslint-disable-next-line no-console
-  console.log(`Nkateko API listening on http://localhost:${port}/api`);
+  console.log(`iShopine API listening on http://localhost:${port}/api`);
 }
 
 bootstrap();
