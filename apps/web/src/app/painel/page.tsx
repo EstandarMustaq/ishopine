@@ -23,13 +23,16 @@ export default function PainelOverviewPage() {
     return <p className="text-sm text-taupe">Carregando visão geral...</p>;
   }
 
+  const k = data.kpis;
   const cards = [
-    { label: "Receita", value: formatBRL(data.kpis.revenueCents) },
-    { label: "Pedidos", value: String(data.kpis.orderCount) },
-    { label: "Pendentes", value: String(data.kpis.pendingOrders) },
-    { label: "Produtos ativos", value: String(data.kpis.activeProducts) },
-    { label: "Clientes", value: String(data.kpis.customerCount) },
-    { label: "Estoque baixo", value: String(data.kpis.lowStock) },
+    { label: "GMV", value: formatBRL(k.gmvCents ?? k.revenueCents ?? 0) },
+    { label: "Lojas ativas", value: String(k.activeShops ?? k.shopCount ?? "—") },
+    { label: "Vendedores", value: String(k.sellerCount ?? "—") },
+    { label: "Pedidos", value: String(k.orderCount) },
+    { label: "Pendentes", value: String(k.pendingOrders) },
+    { label: "Produtos ativos", value: String(k.activeProducts) },
+    { label: "Compradores", value: String(k.buyerCount ?? k.customerCount ?? 0) },
+    { label: "Estoque baixo", value: String(k.lowStock) },
   ];
 
   return (
@@ -74,7 +77,9 @@ export default function PainelOverviewPage() {
               {data.recentOrders.map((order) => (
                 <tr key={order.id} className="border-t border-border">
                   <td className="px-4 py-3 font-medium">{order.orderNumber}</td>
-                  <td className="px-4 py-3">{order.user?.name ?? "—"}</td>
+                  <td className="px-4 py-3">
+                    {order.buyer?.name ?? order.user?.name ?? "—"}
+                  </td>
                   <td className="px-4 py-3">{formatBRL(order.totalCents)}</td>
                   <td className="px-4 py-3">{order.status}</td>
                   <td className="px-4 py-3 text-taupe">

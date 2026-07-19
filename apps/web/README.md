@@ -5,7 +5,7 @@ Frontend Next.js do **Nkateko Investment and Service** — mercado aberto de ben
 ## Desenvolvimento
 
 ```bash
-pnpm --filter @mavula/web dev
+pnpm --filter @nkateko/web dev
 ```
 
 Abra [http://localhost:3000](http://localhost:3000).

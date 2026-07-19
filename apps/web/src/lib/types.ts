@@ -182,19 +182,22 @@ export interface OrderItem {
 export interface Order {
   id: string;
   orderNumber: string;
-  userId: string;
+  userId?: string;
+  buyerId?: string;
   status: OrderStatus;
   paymentStatus: PaymentStatus;
   paymentMethod: PaymentMethod;
   subtotalCents: number;
   shippingCents: number;
   discountCents: number;
+  platformFeeCents?: number;
   totalCents: number;
   notes?: string | null;
   createdAt: string;
   items: OrderItem[];
   address?: Address | null;
   user?: Pick<User, "name" | "email">;
+  buyer?: Pick<User, "name" | "email">;
   sellerShop?: Pick<Shop, "id" | "name" | "slug"> | null;
   sellerShopId?: string | null;
 }
@@ -259,8 +262,14 @@ export interface DashboardOverview {
     activeProducts: number;
     orderCount: number;
     pendingOrders: number;
-    customerCount: number;
-    revenueCents: number;
+    customerCount?: number;
+    buyerCount?: number;
+    shopCount?: number;
+    activeShops?: number;
+    sellerCount?: number;
+    revenueCents?: number;
+    gmvCents?: number;
+    platformFeeCents?: number;
     lowStock: number;
   };
   accounting: Record<string, number>;
