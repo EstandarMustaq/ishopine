@@ -9,10 +9,11 @@ export function SiteFooter() {
             iShopine
           </p>
           <p className="mt-1 text-[13px] font-medium text-zinc-600">
-            Operado por Nkateko Investment and Service
+            Mercado de Moçambique, para Moçambique
           </p>
           <p className="mt-2 max-w-sm text-[13px] text-zinc-500">
-            Mercado aberto de bens — compre e venda com confiança.
+            Compre e venda bens em meticais (MZN). Pagamentos via PaySuite —
+            M-Pesa, e-Mola e cartões.
           </p>
           <a
             href="https://ishopine.com"
@@ -44,27 +45,14 @@ export function SiteFooter() {
             <Link href="/cadastro" className="text-zinc-500 hover:text-zinc-900">
               Criar conta
             </Link>
-            <Link href="/conta" className="text-zinc-500 hover:text-zinc-900">
-              Meus pedidos
+            <Link href="/painel/billing" className="text-zinc-500 hover:text-zinc-900">
+              Pagamentos
             </Link>
-            <Link href="/favoritos" className="text-zinc-500 hover:text-zinc-900">
-              Favoritos
-            </Link>
-          </div>
-          <div className="flex flex-col gap-2">
-            <p className="font-semibold text-zinc-800">Contato</p>
-            <a
-              href="mailto:contato@ishopine.com"
-              className="text-zinc-500 hover:text-zinc-900"
-            >
-              contato@ishopine.com
-            </a>
           </div>
         </div>
       </div>
-      <div className="border-t border-zinc-200/60 py-4 text-center text-[12px] text-zinc-400">
-        © {new Date().getFullYear()} Nkateko Investment and Service. Todos os
-        direitos reservados. iShopine · ishopine.com
+      <div className="border-t border-zinc-200/60 px-4 py-4 text-center text-[12px] text-zinc-400">
+        © {new Date().getFullYear()} iShopine. Todos os direitos reservados.
       </div>
     </footer>
   );

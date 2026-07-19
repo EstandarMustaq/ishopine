@@ -38,7 +38,7 @@ export class UploadsService {
         bytes: number;
       }>((resolve, reject) => {
         const stream = cloudinary.uploader.upload_stream(
-          { folder: `nkateko/${folder}` },
+          { folder: `ishopine/${folder}` },
           (error, uploadResult) => {
             if (error || !uploadResult) {
               reject(error ?? new Error('Falha no upload Cloudinary'));

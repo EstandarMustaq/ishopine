@@ -62,7 +62,7 @@ export default function PainelBillingPage() {
         Pagamentos
       </h1>
       <p className="mt-1 text-[13px] text-zinc-500">
-        Histórico de cobranças Stripe e M-Pesa.
+        Histórico PaySuite — M-Pesa, e-Mola e cartões (MZN).
       </p>
 
       {loading && (
@@ -117,11 +117,7 @@ export default function PainelBillingPage() {
                   </td>
                   <td className="px-4 py-3 font-medium text-zinc-900">
                     {typeof p.amountCents === "number"
-                      ? formatMoney(
-                          p.amountCents,
-                          p.currency ||
-                            (p.provider === "STRIPE" ? "USD" : "MZN"),
-                        )
+                      ? formatMoney(p.amountCents, p.currency || "MZN")
                       : "—"}
                   </td>
                   <td className="px-4 py-3 text-zinc-500">

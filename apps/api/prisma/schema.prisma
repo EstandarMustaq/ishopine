@@ -60,12 +60,14 @@ enum PaymentMethod {
   BANK_TRANSFER
   CASH
   MPESA
-  STRIPE
+  EMOLA
+  STRIPE // legacy — prefer PaySuite credit_card
 }
 
 enum PaymentProvider {
-  STRIPE
-  MPESA
+  PAYSUITE
+  STRIPE // legacy
+  MPESA // legacy direct Vodacom
   MANUAL
 }
 
@@ -533,31 +535,54 @@ model Payment {
   @@index([status])
 }
 
-/// Unified billing ledger for Stripe Checkout + Vodacom M-Pesa MZ C2B
+/// Unified billing ledger — PaySuite (M-Pesa, e-Mola, cartões) for Mozambique
 model BillingPayment {
-  id                   String               @id @default(cuid())
-  buyerId              String
-  provider             PaymentProvider
-  status               BillingPaymentStatus @default(PENDING)
-  amountCents          Int
-  currency             String               @default("MZN")
-  orderIds             String[]
-  stripeSessionId      String?              @unique
+  id                    String               @id @default(cuid())
+  buyerId               String
+  provider              PaymentProvider      @default(PAYSUITE)
+  status                BillingPaymentStatus @default(PENDING)
+  amountCents           Int
+  currency              String               @default("MZN")
+  orderIds              String[]
+  /// PaySuite method: mpesa | emola | credit_card
+  method                String?
+  /// Merchant reference sent to PaySuite (unique, max 50)
+  reference             String               @unique
+  paysuitePaymentId     String?              @unique
+  paysuiteCheckoutUrl   String?
+  paysuiteTransactionId String?
+  msisdn                String?
+  /// Legacy Stripe / direct M-Pesa fields (nullable)
+  stripeSessionId       String?              @unique
   stripePaymentIntentId String?
-  msisdn               String?
-  mpesaConversationId  String?
-  mpesaTransactionId   String?
-  mpesaThirdPartyRef   String?
-  failureReason        String?
-  metadata             Json?
-  paidAt               DateTime?
-  createdAt            DateTime             @default(now())
-  updatedAt            DateTime             @updatedAt
+  mpesaConversationId   String?
+  mpesaTransactionId    String?
+  mpesaThirdPartyRef    String?
+  failureReason         String?
+  metadata              Json?
+  paidAt                DateTime?
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime             @updatedAt
 
   buyer User @relation(fields: [buyerId], references: [id], onDelete: Cascade)
 
   @@index([buyerId])
   @@index([provider, status])
+  @@index([createdAt])
+  @@index([paysuitePaymentId])
+}
+
+/// Idempotent webhook inbox for PaySuite (request_id)
+model BillingWebhookEvent {
+  id          String    @id @default(cuid())
+  requestId   String    @unique
+  event       String
+  payload     Json
+  paymentId   String?
+  processedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([event])
   @@index([createdAt])
 }
 

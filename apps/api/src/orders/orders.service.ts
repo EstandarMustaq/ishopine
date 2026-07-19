@@ -356,7 +356,7 @@ export class OrdersService {
     return order;
   }
 
-  /** Called by billing after Stripe / M-Pesa confirmation */
+  /** Called by billing after PaySuite confirmation */
   async settlePaidOrders(orderIds: string[]) {
     for (const id of orderIds) {
       const order = await this.prisma.order.findUnique({ where: { id } });

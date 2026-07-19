@@ -53,11 +53,11 @@ export default async function HomePage() {
               iShopine
             </p>
             <h1 className="animate-hero-in-delay mt-3 text-lg font-medium leading-snug text-white/95 sm:text-xl">
-              Compre e venda no mercado aberto
+              De Moçambique, para Moçambique
             </h1>
             <p className="animate-hero-in-delay-2 mt-2 max-w-md text-[14px] leading-relaxed text-white/75">
-              Marketplace onde qualquer pessoa compra e vende bens com
-              segurança.
+              Mercado em meticais. Pague com M-Pesa, e-Mola ou cartão via
+              PaySuite.
             </p>
             <div className="animate-hero-in-delay-2 mt-6 flex flex-wrap gap-2.5">
               <Button asChild size="lg" className="bg-white text-zinc-900 hover:bg-zinc-100">

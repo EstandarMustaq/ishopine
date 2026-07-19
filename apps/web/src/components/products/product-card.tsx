@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { WishlistButton } from "@/components/products/wishlist-button";
-import { formatBRL } from "@/lib/format";
+import { formatMZN } from "@/lib/format";
 import type { Product } from "@/lib/types";
 
 interface ProductCardProps {
@@ -41,12 +41,12 @@ export function ProductCard({ product }: ProductCardProps) {
           </h3>
           <div className="mt-2 flex items-baseline gap-2">
             <span className="text-base font-bold text-[#111111]">
-              {formatBRL(product.priceCents)}
+              {formatMZN(product.priceCents)}
             </span>
             {product.compareAtCents &&
               product.compareAtCents > product.priceCents && (
                 <span className="text-xs text-taupe line-through">
-                  {formatBRL(product.compareAtCents)}
+                  {formatMZN(product.compareAtCents)}
                 </span>
               )}
           </div>

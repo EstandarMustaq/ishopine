@@ -1,8 +1,9 @@
 # iShopine
 
-Marketplace aberto oficial **iShopine** — operado por **Nkateko Investment and Service**.
+Marketplace **moçambicano** — de Moçambique para Moçambique.  
+Domínio: [ishopine.com](https://ishopine.com)
 
-Multi-vendedor, multi-usuário, com autenticação Google + OTP + 2FA e arquitetura pronta para multi-tenant.
+Multi-vendedor, multi-utilizador, autenticação Google + OTP + 2FA, pronto para multi-tenant.
 
 ## Stack
 
@@ -11,36 +12,44 @@ Multi-vendedor, multi-usuário, com autenticação Google + OTP + 2FA e arquitet
 | Frontend | Next.js 15, React 19, Tailwind, shadcn/ui |
 | API | NestJS 11, Passport JWT + Google OAuth, TOTP 2FA |
 | Banco | PostgreSQL (Neon) + Prisma |
+| Pagamentos | **[PaySuite](https://paysuite.co.mz)** (M-Pesa, e-Mola, cartões) |
 | Mídia | Upload local ou Cloudinary |
 
-## Funcionalidades
+## Pagamentos (PaySuite)
 
-### Mercado
-- Catálogo multi-loja, categorias, busca
-- Páginas de lojas + seguir loja
-- Favoritos / wishlist
-- Avaliações de produtos (pós-compra)
-- Carrinho e checkout com **cupons**
-- **Billing**: Stripe Checkout (cartões) + Vodacom **M-Pesa Moçambique** C2B (paralelo — M-Pesa não passa pelo Stripe)
-- Mensagens comprador ↔ vendedor
-- Notificações in-app
-- Disputas de pedido
+iShopine usa a API oficial PaySuite (`https://paysuite.tech/api/v1`), alinhada ao SDK PHP [`hypertech/paysuite-php-sdk`](https://github.com/hypertech-lda/paysuite-php-sdk).
 
-### Vendedor
-- Abrir/gerir loja
-- Produtos, estoque, pedidos
-- 2FA no painel
+| Método | Código API |
+|--------|------------|
+| M-Pesa | `mpesa` |
+| e-Mola | `emola` |
+| Cartão Visa/Mastercard | `credit_card` |
 
-### Plataforma
-- Overview (GMV, lojas, vendedores)
-- Cupons, disputas, usuários, contabilidade
-- Comissão configurável
+Moeda: **MZN** (meticais).  
+**Não há sandbox** — ao activar a conta PaySuite, as transacções são reais.
 
-### Segurança
-1. Cadastro → código OTP no e-mail  
-2. Login e-mail/senha ou Google  
-3. 2FA TOTP para vendedores e staff (obrigatório em produção)  
-4. Rate limiting nas rotas de auth  
+### Endpoints
+
+- `POST /api/billing/paysuite/checkout` — cria cobrança + `checkout_url`
+- `GET /api/billing/paysuite/status/:paymentId` — sincroniza estado
+- `POST /api/billing/paysuite/webhook` — `payment.success` / `payment.failed` (HMAC `X-Webhook-Signature`)
+- `POST /api/billing/paysuite/payouts` — payouts (admin)
+- `POST /api/billing/paysuite/refunds` — reembolsos (admin)
+- `GET /api/billing/payments` — histórico do comprador
+
+### Variáveis
+
+```bash
+PAYSUITE_TOKEN=           # painel PaySuite → Settings → API Access
+PAYSUITE_WEBHOOK_SECRET=  # validação HMAC dos webhooks
+PAYSUITE_BASE_URL=https://paysuite.tech/api/v1
+APP_URL=https://api.ishopine.com   # callback_url público
+WEB_URL=https://ishopine.com
+# Só para demos locais sem token:
+PAYSUITE_SIMULATE=true
+```
+
+Webhook URL no painel: `https://<api>/api/billing/paysuite/webhook`
 
 ## Começar
 
@@ -68,28 +77,9 @@ Senha: `IShopine@2026`
 | Vendedor 2 | `vendedor2@ishopine.com` |
 | Comprador | `comprador@ishopine.com` |
 
-Cupons seed: `ISHOP10` (10%) · `BEMVINDO50` (R$ 50)
-
-## Pagamentos
-
-Stripe e M-Pesa são provedores **paralelos** na mesma camada de billing (`BillingPayment`):
-
-| Provedor | Uso | Integração |
-|----------|-----|------------|
-| **Stripe** | Cartões / métodos dinâmicos do Checkout | `POST /api/billing/stripe/checkout` + webhook `checkout.session.completed` |
-| **M-Pesa MZ** | Carteira Vodacom Moçambique (USSD Push C2B) | Open API em [developer.mpesa.vm.co.mz](https://developer.mpesa.vm.co.mz/) — RSA + sessão + C2B single-stage |
-
-Variáveis (ver `apps/api/.env.example`):
-
-- `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_CURRENCY` (default `usd`)
-- `MPESA_API_KEY`, `MPESA_PUBLIC_KEY`, `MPESA_SERVICE_PROVIDER_CODE` (sandbox `171717`), `MPESA_ENV`
-
-Sem chaves configuradas, a API **simula** sucesso em desenvolvimento para demos locais.
-
-Webhook Stripe: `POST /api/billing/stripe/webhook`  
-Callback M-Pesa: `POST /api/billing/mpesa/callback`
+Cupons seed: `ISHOP10` (10%) · `BEMVINDO50`
 
 ## Licença
 
 GNU GPL v3 — ver `LICENSE`.  
-Produto **iShopine** · Operador **Nkateko Investment and Service**.
+**iShopine** · Moçambique.

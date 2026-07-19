@@ -8,7 +8,9 @@ export class AppController {
       ok: true,
       service: 'ishopine-api',
       marketplace: 'iShopine',
-      operator: 'Nkateko Investment and Service',
+      country: 'MZ',
+      currency: 'MZN',
+      payments: 'paysuite',
       timestamp: new Date().toISOString(),
     };
   }

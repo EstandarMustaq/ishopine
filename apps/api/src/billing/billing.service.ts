@@ -4,6 +4,8 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  ServiceUnavailableException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
@@ -12,38 +14,93 @@ import {
   PaymentMethod,
   PaymentProvider,
   PaymentStatus,
+  PlatformRole,
+  Prisma,
 } from '@prisma/client';
 import { randomBytes } from 'crypto';
 import { OrdersService } from '../orders/orders.service';
 import { PrismaService } from '../prisma/prisma.service';
-import { MpesaClient } from './mpesa.client';
-import { StripeService } from './stripe.service';
+import {
+  PaysuiteApiError,
+  PaysuiteClient,
+  PaysuiteValidationError,
+  parsePaysuiteWebhook,
+  verifyPaysuiteWebhookSignature,
+  type PaysuitePaymentMethod,
+} from './paysuite';
+
+const METHOD_TO_ORDER: Record<PaysuitePaymentMethod, PaymentMethod> = {
+  mpesa: PaymentMethod.MPESA,
+  emola: PaymentMethod.EMOLA,
+  credit_card: PaymentMethod.CREDIT_CARD,
+};
 
 @Injectable()
 export class BillingService {
   private readonly logger = new Logger(BillingService.name);
+  private client: PaysuiteClient | null = null;
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
-    private readonly stripe: StripeService,
-    private readonly mpesa: MpesaClient,
     private readonly orders: OrdersService,
-  ) {}
+  ) {
+    const token = this.config.get<string>('PAYSUITE_TOKEN')?.trim();
+    if (token) {
+      this.client = new PaysuiteClient({
+        token,
+        baseUrl: this.config.get<string>('PAYSUITE_BASE_URL'),
+        timeoutMs: Number(this.config.get('PAYSUITE_TIMEOUT_MS') || 30_000),
+        maxRetries: Number(this.config.get('PAYSUITE_MAX_RETRIES') || 3),
+      });
+    } else {
+      this.logger.warn(
+        'PAYSUITE_TOKEN missing — billing requires PaySuite for real charges',
+      );
+    }
+  }
 
   private webUrl(): string {
     return this.config.get<string>('WEB_URL', 'http://localhost:3000');
   }
 
-  private normalizeMsisdn(raw: string): string {
+  private apiPublicUrl(): string {
+    return (
+      this.config.get<string>('APP_URL') ||
+      this.config.get<string>('API_PUBLIC_URL') ||
+      `http://localhost:${this.config.get('API_PORT', 4000)}`
+    );
+  }
+
+  private allowSimulate(): boolean {
+    if (this.config.get<string>('PAYSUITE_SIMULATE') === 'true') return true;
+    if (this.config.get<string>('NODE_ENV') === 'production') return false;
+    return !this.client;
+  }
+
+  private getClientOrThrow(): PaysuiteClient {
+    if (!this.client) {
+      throw new ServiceUnavailableException(
+        'PaySuite não configurado. Defina PAYSUITE_TOKEN (painel PaySuite → API Access).',
+      );
+    }
+    return this.client;
+  }
+
+  private shortReference(): string {
+    // Max 50 chars for PaySuite; keep short + unique for high throughput
+    return `ISH${Date.now().toString(36)}${randomBytes(3).toString('hex')}`.slice(
+      0,
+      50,
+    );
+  }
+
+  private normalizeMsisdn(raw?: string): string | undefined {
+    if (!raw) return undefined;
     const digits = raw.replace(/\D/g, '');
     if (digits.startsWith('258')) return digits;
     if (digits.startsWith('8') && digits.length === 9) return `258${digits}`;
     return digits;
-  }
-
-  private shortRef(): string {
-    return randomBytes(6).toString('hex').slice(0, 12);
   }
 
   private async loadPayableOrders(buyerId: string, orderIds: string[]) {
@@ -83,7 +140,16 @@ export class BillingService {
     return { orders, amountCents };
   }
 
-  async createStripeCheckout(buyerId: string, orderIds: string[]) {
+  /**
+   * Create PaySuite payment for one or more orders and return checkout URL.
+   * Amounts are always MZN. Real traffic goes to paysuite.tech (no sandbox).
+   */
+  async createPaysuiteCheckout(
+    buyerId: string,
+    orderIds: string[],
+    method: PaysuitePaymentMethod,
+    rawMsisdn?: string,
+  ) {
     const buyer = await this.prisma.user.findUnique({ where: { id: buyerId } });
     if (!buyer) throw new ForbiddenException();
 
@@ -91,259 +157,111 @@ export class BillingService {
       buyerId,
       orderIds,
     );
-
-    const payment = await this.prisma.billingPayment.create({
-      data: {
-        buyerId,
-        provider: PaymentProvider.STRIPE,
-        status: BillingPaymentStatus.PENDING,
-        amountCents,
-        currency: this.stripe.currency().toUpperCase(),
-        orderIds: orders.map((o) => o.id),
-        metadata: {
-          orderNumbers: orders.map((o) => o.orderNumber),
-        },
-      },
-    });
-
-    await this.prisma.order.updateMany({
-      where: { id: { in: orders.map((o) => o.id) } },
-      data: { paymentMethod: PaymentMethod.STRIPE },
-    });
-    await this.prisma.payment.updateMany({
-      where: { orderId: { in: orders.map((o) => o.id) } },
-      data: { method: PaymentMethod.STRIPE },
-    });
-
-    const successUrl = `${this.webUrl()}/pagamento/sucesso?session_id={CHECKOUT_SESSION_ID}`;
-    const cancelUrl = `${this.webUrl()}/pagamento/cancelado`;
-
-    if (!this.stripe.isConfigured()) {
-      // Dev simulation: mark paid immediately and return local success URL.
-      await this.markBillingPaid(payment.id, {
-        stripeSessionId: `sim_cs_${payment.id}`,
-      });
-      return {
-        paymentId: payment.id,
-        sessionId: `sim_cs_${payment.id}`,
-        url: `${this.webUrl()}/pagamento/sucesso?simulated=1&paymentId=${payment.id}`,
-        checkoutUrl: `${this.webUrl()}/pagamento/sucesso?simulated=1&paymentId=${payment.id}`,
-        simulated: true,
-      };
-    }
-
-    const session = await this.stripe.createCheckoutSession({
-      amountCents,
-      customerEmail: buyer.email,
-      paymentId: payment.id,
-      orderIds: orders.map((o) => o.id),
-      successUrl,
-      cancelUrl,
-    });
-
-    await this.prisma.billingPayment.update({
-      where: { id: payment.id },
-      data: {
-        stripeSessionId: session.id,
-        status: BillingPaymentStatus.PROCESSING,
-        metadata: {
-          orderNumbers: orders.map((o) => o.orderNumber),
-          stripeMode: session.mode,
-        },
-      },
-    });
-
-    return {
-      paymentId: payment.id,
-      sessionId: session.id,
-      url: session.url,
-      checkoutUrl: session.url,
-      simulated: false,
-    };
-  }
-
-  async handleStripeWebhook(rawBody: Buffer, signature: string | undefined) {
-    if (!signature) {
-      throw new BadRequestException('Assinatura Stripe em falta');
-    }
-    if (!this.stripe.isConfigured()) {
-      throw new BadRequestException('Stripe não configurado');
-    }
-
-    const event = this.stripe.constructWebhookEvent(rawBody, signature);
-
-    switch (event.type) {
-      case 'checkout.session.completed': {
-        const session = event.data.object;
-        const paymentId = session.metadata?.billingPaymentId;
-        if (paymentId) {
-          await this.markBillingPaid(paymentId, {
-            stripeSessionId: session.id,
-            stripePaymentIntentId:
-              typeof session.payment_intent === 'string'
-                ? session.payment_intent
-                : session.payment_intent?.id,
-          });
-        } else if (session.id) {
-          const existing = await this.prisma.billingPayment.findUnique({
-            where: { stripeSessionId: session.id },
-          });
-          if (existing) {
-            await this.markBillingPaid(existing.id, {
-              stripeSessionId: session.id,
-              stripePaymentIntentId:
-                typeof session.payment_intent === 'string'
-                  ? session.payment_intent
-                  : session.payment_intent?.id,
-            });
-          }
-        }
-        break;
-      }
-      case 'checkout.session.expired': {
-        const session = event.data.object;
-        if (session.id) {
-          await this.prisma.billingPayment.updateMany({
-            where: {
-              stripeSessionId: session.id,
-              status: {
-                in: [
-                  BillingPaymentStatus.PENDING,
-                  BillingPaymentStatus.PROCESSING,
-                ],
-              },
-            },
-            data: {
-              status: BillingPaymentStatus.CANCELLED,
-              failureReason: 'Checkout session expired',
-            },
-          });
-        }
-        break;
-      }
-      default: {
-        this.logger.debug(`Stripe event ignorado: ${event.type}`);
-        break;
-      }
-    }
-
-    return { received: true };
-  }
-
-  async initiateMpesaC2b(
-    buyerId: string,
-    orderIds: string[],
-    rawMsisdn: string,
-  ) {
     const msisdn = this.normalizeMsisdn(rawMsisdn);
-    if (!/^(258)?8\d{8}$/.test(msisdn) && !/^2588\d{8}$/.test(msisdn)) {
-      throw new BadRequestException('Número M-Pesa inválido');
-    }
-
-    const { orders, amountCents } = await this.loadPayableOrders(
-      buyerId,
-      orderIds,
-    );
-
-    const thirdPartyReference = this.shortRef();
-    const transactionReference = `ISH${thirdPartyReference}`.slice(0, 20);
+    const reference = this.shortReference();
+    const orderMethod = METHOD_TO_ORDER[method];
+    const amountMzn = (amountCents / 100).toFixed(2);
 
     const payment = await this.prisma.billingPayment.create({
       data: {
         buyerId,
-        provider: PaymentProvider.MPESA,
-        status: BillingPaymentStatus.PROCESSING,
+        provider: PaymentProvider.PAYSUITE,
+        status: BillingPaymentStatus.PENDING,
         amountCents,
         currency: 'MZN',
         orderIds: orders.map((o) => o.id),
+        method,
+        reference,
         msisdn,
-        mpesaThirdPartyRef: thirdPartyReference,
         metadata: {
           orderNumbers: orders.map((o) => o.orderNumber),
-          transactionReference,
+          buyerEmail: buyer.email,
         },
       },
     });
 
     await this.prisma.order.updateMany({
       where: { id: { in: orders.map((o) => o.id) } },
-      data: { paymentMethod: PaymentMethod.MPESA },
+      data: { paymentMethod: orderMethod },
     });
     await this.prisma.payment.updateMany({
       where: { orderId: { in: orders.map((o) => o.id) } },
-      data: { method: PaymentMethod.MPESA },
+      data: { method: orderMethod },
     });
 
-    try {
-      const result = await this.mpesa.c2bSingleStage({
-        amountCents,
-        msisdn,
-        transactionReference,
-        thirdPartyReference,
+    const returnUrl = `${this.webUrl()}/pagamento/sucesso?ref=${encodeURIComponent(reference)}`;
+    const callbackUrl = `${this.apiPublicUrl()}/api/billing/paysuite/webhook`;
+
+    if (this.allowSimulate() && !this.client) {
+      await this.markBillingPaid(payment.id, {
+        paysuitePaymentId: `sim_${payment.id}`,
+        paysuiteTransactionId: `sim_tx_${Date.now()}`,
       });
+      return {
+        paymentId: payment.id,
+        reference,
+        provider: PaymentProvider.PAYSUITE,
+        method,
+        status: BillingPaymentStatus.PAID,
+        amountCents,
+        currency: 'MZN',
+        checkoutUrl: `${this.webUrl()}/pagamento/sucesso?simulated=1&paymentId=${payment.id}`,
+        url: `${this.webUrl()}/pagamento/sucesso?simulated=1&paymentId=${payment.id}`,
+        simulated: true,
+        message:
+          'Simulação local (defina PAYSUITE_TOKEN para cobranças reais — PaySuite não tem sandbox).',
+      };
+    }
 
-      const successCodes = new Set(['INS-0', '0', undefined]);
-      const ok =
-        result.simulated ||
-        !result.responseCode ||
-        successCodes.has(result.responseCode);
-
-      if (!ok) {
-        await this.prisma.billingPayment.update({
-          where: { id: payment.id },
-          data: {
-            status: BillingPaymentStatus.FAILED,
-            failureReason: result.responseDesc || result.responseCode,
-            mpesaConversationId: result.conversationId,
-            mpesaTransactionId: result.transactionId,
-          },
-        });
-        throw new BadRequestException(
-          result.responseDesc || 'Falha ao iniciar M-Pesa',
-        );
-      }
+    try {
+      const client = this.getClientOrThrow();
+      const created = await client.createPayment({
+        amount: amountMzn,
+        reference,
+        method,
+        description: `iShopine · ${orders.length} pedido(s)`.slice(0, 125),
+        return_url: returnUrl,
+        callback_url: callbackUrl,
+      });
 
       await this.prisma.billingPayment.update({
         where: { id: payment.id },
         data: {
-          mpesaConversationId: result.conversationId,
-          mpesaTransactionId: result.transactionId,
+          status: BillingPaymentStatus.PROCESSING,
+          paysuitePaymentId: created.id,
+          paysuiteCheckoutUrl: created.checkout_url,
           metadata: {
             orderNumbers: orders.map((o) => o.orderNumber),
-            transactionReference,
-            simulated: result.simulated,
-            responseCode: result.responseCode,
-            responseDesc: result.responseDesc,
+            buyerEmail: buyer.email,
+            paysuiteStatus: created.status,
+            msisdnHint: msisdn,
           },
         },
       });
 
-      // Simulated sandbox auto-settles so local demos work without Vodacom keys.
-      if (result.simulated) {
-        await this.markBillingPaid(payment.id, {
-          mpesaConversationId: result.conversationId,
-          mpesaTransactionId: result.transactionId,
-        });
-        return {
-          paymentId: payment.id,
-          status: BillingPaymentStatus.PAID,
-          message:
-            'Pagamento M-Pesa simulado com sucesso (configure as chaves Vodacom para produção).',
-          simulated: true,
-        };
+      const checkoutUrl = created.checkout_url;
+      if (!checkoutUrl) {
+        throw new BadRequestException(
+          'PaySuite não devolveu checkout_url — verifique a conta comerciante',
+        );
       }
 
       return {
         paymentId: payment.id,
+        reference,
+        provider: PaymentProvider.PAYSUITE,
+        method,
         status: BillingPaymentStatus.PROCESSING,
-        message:
-          'Pedido M-Pesa enviado. Confirme o PIN no telemóvel (USSD Push).',
+        amountCents,
+        currency: 'MZN',
+        paysuitePaymentId: created.id,
+        checkoutUrl,
+        url: checkoutUrl,
         simulated: false,
+        message: 'Redirecione o comprador para o checkout PaySuite.',
       };
     } catch (error) {
-      if (error instanceof BadRequestException) throw error;
-      const message =
-        error instanceof Error ? error.message : 'Erro M-Pesa desconhecido';
+      const message = this.mapPaysuiteError(error);
       await this.prisma.billingPayment.update({
         where: { id: payment.id },
         data: {
@@ -355,15 +273,15 @@ export class BillingService {
     }
   }
 
-  async getMpesaStatus(buyerId: string, paymentId: string) {
+  async syncPaysuiteStatus(buyerId: string, paymentId: string) {
     const payment = await this.prisma.billingPayment.findUnique({
       where: { id: paymentId },
     });
     if (!payment || payment.buyerId !== buyerId) {
       throw new NotFoundException('Pagamento não encontrado');
     }
-    if (payment.provider !== PaymentProvider.MPESA) {
-      throw new BadRequestException('Pagamento não é M-Pesa');
+    if (payment.provider !== PaymentProvider.PAYSUITE) {
+      throw new BadRequestException('Pagamento não é PaySuite');
     }
 
     if (
@@ -374,120 +292,185 @@ export class BillingService {
     ) {
       return {
         paymentId: payment.id,
+        reference: payment.reference,
         status: payment.status,
         message: payment.failureReason || undefined,
       };
     }
 
-    const queryReference =
-      payment.mpesaConversationId ||
-      payment.mpesaTransactionId ||
-      payment.mpesaThirdPartyRef;
-
-    if (!queryReference || !payment.mpesaThirdPartyRef) {
+    if (!payment.paysuitePaymentId) {
       return {
         paymentId: payment.id,
+        reference: payment.reference,
         status: payment.status,
-        message: 'Aguardando referência M-Pesa',
+        message: 'Aguardando id PaySuite',
       };
     }
 
-    const query = await this.mpesa.queryStatus({
-      thirdPartyReference: payment.mpesaThirdPartyRef,
-      queryReference,
-    });
-
-    if (query.status === 'Completed') {
-      await this.markBillingPaid(payment.id, {
-        mpesaConversationId: query.conversationId || payment.mpesaConversationId,
-      });
+    if (this.allowSimulate() && payment.paysuitePaymentId.startsWith('sim_')) {
+      await this.markBillingPaid(payment.id, {});
       return {
         paymentId: payment.id,
+        reference: payment.reference,
         status: BillingPaymentStatus.PAID,
-        message: query.responseDesc || 'Pago',
+        message: 'Simulado',
       };
     }
 
-    if (
-      query.status === 'Failed' ||
-      query.status === 'Cancelled' ||
-      query.status === 'Expired'
-    ) {
-      const mapped =
-        query.status === 'Cancelled'
-          ? BillingPaymentStatus.CANCELLED
-          : BillingPaymentStatus.FAILED;
-      await this.prisma.billingPayment.update({
-        where: { id: payment.id },
-        data: {
+    try {
+      const remote = await this.getClientOrThrow().getPayment(
+        payment.paysuitePaymentId,
+      );
+      const remoteStatus = String(remote.status || '').toLowerCase();
+
+      if (remoteStatus === 'paid' || remoteStatus === 'completed') {
+        await this.markBillingPaid(payment.id, {
+          paysuiteTransactionId:
+            remote.transaction?.transaction_id ||
+            (remote.transaction?.id != null
+              ? String(remote.transaction.id)
+              : undefined),
+        });
+        return {
+          paymentId: payment.id,
+          reference: payment.reference,
+          status: BillingPaymentStatus.PAID,
+          message: 'Pago',
+        };
+      }
+
+      if (
+        remoteStatus === 'failed' ||
+        remoteStatus === 'cancelled' ||
+        remoteStatus === 'canceled' ||
+        remoteStatus === 'expired'
+      ) {
+        const mapped =
+          remoteStatus === 'expired' || remoteStatus.includes('cancel')
+            ? BillingPaymentStatus.CANCELLED
+            : BillingPaymentStatus.FAILED;
+        await this.prisma.billingPayment.update({
+          where: { id: payment.id },
+          data: {
+            status: mapped,
+            failureReason: remote.error || remoteStatus,
+          },
+        });
+        return {
+          paymentId: payment.id,
+          reference: payment.reference,
           status: mapped,
-          failureReason: query.responseDesc || query.status,
-        },
-      });
+          message: remote.error || remoteStatus,
+        };
+      }
+
       return {
         paymentId: payment.id,
-        status: mapped,
-        message: query.responseDesc || query.status,
+        reference: payment.reference,
+        status: BillingPaymentStatus.PROCESSING,
+        message: remoteStatus || 'pending',
       };
+    } catch (error) {
+      throw new BadRequestException(this.mapPaysuiteError(error));
     }
-
-    return {
-      paymentId: payment.id,
-      status: BillingPaymentStatus.PROCESSING,
-      message: query.responseDesc || 'Aguardando confirmação M-Pesa',
-    };
   }
 
-  async handleMpesaCallback(body: {
-    input_OriginalConversationID?: string;
-    input_ThirdPartyReference?: string;
-    input_TransactionID?: string;
-    input_ResultCode?: string;
-    input_ResultDesc?: string;
-  }) {
-    const thirdParty = body.input_ThirdPartyReference;
-    const conversationId = body.input_OriginalConversationID;
+  async handlePaysuiteWebhook(
+    rawBody: Buffer,
+    signature: string | undefined,
+    accountId?: string,
+  ) {
+    const secret = this.config.get<string>('PAYSUITE_WEBHOOK_SECRET')?.trim();
+    if (!secret) {
+      this.logger.error('PAYSUITE_WEBHOOK_SECRET not configured');
+      throw new ServiceUnavailableException('Webhook secret não configurado');
+    }
 
-    const payment = thirdParty
+    if (!verifyPaysuiteWebhookSignature(rawBody, signature, secret)) {
+      throw new UnauthorizedException('Assinatura PaySuite inválida');
+    }
+
+    const payload = parsePaysuiteWebhook(rawBody);
+    const requestId =
+      payload.request_id ||
+      `${payload.event}:${payload.data?.id}:${payload.created_at || Date.now()}`;
+
+    // Idempotency — PaySuite may retry up to 5 times
+    const existing = await this.prisma.billingWebhookEvent.findUnique({
+      where: { requestId },
+    });
+    if (existing?.processedAt) {
+      return { received: true, duplicate: true };
+    }
+
+    const eventRow = await this.prisma.billingWebhookEvent.upsert({
+      where: { requestId },
+      create: {
+        requestId,
+        event: payload.event,
+        payload: payload as unknown as Prisma.InputJsonValue,
+        paymentId: payload.data?.id,
+      },
+      update: {
+        event: payload.event,
+        payload: payload as unknown as Prisma.InputJsonValue,
+      },
+    });
+
+    const paysuiteId = payload.data?.id;
+    const reference = payload.data?.reference;
+
+    const payment = paysuiteId
       ? await this.prisma.billingPayment.findFirst({
-          where: { mpesaThirdPartyRef: thirdParty },
+          where: {
+            OR: [
+              { paysuitePaymentId: paysuiteId },
+              ...(reference ? [{ reference }] : []),
+            ],
+          },
         })
-      : conversationId
-        ? await this.prisma.billingPayment.findFirst({
-            where: { mpesaConversationId: conversationId },
-          })
+      : reference
+        ? await this.prisma.billingPayment.findUnique({ where: { reference } })
         : null;
 
     if (payment) {
-      const ok =
-        body.input_ResultCode === '0' || body.input_ResultCode === 'INS-0';
-      if (ok) {
+      if (payload.event === 'payment.success') {
         await this.markBillingPaid(payment.id, {
-          mpesaConversationId: conversationId || payment.mpesaConversationId,
-          mpesaTransactionId:
-            body.input_TransactionID || payment.mpesaTransactionId,
+          paysuitePaymentId: paysuiteId || payment.paysuitePaymentId,
+          paysuiteTransactionId:
+            payload.data.transaction?.transaction_id ||
+            (payload.data.transaction?.id != null
+              ? String(payload.data.transaction.id)
+              : undefined),
         });
-      } else {
+      } else if (payload.event === 'payment.failed') {
         await this.prisma.billingPayment.update({
           where: { id: payment.id },
           data: {
             status: BillingPaymentStatus.FAILED,
-            failureReason: body.input_ResultDesc || body.input_ResultCode,
-            mpesaConversationId:
-              conversationId || payment.mpesaConversationId,
-            mpesaTransactionId:
-              body.input_TransactionID || payment.mpesaTransactionId,
+            failureReason: payload.data.error || 'payment.failed',
           },
         });
       }
+    } else {
+      this.logger.warn(
+        `PaySuite webhook sem pagamento local: ${payload.event} ${paysuiteId || reference}`,
+      );
     }
 
-    return {
-      output_OriginalConversationID: conversationId || '',
-      output_ResponseDesc: 'Successfully Accepted Result',
-      output_ResponseCode: '0',
-      output_ThirdPartyConversationID: thirdParty || '',
-    };
+    await this.prisma.billingWebhookEvent.update({
+      where: { id: eventRow.id },
+      data: {
+        processedAt: new Date(),
+        paymentId: payment?.id || paysuiteId,
+      },
+    });
+
+    this.logger.log(
+      `PaySuite webhook ok event=${payload.event} account=${accountId || '-'} requestId=${requestId}`,
+    );
+
+    return { received: true, duplicate: false };
   }
 
   async listPayments(buyerId: string) {
@@ -498,14 +481,102 @@ export class BillingService {
     });
   }
 
+  async createSellerPayout(
+    actor: { id: string; platformRole: PlatformRole },
+    input: {
+      reference: string;
+      amountCents: number;
+      method: 'mpesa' | 'emola';
+      phone: string;
+      holder: string;
+      description?: string;
+    },
+  ) {
+    if (
+      actor.platformRole !== PlatformRole.PLATFORM_ADMIN &&
+      actor.platformRole !== PlatformRole.PLATFORM_OPERATOR
+    ) {
+      throw new ForbiddenException();
+    }
+    if (input.amountCents <= 0) {
+      throw new BadRequestException('Valor de payout inválido');
+    }
+
+    const client = this.getClientOrThrow();
+    const phone = this.normalizeMsisdn(input.phone) || input.phone;
+
+    try {
+      const payout = await client.createPayout({
+        amount: (input.amountCents / 100).toFixed(2),
+        reference: input.reference.slice(0, 50),
+        method: input.method,
+        description: input.description,
+        beneficiary: {
+          phone: phone.replace(/^258/, ''),
+          holder: input.holder,
+        },
+      });
+      return payout;
+    } catch (error) {
+      throw new BadRequestException(this.mapPaysuiteError(error));
+    }
+  }
+
+  async createRefund(
+    actor: { id: string; platformRole: PlatformRole },
+    input: { paymentId: string; amountCents: number; reason?: string },
+  ) {
+    if (
+      actor.platformRole !== PlatformRole.PLATFORM_ADMIN &&
+      actor.platformRole !== PlatformRole.PLATFORM_OPERATOR
+    ) {
+      throw new ForbiddenException();
+    }
+
+    const payment = await this.prisma.billingPayment.findUnique({
+      where: { id: input.paymentId },
+    });
+    if (!payment?.paysuitePaymentId) {
+      throw new NotFoundException('Pagamento PaySuite não encontrado');
+    }
+    if (payment.status !== BillingPaymentStatus.PAID) {
+      throw new BadRequestException('Só é possível reembolsar pagamentos pagos');
+    }
+
+    const client = this.getClientOrThrow();
+    try {
+      const refund = await client.createRefund({
+        payment_id: payment.paysuitePaymentId,
+        amount: (input.amountCents / 100).toFixed(2),
+        reason: input.reason,
+      });
+
+      if (input.amountCents >= payment.amountCents) {
+        await this.prisma.billingPayment.update({
+          where: { id: payment.id },
+          data: { status: BillingPaymentStatus.REFUNDED },
+        });
+      }
+
+      return refund;
+    } catch (error) {
+      throw new BadRequestException(this.mapPaysuiteError(error));
+    }
+  }
+
+  private mapPaysuiteError(error: unknown): string {
+    if (error instanceof PaysuiteValidationError) return error.message;
+    if (error instanceof PaysuiteApiError) return error.message;
+    if (error instanceof Error) return error.message;
+    return 'Erro PaySuite desconhecido';
+  }
+
   private async markBillingPaid(
     paymentId: string,
     extras: {
-      stripeSessionId?: string | null;
-      stripePaymentIntentId?: string | null;
-      mpesaConversationId?: string | null;
-      mpesaTransactionId?: string | null;
-    } = {},
+      paysuitePaymentId?: string | null;
+      paysuiteTransactionId?: string | null;
+    },
   ) {
     const payment = await this.prisma.billingPayment.findUnique({
       where: { id: paymentId },
@@ -518,13 +589,10 @@ export class BillingService {
       data: {
         status: BillingPaymentStatus.PAID,
         paidAt: new Date(),
-        stripeSessionId: extras.stripeSessionId ?? payment.stripeSessionId,
-        stripePaymentIntentId:
-          extras.stripePaymentIntentId ?? payment.stripePaymentIntentId,
-        mpesaConversationId:
-          extras.mpesaConversationId ?? payment.mpesaConversationId,
-        mpesaTransactionId:
-          extras.mpesaTransactionId ?? payment.mpesaTransactionId,
+        paysuitePaymentId:
+          extras.paysuitePaymentId ?? payment.paysuitePaymentId,
+        paysuiteTransactionId:
+          extras.paysuiteTransactionId ?? payment.paysuiteTransactionId,
       },
     });
 

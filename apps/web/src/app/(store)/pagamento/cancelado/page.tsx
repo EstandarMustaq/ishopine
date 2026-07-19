@@ -15,7 +15,7 @@ export default function PagamentoCanceladoPage() {
           Pagamento cancelado
         </h1>
         <p className="mt-2 text-[13px] leading-relaxed text-zinc-500">
-          O checkout Stripe foi cancelado. O pedido pode ficar pendente — pode
+          O checkout PaySuite foi cancelado. O pedido pode ficar pendente — pode
           tentar novamente no carrinho ou na sua conta.
         </p>
         <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-center">

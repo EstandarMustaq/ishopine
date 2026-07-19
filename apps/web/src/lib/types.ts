@@ -31,9 +31,12 @@ export type PaymentMethod =
   | "BANK_TRANSFER"
   | "CASH"
   | "STRIPE"
-  | "MPESA";
+  | "MPESA"
+  | "EMOLA";
 
-export type BillingProvider = "STRIPE" | "MPESA";
+export type BillingProvider = "PAYSUITE" | "STRIPE" | "MPESA" | "MANUAL";
+
+export type PaysuiteMethod = "mpesa" | "emola" | "credit_card";
 
 export type BillingPaymentStatus =
   | "PENDING"
@@ -50,30 +53,43 @@ export interface BillingPayment {
   amountCents?: number;
   currency?: string;
   orderIds?: string[];
+  method?: string | null;
+  reference?: string;
+  paysuitePaymentId?: string | null;
   msisdn?: string | null;
   externalId?: string | null;
   createdAt?: string;
   updatedAt?: string;
 }
 
-export interface StripeCheckoutResponse {
-  url?: string;
-  checkoutUrl?: string;
-  sessionId?: string;
-  paymentId?: string;
-}
-
-export interface MpesaC2bResponse {
+export interface PaysuiteCheckoutResponse {
   paymentId: string;
+  reference?: string;
+  method?: PaysuiteMethod | string;
   status?: BillingPaymentStatus | string;
+  amountCents?: number;
+  currency?: string;
+  checkoutUrl?: string;
+  url?: string;
+  simulated?: boolean;
   message?: string;
 }
 
-export interface MpesaStatusResponse {
+/** @deprecated Use PaysuiteCheckoutResponse */
+export type StripeCheckoutResponse = PaysuiteCheckoutResponse;
+
+/** @deprecated Use PaysuiteCheckoutResponse */
+export type MpesaC2bResponse = PaysuiteCheckoutResponse;
+
+export interface PaysuiteStatusResponse {
   paymentId: string;
+  reference?: string;
   status: BillingPaymentStatus | string;
   message?: string;
 }
+
+/** @deprecated Use PaysuiteStatusResponse */
+export type MpesaStatusResponse = PaysuiteStatusResponse;
 
 export type InventoryMovementType =
   | "IN"

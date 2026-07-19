@@ -1,13 +1,14 @@
 import { format, parseISO } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { pt } from "date-fns/locale";
 
-export function formatBRL(cents: number): string {
-  return formatMoney(cents, "BRL");
+/** Primary marketplace currency — Metical moçambicano */
+export function formatMZN(cents: number): string {
+  return formatMoney(cents, "MZN", "pt-MZ");
 }
 
-/** Default marketplace display currency (Moçambique). */
-export function formatMZN(cents: number): string {
-  return formatMoney(cents, "MZN");
+/** @deprecated Prefer formatMZN — kept as alias for Moçambique */
+export function formatBRL(cents: number): string {
+  return formatMZN(cents);
 }
 
 export function formatMoney(
@@ -26,7 +27,7 @@ export function formatDate(
   pattern = "dd MMM yyyy",
 ): string {
   const date = typeof value === "string" ? parseISO(value) : value;
-  return format(date, pattern, { locale: ptBR });
+  return format(date, pattern, { locale: pt });
 }
 
 export function formatDateTime(value: string | Date): string {
