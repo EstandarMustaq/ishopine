@@ -11,27 +11,28 @@ import {
 import {
   AccountingEntryStatus,
   AccountingEntryType,
-  Role,
+  PlatformRole,
 } from '@prisma/client';
 import { AccountingService } from './accounting.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
+import { TwoFactorGuard } from '../common/guards/two-factor.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { AuthUser } from '../common/decorators/current-user.decorator';
 
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard, TwoFactorGuard)
 @Controller('accounting')
 export class AccountingController {
   constructor(private readonly accounting: AccountingService) {}
 
-  @Roles(Role.ADMIN, Role.OPERATOR)
+  @Roles(PlatformRole.PLATFORM_ADMIN, PlatformRole.PLATFORM_OPERATOR)
   @Get('accounts')
   listAccounts() {
     return this.accounting.listAccounts();
   }
 
-  @Roles(Role.ADMIN)
+  @Roles(PlatformRole.PLATFORM_ADMIN)
   @Post('accounts')
   createAccount(
     @Body()
@@ -45,7 +46,7 @@ export class AccountingController {
     return this.accounting.createAccount(body);
   }
 
-  @Roles(Role.ADMIN, Role.OPERATOR)
+  @Roles(PlatformRole.PLATFORM_ADMIN, PlatformRole.PLATFORM_OPERATOR)
   @Get('entries')
   listEntries(
     @Query()
@@ -61,13 +62,13 @@ export class AccountingController {
     return this.accounting.listEntries(query);
   }
 
-  @Roles(Role.ADMIN, Role.OPERATOR)
+  @Roles(PlatformRole.PLATFORM_ADMIN, PlatformRole.PLATFORM_OPERATOR)
   @Get('summary')
   summary() {
     return this.accounting.summary();
   }
 
-  @Roles(Role.ADMIN, Role.OPERATOR)
+  @Roles(PlatformRole.PLATFORM_ADMIN, PlatformRole.PLATFORM_OPERATOR)
   @Post('entries')
   createEntry(
     @CurrentUser() user: AuthUser,
@@ -87,15 +88,15 @@ export class AccountingController {
     return this.accounting.createEntry(user.id, body);
   }
 
-  @Roles(Role.ADMIN)
+  @Roles(PlatformRole.PLATFORM_ADMIN)
   @Patch('entries/:id/post')
   postEntry(@Param('id') id: string, @CurrentUser() user: AuthUser) {
     return this.accounting.postEntry(id, user.id);
   }
 
-  @Roles(Role.ADMIN)
+  @Roles(PlatformRole.PLATFORM_ADMIN)
   @Patch('entries/:id/void')
   voidEntry(@Param('id') id: string, @CurrentUser() user: AuthUser) {
-    return this.accounting.voidEntry(id, user.id, user.role as Role);
+    return this.accounting.voidEntry(id, user.id, user.platformRole);
   }
 }

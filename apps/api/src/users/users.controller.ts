@@ -8,10 +8,11 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { Role } from '@prisma/client';
+import { PlatformRole } from '@prisma/client';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
+import { TwoFactorGuard } from '../common/guards/two-factor.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { AuthUser } from '../common/decorators/current-user.decorator';
@@ -20,22 +21,25 @@ import type { AuthUser } from '../common/decorators/current-user.decorator';
 export class UsersController {
   constructor(private readonly users: UsersService) {}
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN)
+  @UseGuards(JwtAuthGuard, RolesGuard, TwoFactorGuard)
+  @Roles(PlatformRole.PLATFORM_ADMIN)
   @Get('users')
-  list(@Query('role') role?: Role) {
+  list(@Query('role') role?: PlatformRole) {
     return this.users.list(role);
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN)
+  @UseGuards(JwtAuthGuard, RolesGuard, TwoFactorGuard)
+  @Roles(PlatformRole.PLATFORM_ADMIN)
   @Patch('users/:id/role')
-  updateRole(@Param('id') id: string, @Body() body: { role: Role }) {
-    return this.users.updateRole(id, body.role);
+  updateRole(
+    @Param('id') id: string,
+    @Body() body: { role?: PlatformRole; platformRole?: PlatformRole },
+  ) {
+    return this.users.updateRole(id, body.platformRole ?? body.role!);
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN)
+  @UseGuards(JwtAuthGuard, RolesGuard, TwoFactorGuard)
+  @Roles(PlatformRole.PLATFORM_ADMIN)
   @Patch('users/:id/active')
   setActive(@Param('id') id: string, @Body() body: { isActive: boolean }) {
     return this.users.setActive(id, body.isActive);

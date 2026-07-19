@@ -10,9 +10,9 @@ interface ProductPageProps {
   params: Promise<{ slug: string }>;
 }
 
-async function getProduct(slug: string) {
+async function getProduct(slugOrId: string) {
   try {
-    return await apiFetch<Product>(`/products/${slug}`, { token: null });
+    return await apiFetch<Product>(`/products/${slugOrId}`, { token: null });
   } catch {
     return null;
   }
@@ -34,9 +34,20 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
       <nav className="mb-6 text-sm text-taupe">
         <Link href="/produtos" className="hover:text-[#61005D]">
-          Produtos
+          Mercado
         </Link>
         <span className="mx-2">/</span>
+        {product.shop && (
+          <>
+            <Link
+              href={`/lojas/${product.shop.slug}`}
+              className="hover:text-[#61005D]"
+            >
+              {product.shop.name}
+            </Link>
+            <span className="mx-2">/</span>
+          </>
+        )}
         <span className="text-charcoal">{product.name}</span>
       </nav>
 
@@ -53,8 +64,19 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
         </div>
 
         <div>
-          {product.category?.name && (
+          {product.shop?.name && (
             <p className="text-xs font-semibold uppercase tracking-wide text-taupe">
+              Vendido por{" "}
+              <Link
+                href={`/lojas/${product.shop.slug}`}
+                className="text-[#61005D] hover:underline"
+              >
+                {product.shop.name}
+              </Link>
+            </p>
+          )}
+          {product.category?.name && (
+            <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-taupe">
               {product.category.name}
             </p>
           )}

@@ -1,42 +1,61 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Role } from '@prisma/client';
+import { PlatformRole } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
 
-  list(role?: Role) {
+  list(platformRole?: PlatformRole) {
     return this.prisma.user.findMany({
-      where: role ? { role } : undefined,
+      where: platformRole ? { platformRole } : undefined,
       select: {
         id: true,
         email: true,
         name: true,
-        role: true,
+        platformRole: true,
         phone: true,
         isActive: true,
+        canBuy: true,
+        canSell: true,
+        totpEnabled: true,
+        emailVerifiedAt: true,
         createdAt: true,
-        _count: { select: { orders: true } },
+        _count: {
+          select: {
+            buyerOrders: true,
+            ownedShops: true,
+            shopMemberships: true,
+          },
+        },
       },
       orderBy: { createdAt: 'desc' },
     });
   }
 
-  async updateRole(id: string, role: Role) {
+  async updateRole(id: string, platformRole: PlatformRole) {
     const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) {
       throw new NotFoundException('Usuário não encontrado');
     }
     return this.prisma.user.update({
       where: { id },
-      data: { role },
+      data: {
+        platformRole,
+        canSell:
+          platformRole === PlatformRole.SELLER ||
+          platformRole === PlatformRole.PLATFORM_ADMIN ||
+          platformRole === PlatformRole.PLATFORM_OPERATOR
+            ? true
+            : user.canSell,
+      },
       select: {
         id: true,
         email: true,
         name: true,
-        role: true,
+        platformRole: true,
         isActive: true,
+        canSell: true,
       },
     });
   }
@@ -49,7 +68,7 @@ export class UsersService {
         id: true,
         email: true,
         name: true,
-        role: true,
+        platformRole: true,
         isActive: true,
       },
     });

@@ -1,13 +1,19 @@
 import type { ApiErrorBody } from "@/lib/types";
 
+export const AUTH_STORAGE_KEY = "nkateko-auth";
+
 export function getApiBase(): string {
   return process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+}
+
+export function getGoogleAuthUrl(): string {
+  return `${getApiBase()}/api/auth/google/start`;
 }
 
 function getClientToken(): string | null {
   if (typeof window === "undefined") return null;
   try {
-    const raw = localStorage.getItem("mavula-auth");
+    const raw = localStorage.getItem(AUTH_STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as {
       state?: { accessToken?: string | null };

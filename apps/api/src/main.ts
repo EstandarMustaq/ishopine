@@ -30,7 +30,7 @@ async function bootstrap() {
   const port = Number(config.get('API_PORT', 4000));
   await app.listen(port);
   // eslint-disable-next-line no-console
-  console.log(`Mavula API listening on http://localhost:${port}/api`);
+  console.log(`Nkateko API listening on http://localhost:${port}/api`);
 }
 
 bootstrap();

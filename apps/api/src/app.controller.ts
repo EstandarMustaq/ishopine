@@ -6,7 +6,8 @@ export class AppController {
   health() {
     return {
       ok: true,
-      service: 'mavula-api',
+      service: 'nkateko-api',
+      marketplace: 'Nkateko Investment and Service',
       timestamp: new Date().toISOString(),
     };
   }

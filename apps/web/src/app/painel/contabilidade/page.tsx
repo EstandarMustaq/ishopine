@@ -33,7 +33,7 @@ const entryTypes: AccountingEntryType[] = [
 ];
 
 export default function PainelContabilidadePage() {
-  const isAdmin = useAuthStore((s) => s.user?.role === "ADMIN");
+  const isAdmin = useAuthStore((s) => s.isAdmin());
   const [entries, setEntries] = useState<AccountingEntry[]>([]);
   const [accounts, setAccounts] = useState<AccountingAccount[]>([]);
   const [summary, setSummary] = useState<Record<string, number>>({});

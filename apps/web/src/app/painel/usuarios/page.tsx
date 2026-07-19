@@ -13,9 +13,21 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { api } from "@/lib/api";
-import type { Role, User } from "@/lib/types";
+import type { PlatformRole, User } from "@/lib/types";
 
-const roles: Role[] = ["CUSTOMER", "OPERATOR", "ADMIN"];
+const roles: PlatformRole[] = [
+  "BUYER",
+  "SELLER",
+  "PLATFORM_OPERATOR",
+  "PLATFORM_ADMIN",
+];
+
+const roleLabel: Record<PlatformRole, string> = {
+  BUYER: "Comprador",
+  SELLER: "Vendedor",
+  PLATFORM_OPERATOR: "Operador",
+  PLATFORM_ADMIN: "Admin",
+};
 
 export default function PainelUsuariosPage() {
   return (
@@ -47,11 +59,11 @@ function UsersContent() {
     void load();
   }, [load]);
 
-  async function updateRole(id: string, role: Role) {
+  async function updateRole(id: string, platformRole: PlatformRole) {
     try {
       await api(`/users/${id}/role`, {
         method: "PATCH",
-        body: JSON.stringify({ role }),
+        body: JSON.stringify({ platformRole }),
       });
       toast.success("Papel atualizado");
       await load();
@@ -99,45 +111,50 @@ function UsersContent() {
               </tr>
             </thead>
             <tbody>
-              {users.map((user) => (
-                <tr key={user.id} className="border-t border-border">
-                  <td className="px-4 py-3 font-medium">{user.name}</td>
-                  <td className="px-4 py-3 text-taupe">{user.email}</td>
-                  <td className="px-4 py-3">
-                    <Select
-                      value={user.role}
-                      onValueChange={(v) => updateRole(user.id, v as Role)}
-                    >
-                      <SelectTrigger className="h-9 w-[140px] rounded-[12px]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {roles.map((role) => (
-                          <SelectItem key={role} value={role}>
-                            {role}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </td>
-                  <td className="px-4 py-3">
-                    <Badge variant="secondary">
-                      {user.isActive === false ? "Inativo" : "Ativo"}
-                    </Badge>
-                  </td>
-                  <td className="px-4 py-3">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() =>
-                        toggleActive(user.id, user.isActive === false)
-                      }
-                    >
-                      {user.isActive === false ? "Ativar" : "Desativar"}
-                    </Button>
-                  </td>
-                </tr>
-              ))}
+              {users.map((user) => {
+                const role = user.platformRole ?? user.role ?? "BUYER";
+                return (
+                  <tr key={user.id} className="border-t border-border">
+                    <td className="px-4 py-3 font-medium">{user.name}</td>
+                    <td className="px-4 py-3 text-taupe">{user.email}</td>
+                    <td className="px-4 py-3">
+                      <Select
+                        value={role}
+                        onValueChange={(v) =>
+                          updateRole(user.id, v as PlatformRole)
+                        }
+                      >
+                        <SelectTrigger className="h-9 w-[170px] rounded-[12px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {roles.map((r) => (
+                            <SelectItem key={r} value={r}>
+                              {roleLabel[r]}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </td>
+                    <td className="px-4 py-3">
+                      <Badge variant="secondary">
+                        {user.isActive === false ? "Inativo" : "Ativo"}
+                      </Badge>
+                    </td>
+                    <td className="px-4 py-3">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() =>
+                          toggleActive(user.id, user.isActive === false)
+                        }
+                      >
+                        {user.isActive === false ? "Ativar" : "Desativar"}
+                      </Button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

@@ -6,7 +6,7 @@ import {
 import {
   AccountingEntryStatus,
   AccountingEntryType,
-  Role,
+  PlatformRole,
 } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -170,8 +170,8 @@ export class AccountingService {
     });
   }
 
-  async voidEntry(id: string, reviewerId: string, role: Role) {
-    if (role !== Role.ADMIN) {
+  async voidEntry(id: string, reviewerId: string, role: PlatformRole) {
+    if (role !== PlatformRole.PLATFORM_ADMIN) {
       throw new BadRequestException('Somente administradores podem estornar');
     }
 

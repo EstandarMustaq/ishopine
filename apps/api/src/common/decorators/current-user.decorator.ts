@@ -1,10 +1,19 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
+import { PlatformRole } from '@prisma/client';
 
 export type AuthUser = {
   id: string;
   email: string;
-  role: string;
+  platformRole: PlatformRole;
+  /** Alias of platformRole for existing controllers */
+  role: PlatformRole;
   name: string;
+  totpEnabled: boolean;
+  emailVerifiedAt: Date | null;
+  emailVerified: boolean;
+  tfa: boolean;
+  canSell: boolean;
+  canBuy: boolean;
 };
 
 export const CurrentUser = createParamDecorator(

@@ -13,7 +13,20 @@ const nextConfig: NextConfig = {
         port: "4000",
         pathname: "/uploads/**",
       },
+      {
+        protocol: "https",
+        hostname: "res.cloudinary.com",
+      },
     ],
+  },
+  async redirects() {
+    return [
+      {
+        source: "/auth/login",
+        destination: "/entrar",
+        permanent: false,
+      },
+    ];
   },
 };
 
