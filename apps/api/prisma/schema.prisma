@@ -7,10 +7,26 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Role {
-  CUSTOMER
-  OPERATOR
-  ADMIN
+/// Platform-level roles (Nkateko operators)
+enum PlatformRole {
+  BUYER
+  SELLER
+  PLATFORM_OPERATOR
+  PLATFORM_ADMIN
+}
+
+/// Membership role inside a shop (future multi-tenant ready)
+enum ShopRole {
+  OWNER
+  MANAGER
+  STAFF
+}
+
+enum ShopStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  CLOSED
 }
 
 enum ProductStatus {
@@ -68,27 +84,200 @@ enum AccountingEntryStatus {
   VOID
 }
 
-model User {
-  id           String    @id @default(cuid())
-  email        String    @unique
-  passwordHash String
-  name         String
-  phone        String?
-  role         Role      @default(CUSTOMER)
-  avatarUrl    String?
-  isActive     Boolean   @default(true)
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+enum AuthProvider {
+  LOCAL
+  GOOGLE
+}
 
+enum VerificationPurpose {
+  EMAIL_VERIFY
+  LOGIN_OTP
+  SENSITIVE_ACTION
+  PASSWORD_RESET
+}
+
+/// Tenant root — today one platform org; ready for multi-tenant later
+model Organization {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  legalName   String?
+  supportEmail String?
+  supportPhone String?
+  logoUrl     String?
+  primaryColor String  @default("#61005D")
+  isActive    Boolean  @default(true)
+  /// Reserved for future per-tenant billing / plan
+  plan        String   @default("platform")
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  shops    Shop[]
+  users    User[]
+  settings PlatformSettings?
+
+  @@index([slug])
+}
+
+model PlatformSettings {
+  id                String @id @default(cuid())
+  organizationId    String @unique
+  marketplaceName   String @default("Nkateko Marketplace")
+  tagline           String @default("Mercado aberto de bens — compra e venda")
+  currency          String @default("BRL")
+  shippingFlatCents Int    @default(4900)
+  freeShippingCents Int    @default(99900)
+  requireSeller2fa  Boolean @default(true)
+  requireEmailVerify Boolean @default(true)
+  commissionBps     Int    @default(500) // 5%
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id               String       @id @default(cuid())
+  organizationId   String
+  email            String
+  passwordHash     String?
+  name             String
+  phone            String?
+  avatarUrl        String?
+  platformRole     PlatformRole @default(BUYER)
+  authProvider     AuthProvider @default(LOCAL)
+  googleId         String?      @unique
+  emailVerifiedAt  DateTime?
+  totpSecret       String?
+  totpEnabled      Boolean      @default(false)
+  totpVerifiedAt   DateTime?
+  backupCodesHash  String[]     @default([])
+  canBuy           Boolean      @default(true)
+  canSell          Boolean      @default(false)
+  isActive         Boolean      @default(true)
+  lastLoginAt      DateTime?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  organization      Organization        @relation(fields: [organizationId], references: [id])
   addresses         Address[]
-  orders            Order[]
   cart              Cart?
+  shopMemberships   ShopMember[]
+  ownedShops        Shop[]              @relation("ShopOwner")
+  buyerOrders       Order[]             @relation("BuyerOrders")
   inventoryMoves    InventoryMovement[] @relation("InventoryOperator")
   accountingEntries AccountingEntry[]   @relation("AccountingCreator")
   reviewedEntries   AccountingEntry[]   @relation("AccountingReviewer")
+  verificationCodes EmailVerificationCode[]
+  authSessions      AuthSession[]
+  auditLogs         AuditLog[]
 
-  @@index([role])
+  @@unique([organizationId, email])
   @@index([email])
+  @@index([platformRole])
+  @@index([googleId])
+  @@index([organizationId])
+}
+
+model EmailVerificationCode {
+  id        String              @id @default(cuid())
+  userId    String?
+  email     String
+  codeHash  String
+  purpose   VerificationPurpose
+  attempts  Int                 @default(0)
+  expiresAt DateTime
+  consumedAt DateTime?
+  metadata  Json?
+  createdAt DateTime            @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([email, purpose])
+  @@index([expiresAt])
+}
+
+model AuthSession {
+  id               String   @id @default(cuid())
+  userId           String
+  refreshTokenHash String?
+  userAgent        String?
+  ipAddress        String?
+  /// Set when password/Google ok but 2FA still required
+  pendingTwoFactor Boolean  @default(false)
+  expiresAt        DateTime
+  revokedAt        DateTime?
+  createdAt        DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  action     String
+  entityType String?
+  entityId   String?
+  ipAddress  String?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+}
+
+model Shop {
+  id             String     @id @default(cuid())
+  organizationId String
+  ownerId        String
+  name           String
+  slug           String
+  description    String?
+  logoUrl        String?
+  bannerUrl      String?
+  status         ShopStatus @default(PENDING)
+  city           String?
+  state          String?
+  country        String     @default("BR")
+  /// Seller can also purchase as buyer — shop is sell-side presence
+  ratingAvg      Float      @default(0)
+  ratingCount    Int        @default(0)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  owner        User         @relation("ShopOwner", fields: [ownerId], references: [id])
+  members      ShopMember[]
+  products     Product[]
+  orders       Order[]      @relation("SellerOrders")
+
+  @@unique([organizationId, slug])
+  @@index([status])
+  @@index([ownerId])
+  @@index([organizationId])
+}
+
+model ShopMember {
+  id        String   @id @default(cuid())
+  shopId    String
+  userId    String
+  role      ShopRole @default(STAFF)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([shopId, userId])
+  @@index([userId])
 }
 
 model Address {
@@ -134,40 +323,45 @@ model Category {
 }
 
 model Product {
-  id              String        @id @default(cuid())
-  sku             String        @unique
-  name            String
-  slug            String        @unique
-  description     String
+  id               String        @id @default(cuid())
+  shopId           String
+  sku              String
+  name             String
+  slug             String
+  description      String
   shortDescription String?
-  priceCents      Int
-  compareAtCents  Int?
-  costCents       Int           @default(0)
-  stock           Int           @default(0)
-  reservedStock   Int           @default(0)
-  status          ProductStatus @default(DRAFT)
-  categoryId      String?
-  brand           String?
-  material        String?
-  dimensions      String?
-  weightKg        Float?
-  color           String?
-  featured        Boolean       @default(false)
-  metaTitle       String?
-  metaDescription String?
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  priceCents       Int
+  compareAtCents   Int?
+  costCents        Int           @default(0)
+  stock            Int           @default(0)
+  reservedStock    Int           @default(0)
+  status           ProductStatus @default(DRAFT)
+  categoryId       String?
+  brand            String?
+  material         String?
+  dimensions       String?
+  weightKg         Float?
+  color            String?
+  condition        String        @default("new") // new | used | refurbished
+  featured         Boolean       @default(false)
+  metaTitle        String?
+  metaDescription  String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
 
+  shop       Shop                @relation(fields: [shopId], references: [id], onDelete: Cascade)
   category   Category?           @relation(fields: [categoryId], references: [id])
   images     ProductImage[]
   cartItems  CartItem[]
   orderItems OrderItem[]
   movements  InventoryMovement[]
 
+  @@unique([shopId, sku])
+  @@unique([shopId, slug])
   @@index([categoryId])
   @@index([status])
   @@index([featured])
-  @@index([slug])
+  @@index([shopId])
 }
 
 model ProductImage {
@@ -186,10 +380,10 @@ model ProductImage {
 }
 
 model Cart {
-  id        String     @id @default(cuid())
-  userId    String     @unique
-  updatedAt DateTime   @updatedAt
-  createdAt DateTime   @default(now())
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
 
   user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   items CartItem[]
@@ -210,10 +404,12 @@ model CartItem {
   @@index([cartId])
 }
 
+/// Marketplace order: one buyer, one seller shop (cart splits by shop at checkout)
 model Order {
   id              String        @id @default(cuid())
   orderNumber     String        @unique
-  userId          String
+  buyerId         String
+  sellerShopId    String
   addressId       String?
   status          OrderStatus   @default(PENDING)
   paymentStatus   PaymentStatus @default(PENDING)
@@ -221,6 +417,7 @@ model Order {
   subtotalCents   Int
   shippingCents   Int           @default(0)
   discountCents   Int           @default(0)
+  platformFeeCents Int          @default(0)
   totalCents      Int
   notes           String?
   shippedAt       DateTime?
@@ -229,27 +426,29 @@ model Order {
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
-  user              User              @relation(fields: [userId], references: [id])
+  buyer             User              @relation("BuyerOrders", fields: [buyerId], references: [id])
+  sellerShop        Shop              @relation("SellerOrders", fields: [sellerShopId], references: [id])
   address           Address?          @relation(fields: [addressId], references: [id])
   items             OrderItem[]
   payments          Payment[]
   accountingEntries AccountingEntry[]
 
-  @@index([userId])
+  @@index([buyerId])
+  @@index([sellerShopId])
   @@index([status])
   @@index([orderNumber])
   @@index([createdAt])
 }
 
 model OrderItem {
-  id              String @id @default(cuid())
-  orderId         String
-  productId       String
-  productName     String
-  productSku      String
-  unitPriceCents  Int
-  quantity        Int
-  totalCents      Int
+  id             String @id @default(cuid())
+  orderId        String
+  productId      String
+  productName    String
+  productSku     String
+  unitPriceCents Int
+  quantity       Int
+  totalCents     Int
 
   order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product Product @relation(fields: [productId], references: [id])
@@ -259,16 +458,16 @@ model OrderItem {
 }
 
 model Payment {
-  id              String        @id @default(cuid())
-  orderId         String
-  method          PaymentMethod
-  status          PaymentStatus @default(PENDING)
-  amountCents     Int
-  externalId      String?
-  paidAt          DateTime?
-  metadata        Json?
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  id          String        @id @default(cuid())
+  orderId     String
+  method      PaymentMethod
+  status      PaymentStatus @default(PENDING)
+  amountCents Int
+  externalId  String?
+  paidAt      DateTime?
+  metadata    Json?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 
   order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
@@ -277,14 +476,14 @@ model Payment {
 }
 
 model InventoryMovement {
-  id          String                @id @default(cuid())
-  productId   String
-  type        InventoryMovementType
-  quantity    Int
-  reason      String
-  reference   String?
-  operatorId  String?
-  createdAt   DateTime              @default(now())
+  id         String                @id @default(cuid())
+  productId  String
+  type       InventoryMovementType
+  quantity   Int
+  reason     String
+  reference  String?
+  operatorId String?
+  createdAt  DateTime              @default(now())
 
   product  Product @relation(fields: [productId], references: [id])
   operator User?   @relation("InventoryOperator", fields: [operatorId], references: [id])
@@ -310,23 +509,23 @@ model AccountingAccount {
 }
 
 model AccountingEntry {
-  id             String                 @id @default(cuid())
-  entryNumber    String                 @unique
-  description    String
-  type           AccountingEntryType
-  status         AccountingEntryStatus  @default(DRAFT)
-  amountCents    Int
-  entryDate      DateTime               @default(now())
-  debitAccountId String
+  id              String                @id @default(cuid())
+  entryNumber     String                @unique
+  description     String
+  type            AccountingEntryType
+  status          AccountingEntryStatus @default(DRAFT)
+  amountCents     Int
+  entryDate       DateTime              @default(now())
+  debitAccountId  String
   creditAccountId String
-  orderId        String?
-  createdById    String
-  reviewedById   String?
-  notes          String?
-  postedAt       DateTime?
-  voidedAt       DateTime?
-  createdAt      DateTime               @default(now())
-  updatedAt      DateTime               @updatedAt
+  orderId         String?
+  createdById     String
+  reviewedById    String?
+  notes           String?
+  postedAt        DateTime?
+  voidedAt        DateTime?
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
 
   debitAccount  AccountingAccount @relation("DebitAccount", fields: [debitAccountId], references: [id])
   creditAccount AccountingAccount @relation("CreditAccount", fields: [creditAccountId], references: [id])
@@ -338,22 +537,6 @@ model AccountingEntry {
   @@index([entryDate])
   @@index([type])
   @@index([orderId])
-}
-
-model StoreSettings {
-  id              String   @id @default(cuid())
-  storeName       String   @default("Mavula Móveis")
-  storeSlug       String   @default("mavula")
-  tagline         String   @default("Móveis com alma brasileira")
-  supportEmail    String   @default("contato@mavula.com.br")
-  supportPhone    String?
-  currency        String   @default("BRL")
-  shippingFlatCents Int    @default(4900)
-  freeShippingCents Int    @default(99900)
-  logoUrl         String?
-  primaryColor    String   @default("#61005D")
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
 }
 
 model MediaAsset {

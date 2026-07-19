@@ -1,9 +1,11 @@
 import {
   AccountingEntryStatus,
   AccountingEntryType,
+  PlatformRole,
   PrismaClient,
   ProductStatus,
-  Role,
+  ShopRole,
+  ShopStatus,
 } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 
@@ -26,40 +28,123 @@ async function main() {
   await prisma.address.deleteMany();
   await prisma.mediaAsset.deleteMany();
   await prisma.accountingAccount.deleteMany();
-  await prisma.storeSettings.deleteMany();
+  await prisma.shopMember.deleteMany();
+  await prisma.shop.deleteMany();
+  await prisma.auditLog.deleteMany();
+  await prisma.authSession.deleteMany();
+  await prisma.emailVerificationCode.deleteMany();
+  await prisma.platformSettings.deleteMany();
   await prisma.user.deleteMany();
+  await prisma.organization.deleteMany();
 
-  const passwordHash = await bcrypt.hash('mavula123', 10);
+  const org = await prisma.organization.create({
+    data: {
+      name: 'Nkateko Investment and Service',
+      slug: 'nkateko',
+      legalName: 'Nkateko Investment and Service',
+      supportEmail: 'contato@nkateko.com',
+      supportPhone: '+55 11 4000-2026',
+      primaryColor: '#61005D',
+      settings: {
+        create: {
+          marketplaceName: 'Nkateko Marketplace',
+          tagline: 'Mercado aberto de bens — compra e venda',
+          shippingFlatCents: 4900,
+          freeShippingCents: 99900,
+          requireSeller2fa: true,
+          requireEmailVerify: true,
+          commissionBps: 500,
+        },
+      },
+    },
+  });
 
+  const passwordHash = await bcrypt.hash('Nkateko@2026', 10);
+  const now = new Date();
+
+  /**
+   * Seed users have totpEnabled=false for local simplicity.
+   * To enable 2FA after login:
+   *   POST /api/auth/2fa/setup  (JWT)
+   *   POST /api/auth/2fa/enable { "code": "<authenticator>" }
+   * Dashboard routes require tfa claim once totpEnabled is true.
+   */
   const admin = await prisma.user.create({
     data: {
-      email: 'admin@mavula.com.br',
-      name: 'Admin Mavula',
+      organizationId: org.id,
+      email: 'admin@nkateko.com',
+      name: 'Admin Nkateko',
       passwordHash,
-      role: Role.ADMIN,
+      platformRole: PlatformRole.PLATFORM_ADMIN,
       phone: '+55 11 90000-0001',
+      emailVerifiedAt: now,
+      canBuy: true,
+      canSell: true,
+      totpEnabled: false,
       cart: { create: {} },
     },
   });
 
   const operator = await prisma.user.create({
     data: {
-      email: 'operador@mavula.com.br',
-      name: 'Operador Loja',
+      organizationId: org.id,
+      email: 'operador@nkateko.com',
+      name: 'Operador Plataforma',
       passwordHash,
-      role: Role.OPERATOR,
+      platformRole: PlatformRole.PLATFORM_OPERATOR,
       phone: '+55 11 90000-0002',
+      emailVerifiedAt: now,
+      canBuy: true,
+      canSell: false,
+      totpEnabled: false,
       cart: { create: {} },
     },
   });
 
-  const customer = await prisma.user.create({
+  const seller1 = await prisma.user.create({
     data: {
-      email: 'cliente@mavula.com.br',
-      name: 'Ana Cliente',
+      organizationId: org.id,
+      email: 'vendedor1@nkateko.com',
+      name: 'Casa Atlas',
       passwordHash,
-      role: Role.CUSTOMER,
+      platformRole: PlatformRole.SELLER,
+      phone: '+55 11 90000-0010',
+      emailVerifiedAt: now,
+      canBuy: true,
+      canSell: true,
+      totpEnabled: false,
+      cart: { create: {} },
+    },
+  });
+
+  const seller2 = await prisma.user.create({
+    data: {
+      organizationId: org.id,
+      email: 'vendedor2@nkateko.com',
+      name: 'Studio Horizonte',
+      passwordHash,
+      platformRole: PlatformRole.SELLER,
+      phone: '+55 11 90000-0011',
+      emailVerifiedAt: now,
+      canBuy: true,
+      canSell: true,
+      totpEnabled: false,
+      cart: { create: {} },
+    },
+  });
+
+  const buyer = await prisma.user.create({
+    data: {
+      organizationId: org.id,
+      email: 'comprador@nkateko.com',
+      name: 'Ana Compradora',
+      passwordHash,
+      platformRole: PlatformRole.BUYER,
       phone: '+55 11 90000-0003',
+      emailVerifiedAt: now,
+      canBuy: true,
+      canSell: false,
+      totpEnabled: false,
       cart: { create: {} },
       addresses: {
         create: {
@@ -76,27 +161,72 @@ async function main() {
     },
   });
 
-  await prisma.storeSettings.create({
+  const shopAtlas = await prisma.shop.create({
     data: {
-      storeName: 'Mavula Móveis',
-      tagline: 'Móveis com alma brasileira',
-      supportEmail: 'contato@mavula.com.br',
-      supportPhone: '+55 11 4000-1234',
-      shippingFlatCents: 4900,
-      freeShippingCents: 99900,
-      primaryColor: '#61005D',
+      organizationId: org.id,
+      ownerId: seller1.id,
+      name: 'Casa Atlas',
+      slug: 'casa-atlas',
+      description: 'Móveis e decoração contemporânea',
+      status: ShopStatus.ACTIVE,
+      city: 'São Paulo',
+      state: 'SP',
+      members: {
+        create: { userId: seller1.id, role: ShopRole.OWNER },
+      },
+    },
+  });
+
+  const shopHorizonte = await prisma.shop.create({
+    data: {
+      organizationId: org.id,
+      ownerId: seller2.id,
+      name: 'Studio Horizonte',
+      slug: 'studio-horizonte',
+      description: 'Design autoral e peças sob medida',
+      status: ShopStatus.ACTIVE,
+      city: 'Curitiba',
+      state: 'PR',
+      members: {
+        create: { userId: seller2.id, role: ShopRole.OWNER },
+      },
     },
   });
 
   const accounts = await Promise.all(
     [
       { code: '1.1.01', name: 'Caixa / Bancos', type: AccountingEntryType.ASSET },
-      { code: '1.2.01', name: 'Estoque de Mercadorias', type: AccountingEntryType.ASSET },
-      { code: '2.1.01', name: 'Fornecedores', type: AccountingEntryType.LIABILITY },
-      { code: '3.1.01', name: 'Receita de Vendas', type: AccountingEntryType.REVENUE },
+      {
+        code: '1.2.01',
+        name: 'Estoque de Mercadorias',
+        type: AccountingEntryType.ASSET,
+      },
+      {
+        code: '2.1.01',
+        name: 'Fornecedores',
+        type: AccountingEntryType.LIABILITY,
+      },
+      {
+        code: '3.1.01',
+        name: 'Receita de Vendas (Marketplace)',
+        type: AccountingEntryType.REVENUE,
+      },
+      {
+        code: '3.2.01',
+        name: 'Receita de Comissão',
+        type: AccountingEntryType.REVENUE,
+      },
       { code: '4.1.01', name: 'CMV', type: AccountingEntryType.EXPENSE },
-      { code: '4.2.01', name: 'Despesas Operacionais', type: AccountingEntryType.EXPENSE },
-      { code: '5.1.01', name: 'Capital Social', type: AccountingEntryType.EQUITY },
+      {
+        code: '4.2.01',
+        name: 'Despesas Operacionais',
+        type: AccountingEntryType.EXPENSE,
+      },
+      {
+        code: '5.1.01',
+        name: 'Capital Social',
+        type: AccountingEntryType.EQUITY,
+      },
     ].map((account) => prisma.accountingAccount.create({ data: account })),
   );
 
@@ -127,7 +257,7 @@ async function main() {
         name: 'Estantes',
         slug: 'estantes',
         description: 'Organização e estilo',
-        imageUrl: unsplash('photo-1595428773922-5d1a5a3b6b8a'),
+        imageUrl: unsplash('photo-1594026112284-02bb6f3353fe'),
         sortOrder: 4,
       },
       {
@@ -140,52 +270,69 @@ async function main() {
     ].map((category) => prisma.category.create({ data: category })),
   );
 
+  const slugify = (value: string) =>
+    value
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
+
   const productsData = [
     {
+      shopId: shopAtlas.id,
       name: 'Sofá Modular Aurora',
-      sku: 'MV-SOF-001',
+      sku: 'AT-SOF-001',
       categoryId: categories[0].id,
       priceCents: 459900,
       compareAtCents: 529900,
       costCents: 210000,
       stock: 12,
       featured: true,
-      brand: 'Mavula',
+      brand: 'Casa Atlas',
       material: 'Linho premium',
       color: 'Areia',
       dimensions: '220x90x85 cm',
       shortDescription: 'Sofá modular com chaise reversível e tecido lavável.',
       description:
-        'O Sofá Modular Aurora combina linhas limpas com conforto generoso. Estrutura em madeira maciça, espuma D33 e tecido linho premium em tom areia. Ideal para salas contemporâneas.',
-      images: [unsplash('photo-1555041469-a586c61ea9bc'), unsplash('photo-1493663284031-b7e3aefcae8e')],
+        'O Sofá Modular Aurora combina linhas limpas com conforto generoso. Estrutura em madeira maciça, espuma D33 e tecido linho premium em tom areia.',
+      images: [
+        unsplash('photo-1555041469-a586c61ea9bc'),
+        unsplash('photo-1493663284031-b7e3aefcae8e'),
+      ],
     },
     {
+      shopId: shopAtlas.id,
       name: 'Mesa de Jantar Nogueira',
-      sku: 'MV-MES-002',
+      sku: 'AT-MES-002',
       categoryId: categories[1].id,
       priceCents: 289900,
       costCents: 140000,
       stock: 8,
       featured: true,
-      brand: 'Mavula',
+      brand: 'Casa Atlas',
       material: 'Madeira de nogueira',
       color: 'Natural',
       dimensions: '180x90x75 cm',
       shortDescription: 'Mesa para 6 lugares com tampo maciço.',
       description:
-        'Tampo em nogueira americana com acabamento óleo natural. Pés em aço preto fosco. Serve até 6 pessoas com conforto.',
-      images: [unsplash('photo-1533090481720-856c6e3c1fdc'), unsplash('photo-1617806118233-18e1de247200')],
+        'Tampo em nogueira americana com acabamento óleo natural. Pés em aço preto fosco.',
+      images: [
+        unsplash('photo-1533090481720-856c6e3c1fdc'),
+        unsplash('photo-1617806118233-18e1de247200'),
+      ],
     },
     {
+      shopId: shopAtlas.id,
       name: 'Cadeira Escandinava Lumi',
-      sku: 'MV-CAD-003',
+      sku: 'AT-CAD-003',
       categoryId: categories[2].id,
       priceCents: 69900,
       compareAtCents: 89900,
       costCents: 28000,
       stock: 40,
       featured: true,
-      brand: 'Mavula',
+      brand: 'Casa Atlas',
       material: 'Carvalho e linho',
       color: 'Off-white',
       dimensions: '45x50x80 cm',
@@ -195,14 +342,15 @@ async function main() {
       images: [unsplash('photo-1506439773649-6e0eb8cfb237')],
     },
     {
+      shopId: shopAtlas.id,
       name: 'Estante Grid 5 Prateleiras',
-      sku: 'MV-EST-004',
+      sku: 'AT-EST-004',
       categoryId: categories[3].id,
       priceCents: 149900,
       costCents: 62000,
       stock: 15,
       featured: false,
-      brand: 'Mavula',
+      brand: 'Casa Atlas',
       material: 'MDF e metal',
       color: 'Preto',
       dimensions: '80x30x180 cm',
@@ -212,14 +360,15 @@ async function main() {
       images: [unsplash('photo-1594026112284-02bb6f3353fe')],
     },
     {
+      shopId: shopHorizonte.id,
       name: 'Cama Casal Horizon',
-      sku: 'MV-QUA-005',
+      sku: 'HZ-QUA-005',
       categoryId: categories[4].id,
       priceCents: 329900,
       costCents: 155000,
       stock: 6,
       featured: true,
-      brand: 'Mavula',
+      brand: 'Studio Horizonte',
       material: 'Madeira maciça e linho',
       color: 'Grafite',
       dimensions: '160x200 cm',
@@ -229,14 +378,15 @@ async function main() {
       images: [unsplash('photo-1505693416388-ac5ce068fe85')],
     },
     {
+      shopId: shopHorizonte.id,
       name: 'Mesa Lateral Pedra Luna',
-      sku: 'MV-MES-006',
+      sku: 'HZ-MES-006',
       categoryId: categories[1].id,
       priceCents: 89900,
       costCents: 35000,
       stock: 20,
       featured: false,
-      brand: 'Mavula',
+      brand: 'Studio Horizonte',
       material: 'Travertino e metal',
       color: 'Creme',
       dimensions: '45x45x50 cm',
@@ -246,14 +396,15 @@ async function main() {
       images: [unsplash('photo-1499933374294-4584852892ce')],
     },
     {
+      shopId: shopHorizonte.id,
       name: 'Poltrona Bouclé Nest',
-      sku: 'MV-SOF-007',
+      sku: 'HZ-SOF-007',
       categoryId: categories[0].id,
       priceCents: 189900,
       costCents: 82000,
       stock: 10,
       featured: true,
-      brand: 'Mavula',
+      brand: 'Studio Horizonte',
       material: 'Bouclé',
       color: 'Marfim',
       dimensions: '85x90x80 cm',
@@ -263,14 +414,15 @@ async function main() {
       images: [unsplash('photo-1567538096630-e4cde14f43ff')],
     },
     {
+      shopId: shopHorizonte.id,
       name: 'Cômoda Veneza 4 Gavetas',
-      sku: 'MV-QUA-008',
+      sku: 'HZ-QUA-008',
       categoryId: categories[4].id,
       priceCents: 219900,
       costCents: 98000,
       stock: 7,
       featured: false,
-      brand: 'Mavula',
+      brand: 'Studio Horizonte',
       material: 'Freijó',
       color: 'Natural',
       dimensions: '120x45x80 cm',
@@ -286,12 +438,7 @@ async function main() {
     await prisma.product.create({
       data: {
         ...data,
-        slug: data.name
-          .normalize('NFD')
-          .replace(/[\u0300-\u036f]/g, '')
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, '-')
-          .replace(/(^-|-$)/g, ''),
+        slug: slugify(data.name),
         status: ProductStatus.ACTIVE,
         images: {
           create: images.map((url, index) => ({
@@ -304,11 +451,6 @@ async function main() {
       },
     });
   }
-
-  // Fix: ProductImage doesn't have provider - remove that
-  // Actually I included provider: undefined which might fail. Let me check - I used `provider: undefined as never` which is weird.
-  // Better to recreate without it - but seed already written with it. Prisma create will ignore unknown? No, it will error.
-  // I'll fix the seed file.
 
   const cash = accounts.find((a) => a.code === '1.1.01')!;
   const revenue = accounts.find((a) => a.code === '3.1.01')!;
@@ -330,7 +472,7 @@ async function main() {
       },
       {
         entryNumber: 'LC000002',
-        description: 'Despesa de frete e logística',
+        description: 'Despesa de frete e logística da plataforma',
         type: AccountingEntryType.EXPENSE,
         status: AccountingEntryStatus.POSTED,
         amountCents: 125000,
@@ -342,7 +484,7 @@ async function main() {
       },
       {
         entryNumber: 'LC000003',
-        description: 'Receita antecipada de campanha',
+        description: 'Receita antecipada de campanha marketplace',
         type: AccountingEntryType.REVENUE,
         status: AccountingEntryStatus.DRAFT,
         amountCents: 89000,
@@ -353,14 +495,22 @@ async function main() {
     ],
   });
 
-  // silence unused
-  void customer;
-  void operator;
+  void buyer;
+  void shopAtlas;
+  void shopHorizonte;
 
-  console.log('Seed concluído');
-  console.log('Admin: admin@mavula.com.br / mavula123');
-  console.log('Operador: operador@mavula.com.br / mavula123');
-  console.log('Cliente: cliente@mavula.com.br / mavula123');
+  console.log('Seed Nkateko concluído');
+  console.log('Org: Nkateko Investment and Service (slug=nkateko)');
+  console.log('Admin: admin@nkateko.com / Nkateko@2026 (2FA desativado no seed)');
+  console.log('Operador: operador@nkateko.com / Nkateko@2026');
+  console.log('Vendedor 1: vendedor1@nkateko.com / Nkateko@2026 (loja Casa Atlas)');
+  console.log(
+    'Vendedor 2: vendedor2@nkateko.com / Nkateko@2026 (loja Studio Horizonte)',
+  );
+  console.log('Comprador: comprador@nkateko.com / Nkateko@2026');
+  console.log(
+    'Para ativar 2FA: POST /api/auth/2fa/setup → POST /api/auth/2fa/enable',
+  );
 }
 
 main()

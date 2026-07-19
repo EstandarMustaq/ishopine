@@ -4,6 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import {
   AccountingEntryStatus,
   AccountingEntryType,
@@ -11,37 +12,50 @@ import {
   OrderStatus,
   PaymentMethod,
   PaymentStatus,
+  PlatformRole,
   ProductStatus,
-  Role,
+  ShopStatus,
 } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class OrdersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly config: ConfigService,
+  ) {}
 
-  private async nextOrderNumber() {
-    const count = await this.prisma.order.count();
-    return `MV${String(count + 1).padStart(6, '0')}`;
-  }
-
-  private async nextEntryNumber() {
-    const count = await this.prisma.accountingEntry.count();
-    return `LC${String(count + 1).padStart(6, '0')}`;
+  private async nextOrderNumber(tx: {
+    order: { count: () => Promise<number> };
+  }) {
+    const count = await tx.order.count();
+    return `NK${String(count + 1).padStart(6, '0')}`;
   }
 
   async checkout(
-    userId: string,
+    buyerId: string,
     data: {
       addressId?: string;
       paymentMethod?: PaymentMethod;
       notes?: string;
     },
   ) {
+    const buyer = await this.prisma.user.findUnique({ where: { id: buyerId } });
+    if (!buyer?.canBuy) {
+      throw new ForbiddenException('Conta sem permissão de compra');
+    }
+    if (!buyer.emailVerifiedAt) {
+      throw new ForbiddenException('Verifique seu e-mail antes de comprar');
+    }
+
     const cart = await this.prisma.cart.findUnique({
-      where: { userId },
+      where: { userId: buyerId },
       include: {
-        items: { include: { product: true } },
+        items: {
+          include: {
+            product: { include: { shop: true } },
+          },
+        },
       },
     });
 
@@ -53,6 +67,7 @@ export class OrdersService {
       const available = item.product.stock - item.product.reservedStock;
       if (
         item.product.status !== ProductStatus.ACTIVE ||
+        item.product.shop.status !== ShopStatus.ACTIVE ||
         available < item.quantity
       ) {
         throw new BadRequestException(
@@ -61,77 +76,131 @@ export class OrdersService {
       }
     }
 
-    const settings = await this.prisma.storeSettings.findFirst();
-    const subtotalCents = cart.items.reduce(
-      (sum, item) => sum + item.quantity * item.product.priceCents,
-      0,
-    );
+    const orgSlug = this.config.get<string>('PLATFORM_ORG_SLUG', 'nkateko');
+    const settings = await this.prisma.platformSettings.findFirst({
+      where: { organization: { slug: orgSlug } },
+    });
     const freeShipping = settings?.freeShippingCents ?? 99900;
-    const shippingCents =
-      subtotalCents >= freeShipping ? 0 : (settings?.shippingFlatCents ?? 4900);
-    const totalCents = subtotalCents + shippingCents;
+    const flatShipping = settings?.shippingFlatCents ?? 4900;
+    const commissionBps = settings?.commissionBps ?? 500;
 
-    const orderNumber = await this.nextOrderNumber();
+    // Split cart by shop
+    const byShop = new Map<string, typeof cart.items>();
+    for (const item of cart.items) {
+      const list = byShop.get(item.product.shopId) ?? [];
+      list.push(item);
+      byShop.set(item.product.shopId, list);
+    }
 
-    const order = await this.prisma.$transaction(async (tx) => {
-      for (const item of cart.items) {
-        await tx.product.update({
-          where: { id: item.productId },
+    const orders = await this.prisma.$transaction(async (tx) => {
+      const createdOrders = [];
+
+      for (const [sellerShopId, items] of byShop) {
+        const subtotalCents = items.reduce(
+          (sum, item) => sum + item.quantity * item.product.priceCents,
+          0,
+        );
+        const shippingCents =
+          subtotalCents >= freeShipping ? 0 : flatShipping;
+        const platformFeeCents = Math.round(
+          (subtotalCents * commissionBps) / 10_000,
+        );
+        const totalCents = subtotalCents + shippingCents;
+        const orderNumber = await this.nextOrderNumber(tx);
+
+        for (const item of items) {
+          await tx.product.update({
+            where: { id: item.productId },
+            data: {
+              reservedStock: { increment: item.quantity },
+            },
+          });
+        }
+
+        const created = await tx.order.create({
           data: {
-            reservedStock: { increment: item.quantity },
-          },
-        });
-      }
-
-      const created = await tx.order.create({
-        data: {
-          orderNumber,
-          userId,
-          addressId: data.addressId,
-          paymentMethod: data.paymentMethod ?? PaymentMethod.PIX,
-          subtotalCents,
-          shippingCents,
-          totalCents,
-          notes: data.notes,
-          items: {
-            create: cart.items.map((item) => ({
-              productId: item.productId,
-              productName: item.product.name,
-              productSku: item.product.sku,
-              unitPriceCents: item.product.priceCents,
-              quantity: item.quantity,
-              totalCents: item.product.priceCents * item.quantity,
-            })),
-          },
-          payments: {
-            create: {
-              method: data.paymentMethod ?? PaymentMethod.PIX,
-              amountCents: totalCents,
-              status: PaymentStatus.PENDING,
+            orderNumber,
+            buyerId,
+            sellerShopId,
+            addressId: data.addressId,
+            paymentMethod: data.paymentMethod ?? PaymentMethod.PIX,
+            subtotalCents,
+            shippingCents,
+            platformFeeCents,
+            totalCents,
+            notes: data.notes,
+            items: {
+              create: items.map((item) => ({
+                productId: item.productId,
+                productName: item.product.name,
+                productSku: item.product.sku,
+                unitPriceCents: item.product.priceCents,
+                quantity: item.quantity,
+                totalCents: item.product.priceCents * item.quantity,
+              })),
+            },
+            payments: {
+              create: {
+                method: data.paymentMethod ?? PaymentMethod.PIX,
+                amountCents: totalCents,
+                status: PaymentStatus.PENDING,
+              },
             },
           },
-        },
-        include: {
-          items: true,
-          payments: true,
-          address: true,
-        },
-      });
+          include: {
+            items: true,
+            payments: true,
+            address: true,
+            sellerShop: {
+              select: { id: true, name: true, slug: true },
+            },
+          },
+        });
+
+        createdOrders.push(created);
+      }
 
       await tx.cartItem.deleteMany({ where: { cartId: cart.id } });
-      return created;
+      return createdOrders;
     });
 
-    return order;
+    return {
+      orders,
+      orderCount: orders.length,
+      totalCents: orders.reduce((sum, o) => sum + o.totalCents, 0),
+    };
   }
 
-  async listForUser(userId: string) {
+  async listForUser(buyerId: string) {
     return this.prisma.order.findMany({
-      where: { userId },
+      where: { buyerId },
       include: {
         items: true,
         payments: true,
         address: true,
+        sellerShop: {
+          select: { id: true, name: true, slug: true },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async listForSeller(userId: string) {
+    return this.prisma.order.findMany({
+      where: {
+        sellerShop: {
+          OR: [
+            { ownerId: userId },
+            { members: { some: { userId, isActive: true } } },
+          ],
+        },
+      },
+      include: {
+        items: true,
+        payments: true,
+        buyer: { select: { id: true, name: true, email: true } },
+        sellerShop: { select: { id: true, name: true, slug: true } },
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -146,7 +215,8 @@ export class OrdersService {
       this.prisma.order.findMany({
         where,
         include: {
-          user: { select: { id: true, name: true, email: true } },
+          buyer: { select: { id: true, name: true, email: true } },
+          sellerShop: { select: { id: true, name: true, slug: true } },
           items: true,
           payments: true,
           address: true,
@@ -164,11 +234,28 @@ export class OrdersService {
     };
   }
 
-  async getOne(id: string, user: { id: string; role: Role }) {
+  async getOne(
+    id: string,
+    user: { id: string; platformRole: PlatformRole },
+  ) {
     const order = await this.prisma.order.findUnique({
       where: { id },
       include: {
-        user: { select: { id: true, name: true, email: true, phone: true } },
+        buyer: {
+          select: { id: true, name: true, email: true, phone: true },
+        },
+        sellerShop: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            ownerId: true,
+            members: {
+              where: { userId: user.id, isActive: true },
+              select: { role: true },
+            },
+          },
+        },
         items: { include: { product: { include: { images: true } } } },
         payments: true,
         address: true,
@@ -180,21 +267,22 @@ export class OrdersService {
       throw new NotFoundException('Pedido não encontrado');
     }
 
-    if (
-      user.role === Role.CUSTOMER &&
-      order.userId !== user.id
-    ) {
+    const isPlatform =
+      user.platformRole === PlatformRole.PLATFORM_ADMIN ||
+      user.platformRole === PlatformRole.PLATFORM_OPERATOR;
+    const isBuyer = order.buyerId === user.id;
+    const isSeller =
+      order.sellerShop.ownerId === user.id ||
+      order.sellerShop.members.length > 0;
+
+    if (!isPlatform && !isBuyer && !isSeller) {
       throw new ForbiddenException();
     }
 
     return order;
   }
 
-  async updateStatus(
-    id: string,
-    status: OrderStatus,
-    operatorId: string,
-  ) {
+  async updateStatus(id: string, status: OrderStatus, operatorId: string) {
     const order = await this.prisma.order.findUnique({
       where: { id },
       include: { items: true, payments: true },
@@ -311,7 +399,8 @@ export class OrdersService {
         include: {
           items: true,
           payments: true,
-          user: { select: { id: true, name: true, email: true } },
+          buyer: { select: { id: true, name: true, email: true } },
+          sellerShop: { select: { id: true, name: true, slug: true } },
         },
       });
     });

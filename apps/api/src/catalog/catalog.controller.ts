@@ -9,10 +9,11 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ProductStatus, Role } from '@prisma/client';
+import { PlatformRole, ProductStatus } from '@prisma/client';
 import { CatalogService } from './catalog.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
+import { TwoFactorGuard } from '../common/guards/two-factor.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { AuthUser } from '../common/decorators/current-user.decorator';
@@ -26,8 +27,8 @@ export class CatalogController {
     return this.catalog.listCategories();
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN, Role.OPERATOR)
+  @UseGuards(JwtAuthGuard, RolesGuard, TwoFactorGuard)
+  @Roles(PlatformRole.PLATFORM_ADMIN, PlatformRole.PLATFORM_OPERATOR)
   @Post('categories')
   createCategory(
     @Body()
@@ -48,6 +49,8 @@ export class CatalogController {
     query: {
       q?: string;
       category?: string;
+      shop?: string;
+      shopId?: string;
       featured?: string;
       status?: ProductStatus;
       minPrice?: string;
@@ -60,14 +63,16 @@ export class CatalogController {
     return this.catalog.listProducts(query);
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN, Role.OPERATOR)
+  @UseGuards(JwtAuthGuard, RolesGuard, TwoFactorGuard)
+  @Roles(PlatformRole.PLATFORM_ADMIN, PlatformRole.PLATFORM_OPERATOR)
   @Get('admin/products')
   listAdminProducts(
     @Query()
     query: {
       q?: string;
       category?: string;
+      shop?: string;
+      shopId?: string;
       featured?: string;
       status?: ProductStatus;
       minPrice?: string;
@@ -78,7 +83,10 @@ export class CatalogController {
     },
     @CurrentUser() user: AuthUser,
   ) {
-    return this.catalog.listProducts({ ...query, role: user.role as Role });
+    return this.catalog.listProducts({
+      ...query,
+      platformRole: user.platformRole,
+    });
   }
 
   @Get('products/:slugOrId')
@@ -86,38 +94,39 @@ export class CatalogController {
     return this.catalog.getProduct(slugOrId);
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN, Role.OPERATOR)
+  @UseGuards(JwtAuthGuard, TwoFactorGuard)
   @Post('products')
-  createProduct(@Body() body: Parameters<CatalogService['createProduct']>[0]) {
-    return this.catalog.createProduct(body);
+  createProduct(
+    @CurrentUser() user: AuthUser,
+    @Body() body: Parameters<CatalogService['createProduct']>[1],
+  ) {
+    return this.catalog.createProduct(user.id, body);
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN, Role.OPERATOR)
+  @UseGuards(JwtAuthGuard, TwoFactorGuard)
   @Patch('products/:id')
   updateProduct(
     @Param('id') id: string,
-    @Body() body: Parameters<CatalogService['updateProduct']>[1],
+    @CurrentUser() user: AuthUser,
+    @Body() body: Parameters<CatalogService['updateProduct']>[2],
   ) {
-    return this.catalog.updateProduct(id, body);
+    return this.catalog.updateProduct(id, user.id, body);
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN, Role.OPERATOR)
+  @UseGuards(JwtAuthGuard, TwoFactorGuard)
   @Post('products/:id/images')
   addImage(
     @Param('id') id: string,
+    @CurrentUser() user: AuthUser,
     @Body()
     body: { url: string; publicId?: string; alt?: string; isPrimary?: boolean },
   ) {
-    return this.catalog.addProductImage(id, body);
+    return this.catalog.addProductImage(id, user.id, body);
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN)
+  @UseGuards(JwtAuthGuard, TwoFactorGuard)
   @Delete('products/:id')
-  deleteProduct(@Param('id') id: string) {
-    return this.catalog.deleteProduct(id);
+  deleteProduct(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.catalog.deleteProduct(id, user.id);
   }
 }

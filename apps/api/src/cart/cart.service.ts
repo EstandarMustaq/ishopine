@@ -27,6 +27,9 @@ export class CartService {
           include: {
             product: {
               include: {
+                shop: {
+                  select: { id: true, name: true, slug: true, status: true },
+                },
                 images: {
                   orderBy: [{ isPrimary: 'desc' }, { sortOrder: 'asc' }],
                   take: 1,

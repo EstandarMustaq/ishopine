@@ -1,9 +1,16 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma, ProductStatus, Role } from '@prisma/client';
+import {
+  PlatformRole,
+  Prisma,
+  ProductStatus,
+  ShopRole,
+  ShopStatus,
+} from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
 function slugify(value: string) {
@@ -52,6 +59,8 @@ export class CatalogService {
   async listProducts(query: {
     q?: string;
     category?: string;
+    shop?: string;
+    shopId?: string;
     featured?: string;
     status?: ProductStatus;
     minPrice?: string;
@@ -59,18 +68,36 @@ export class CatalogService {
     sort?: string;
     page?: string;
     limit?: string;
-    role?: Role;
+    platformRole?: PlatformRole;
   }) {
     const page = Math.max(1, Number(query.page ?? 1));
     const limit = Math.min(48, Math.max(1, Number(query.limit ?? 12)));
     const skip = (page - 1) * limit;
 
+    const isStaff =
+      query.platformRole === PlatformRole.PLATFORM_ADMIN ||
+      query.platformRole === PlatformRole.PLATFORM_OPERATOR;
+
     const where: Prisma.ProductWhereInput = {};
 
-    if (query.role !== Role.ADMIN && query.role !== Role.OPERATOR) {
+    if (!isStaff) {
       where.status = ProductStatus.ACTIVE;
     } else if (query.status) {
       where.status = query.status;
+    }
+
+    if (query.shopId) {
+      where.shopId = query.shopId;
+      if (!isStaff) {
+        where.shop = { status: ShopStatus.ACTIVE };
+      }
+    } else if (query.shop) {
+      where.shop = {
+        slug: query.shop,
+        ...(!isStaff ? { status: ShopStatus.ACTIVE } : {}),
+      };
+    } else if (!isStaff) {
+      where.shop = { status: ShopStatus.ACTIVE };
     }
 
     if (query.q) {
@@ -119,6 +146,16 @@ export class CatalogService {
         where,
         include: {
           category: true,
+          shop: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              status: true,
+              city: true,
+              state: true,
+            },
+          },
           images: { orderBy: [{ isPrimary: 'desc' }, { sortOrder: 'asc' }] },
         },
         orderBy,
@@ -146,6 +183,17 @@ export class CatalogService {
       },
       include: {
         category: true,
+        shop: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            status: true,
+            city: true,
+            state: true,
+            logoUrl: true,
+          },
+        },
         images: { orderBy: [{ isPrimary: 'desc' }, { sortOrder: 'asc' }] },
       },
     });
@@ -157,34 +205,87 @@ export class CatalogService {
     return product;
   }
 
-  async createProduct(data: {
-    name: string;
-    description: string;
-    shortDescription?: string;
-    priceCents: number;
-    compareAtCents?: number;
-    costCents?: number;
-    stock?: number;
-    status?: ProductStatus;
-    categoryId?: string;
-    brand?: string;
-    material?: string;
-    dimensions?: string;
-    weightKg?: number;
-    color?: string;
-    featured?: boolean;
-    sku?: string;
-    images?: Array<{ url: string; publicId?: string; alt?: string; isPrimary?: boolean }>;
-  }) {
-    const slug = slugify(data.name);
+  private async assertCanManageShop(shopId: string, userId: string) {
+    const member = await this.prisma.shopMember.findUnique({
+      where: { shopId_userId: { shopId, userId } },
+    });
+    const shop = await this.prisma.shop.findUnique({ where: { id: shopId } });
+    if (!shop) {
+      throw new NotFoundException('Loja não encontrada');
+    }
+
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (
+      user?.platformRole === PlatformRole.PLATFORM_ADMIN ||
+      user?.platformRole === PlatformRole.PLATFORM_OPERATOR
+    ) {
+      return shop;
+    }
+
+    if (
+      shop.ownerId === userId ||
+      (member?.isActive &&
+        [ShopRole.OWNER, ShopRole.MANAGER, ShopRole.STAFF].includes(
+          member.role,
+        ))
+    ) {
+      return shop;
+    }
+
+    throw new ForbiddenException('Sem permissão para gerenciar produtos desta loja');
+  }
+
+  async createProduct(
+    userId: string,
+    data: {
+      shopId: string;
+      name: string;
+      description: string;
+      shortDescription?: string;
+      priceCents: number;
+      compareAtCents?: number;
+      costCents?: number;
+      stock?: number;
+      status?: ProductStatus;
+      categoryId?: string;
+      brand?: string;
+      material?: string;
+      dimensions?: string;
+      weightKg?: number;
+      color?: string;
+      condition?: string;
+      featured?: boolean;
+      sku?: string;
+      images?: Array<{
+        url: string;
+        publicId?: string;
+        alt?: string;
+        isPrimary?: boolean;
+      }>;
+    },
+  ) {
+    await this.assertCanManageShop(data.shopId, userId);
+
+    const baseSlug = slugify(data.name);
+    let slug = baseSlug;
+    const existingSlug = await this.prisma.product.findUnique({
+      where: {
+        shopId_slug: { shopId: data.shopId, slug },
+      },
+    });
+    if (existingSlug) {
+      slug = `${baseSlug}-${Date.now().toString(36)}`;
+    }
+
     const sku =
       data.sku ??
-      `MV-${Date.now().toString(36).toUpperCase()}-${Math.floor(Math.random() * 999)
+      `NK-${Date.now().toString(36).toUpperCase()}-${Math.floor(Math.random() * 999)
         .toString()
         .padStart(3, '0')}`;
 
     return this.prisma.product.create({
       data: {
+        shopId: data.shopId,
         name: data.name,
         slug,
         sku,
@@ -201,6 +302,7 @@ export class CatalogService {
         dimensions: data.dimensions,
         weightKg: data.weightKg,
         color: data.color,
+        condition: data.condition ?? 'new',
         featured: data.featured ?? false,
         images: data.images?.length
           ? {
@@ -216,6 +318,7 @@ export class CatalogService {
       },
       include: {
         category: true,
+        shop: { select: { id: true, name: true, slug: true } },
         images: true,
       },
     });
@@ -223,6 +326,7 @@ export class CatalogService {
 
   async updateProduct(
     id: string,
+    userId: string,
     data: Partial<{
       name: string;
       description: string;
@@ -238,19 +342,22 @@ export class CatalogService {
       dimensions: string;
       weightKg: number;
       color: string;
+      condition: string;
       featured: boolean;
     }>,
   ) {
-    await this.getProduct(id);
+    const product = await this.getProduct(id);
+    await this.assertCanManageShop(product.shopId, userId);
 
     return this.prisma.product.update({
-      where: { id },
+      where: { id: product.id },
       data: {
         ...data,
         ...(data.name ? { slug: slugify(data.name) } : {}),
       },
       include: {
         category: true,
+        shop: { select: { id: true, name: true, slug: true } },
         images: true,
       },
     });
@@ -258,9 +365,17 @@ export class CatalogService {
 
   async addProductImage(
     productId: string,
-    image: { url: string; publicId?: string; alt?: string; isPrimary?: boolean },
+    userId: string,
+    image: {
+      url: string;
+      publicId?: string;
+      alt?: string;
+      isPrimary?: boolean;
+    },
   ) {
     const product = await this.getProduct(productId);
+    await this.assertCanManageShop(product.shopId, userId);
+
     if (image.isPrimary) {
       await this.prisma.productImage.updateMany({
         where: { productId: product.id },
@@ -279,15 +394,17 @@ export class CatalogService {
     });
   }
 
-  async deleteProduct(id: string) {
+  async deleteProduct(id: string, userId: string) {
     const product = await this.getProduct(id);
+    await this.assertCanManageShop(product.shopId, userId);
+
     if (product.stock > 0) {
       throw new BadRequestException(
         'Arquive o produto ou zere o estoque antes de remover',
       );
     }
     return this.prisma.product.update({
-      where: { id },
+      where: { id: product.id },
       data: { status: ProductStatus.ARCHIVED },
     });
   }

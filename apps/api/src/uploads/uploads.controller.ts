@@ -8,15 +8,20 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { Role } from '@prisma/client';
+import { PlatformRole } from '@prisma/client';
 import { memoryStorage } from 'multer';
 import { UploadsService } from './uploads.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
+import { TwoFactorGuard } from '../common/guards/two-factor.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 
-@UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(Role.ADMIN, Role.OPERATOR)
+@UseGuards(JwtAuthGuard, RolesGuard, TwoFactorGuard)
+@Roles(
+  PlatformRole.PLATFORM_ADMIN,
+  PlatformRole.PLATFORM_OPERATOR,
+  PlatformRole.SELLER,
+)
 @Controller('uploads')
 export class UploadsController {
   constructor(private readonly uploads: UploadsService) {}

@@ -8,10 +8,11 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { OrderStatus, PaymentMethod, Role } from '@prisma/client';
+import { OrderStatus, PaymentMethod, PlatformRole } from '@prisma/client';
 import { OrdersService } from './orders.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
+import { TwoFactorGuard } from '../common/guards/two-factor.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { AuthUser } from '../common/decorators/current-user.decorator';
@@ -39,8 +40,14 @@ export class OrdersController {
     return this.orders.listForUser(user.id);
   }
 
-  @UseGuards(RolesGuard)
-  @Roles(Role.ADMIN, Role.OPERATOR)
+  @UseGuards(TwoFactorGuard)
+  @Get('selling')
+  sellerOrders(@CurrentUser() user: AuthUser) {
+    return this.orders.listForSeller(user.id);
+  }
+
+  @UseGuards(RolesGuard, TwoFactorGuard)
+  @Roles(PlatformRole.PLATFORM_ADMIN, PlatformRole.PLATFORM_OPERATOR)
   @Get()
   listAll(
     @Query() query: { status?: OrderStatus; page?: string; limit?: string },
@@ -50,11 +57,18 @@ export class OrdersController {
 
   @Get(':id')
   getOne(@Param('id') id: string, @CurrentUser() user: AuthUser) {
-    return this.orders.getOne(id, { id: user.id, role: user.role as Role });
+    return this.orders.getOne(id, {
+      id: user.id,
+      platformRole: user.platformRole,
+    });
   }
 
-  @UseGuards(RolesGuard)
-  @Roles(Role.ADMIN, Role.OPERATOR)
+  @UseGuards(RolesGuard, TwoFactorGuard)
+  @Roles(
+    PlatformRole.PLATFORM_ADMIN,
+    PlatformRole.PLATFORM_OPERATOR,
+    PlatformRole.SELLER,
+  )
   @Patch(':id/status')
   updateStatus(
     @Param('id') id: string,
