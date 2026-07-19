@@ -1,0 +1,16 @@
+{
+  "name": "mavula-moveis",
+  "private": true,
+  "packageManager": "pnpm@9.15.0",
+  "scripts": {
+    "dev": "pnpm -r --parallel run dev",
+    "dev:web": "pnpm --filter @mavula/web dev",
+    "dev:api": "pnpm --filter @mavula/api start:dev",
+    "build": "pnpm --filter @mavula/api build && pnpm --filter @mavula/web build",
+    "db:generate": "pnpm --filter @mavula/api prisma:generate",
+    "db:migrate": "pnpm --filter @mavula/api prisma:migrate",
+    "db:seed": "pnpm --filter @mavula/api prisma:seed",
+    "db:push": "pnpm --filter @mavula/api prisma:push",
+    "lint": "pnpm -r run lint"
+  }
+}

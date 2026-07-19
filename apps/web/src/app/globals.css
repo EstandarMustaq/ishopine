@@ -1,0 +1,90 @@
+@import "tw-animate-css";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Mavula / Enjoei-inspired */
+    --mavula-purple: #61005d;
+    --mavula-purple-hover: #4a0048;
+    --mavula-purple-active: #330032;
+    --mavula-beige: #f9f8f5;
+    --mavula-purple-light: #f1f1f1;
+    --mavula-charcoal: #222222;
+    --mavula-taupe: #7d7a77;
+    --mavula-border: #d5d2d5;
+    --mavula-nav-divider: #e2e0e2;
+    --mavula-white: #ffffff;
+
+    --background: #ffffff;
+    --foreground: #222222;
+    --card: #ffffff;
+    --card-foreground: #222222;
+    --popover: #ffffff;
+    --popover-foreground: #222222;
+    --primary: #61005d;
+    --primary-foreground: #ffffff;
+    --secondary: #f1f1f1;
+    --secondary-foreground: #222222;
+    --muted: #f9f8f5;
+    --muted-foreground: #7d7a77;
+    --accent: #f9f8f5;
+    --accent-foreground: #61005d;
+    --destructive: #c62828;
+    --border: #d5d2d5;
+    --input: #d5d2d5;
+    --ring: #61005d;
+    --chart-1: #61005d;
+    --chart-2: #7d7a77;
+    --chart-3: #4a0048;
+    --chart-4: #d5d2d5;
+    --chart-5: #222222;
+    --radius: 0.75rem;
+    --sidebar: #f9f8f5;
+    --sidebar-foreground: #222222;
+    --sidebar-primary: #61005d;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #f1f1f1;
+    --sidebar-accent-foreground: #222222;
+    --sidebar-border: #e2e0e2;
+    --sidebar-ring: #61005d;
+  }
+
+  * {
+    border-color: var(--border);
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+
+  html {
+    @apply font-sans;
+  }
+}
+
+@layer utilities {
+  .animate-hero-in {
+    animation: hero-in 0.8s ease-out both;
+  }
+
+  .animate-hero-in-delay {
+    animation: hero-in 0.8s ease-out 0.15s both;
+  }
+
+  .animate-hero-in-delay-2 {
+    animation: hero-in 0.8s ease-out 0.3s both;
+  }
+}
+
+@keyframes hero-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
