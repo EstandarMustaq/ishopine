@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { api } from "@/lib/api";
-import { formatBRL, formatDateTime } from "@/lib/format";
+import { formatMZN, formatDateTime } from "@/lib/format";
 import type { Order, OrderStatus, Paginated } from "@/lib/types";
 
 const statuses: OrderStatus[] = [
@@ -126,7 +126,7 @@ export default function PainelPedidosPage() {
                     {statusLabel[order.status]}
                   </Badge>
                   <p className="mt-2 font-bold text-[#111111]">
-                    {formatBRL(order.totalCents)}
+                    {formatMZN(order.totalCents)}
                   </p>
                 </div>
               </div>

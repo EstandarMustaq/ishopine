@@ -1,10 +1,6 @@
 import { createHmac, timingSafeEqual } from 'crypto';
 import type { PaysuiteWebhookPayload } from './types';
 
-/**
- * Verify PaySuite webhook HMAC-SHA256 signature (X-Webhook-Signature).
- * Mirrors the official docs at https://paysuite.tech/docs/
- */
 export function verifyPaysuiteWebhookSignature(
   rawBody: Buffer | string,
   signature: string | undefined,

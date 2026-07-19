@@ -5,7 +5,7 @@ export type AuthUser = {
   id: string;
   email: string;
   platformRole: PlatformRole;
-  /** Alias of platformRole for existing controllers */
+
   role: PlatformRole;
   name: string;
   totpEnabled: boolean;

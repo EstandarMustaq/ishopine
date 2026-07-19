@@ -8,7 +8,7 @@ import {
   ServiceUnavailableException,
   UseGuards,
 } from '@nestjs/common';
-// ServiceUnavailableException kept for google/callback guard path
+
 import { ConfigService } from '@nestjs/config';
 import { AuthGuard } from '@nestjs/passport';
 import { Throttle } from '@nestjs/throttler';
@@ -89,7 +89,6 @@ export class AuthController {
   @Get('google/start')
   @UseGuards(AuthGuard('google'))
   googleStart() {
-    // Passport redirects to Google
   }
 
   @Get('google/callback')

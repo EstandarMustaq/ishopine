@@ -1,4 +1,47 @@
 import Link from "next/link";
+import {
+  ArrowUpRight,
+  CircleDollarSign,
+  CreditCard,
+  ExternalLink,
+  LogIn,
+  Package,
+  Store,
+  UserPlus,
+} from "lucide-react";
+
+const mercadoLinks = [
+  { href: "/produtos", label: "Explorar", icon: Package },
+  { href: "/lojas", label: "Lojas", icon: Store },
+  { href: "/vender", label: "Abrir loja", icon: CircleDollarSign },
+];
+
+const contaLinks = [
+  { href: "/entrar", label: "Entrar", icon: LogIn },
+  { href: "/cadastro", label: "Criar conta", icon: UserPlus },
+  { href: "/painel/billing", label: "Pagamentos", icon: CreditCard },
+];
+
+function FooterLink({
+  href,
+  label,
+  icon: Icon,
+}: {
+  href: string;
+  label: string;
+  icon: typeof Package;
+}) {
+  return (
+    <Link
+      href={href}
+      className="group inline-flex items-center gap-2 text-zinc-500 transition-colors hover:text-zinc-900"
+    >
+      <Icon className="size-3.5 shrink-0 opacity-70" />
+      <span>{label}</span>
+      <ArrowUpRight className="size-3 shrink-0 text-zinc-300 transition-all group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-zinc-600" />
+    </Link>
+  );
+}
 
 export function SiteFooter() {
   return (
@@ -17,37 +60,27 @@ export function SiteFooter() {
           </p>
           <a
             href="https://ishopine.com"
-            className="mt-3 inline-block text-[13px] text-zinc-500 transition-colors hover:text-zinc-900"
+            className="group mt-3 inline-flex items-center gap-1.5 text-[13px] text-zinc-500 transition-colors hover:text-zinc-900"
             target="_blank"
             rel="noopener noreferrer"
           >
+            <ExternalLink className="size-3.5 opacity-70" />
             ishopine.com
+            <ArrowUpRight className="size-3 text-zinc-300 transition-all group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-zinc-600" />
           </a>
         </div>
         <div className="flex flex-wrap gap-10 text-[13px]">
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2.5">
             <p className="font-semibold text-zinc-800">Mercado</p>
-            <Link href="/produtos" className="text-zinc-500 hover:text-zinc-900">
-              Explorar
-            </Link>
-            <Link href="/lojas" className="text-zinc-500 hover:text-zinc-900">
-              Lojas
-            </Link>
-            <Link href="/vender" className="text-zinc-500 hover:text-zinc-900">
-              Abrir loja
-            </Link>
+            {mercadoLinks.map((link) => (
+              <FooterLink key={link.href} {...link} />
+            ))}
           </div>
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2.5">
             <p className="font-semibold text-zinc-800">Conta</p>
-            <Link href="/entrar" className="text-zinc-500 hover:text-zinc-900">
-              Entrar
-            </Link>
-            <Link href="/cadastro" className="text-zinc-500 hover:text-zinc-900">
-              Criar conta
-            </Link>
-            <Link href="/painel/billing" className="text-zinc-500 hover:text-zinc-900">
-              Pagamentos
-            </Link>
+            {contaLinks.map((link) => (
+              <FooterLink key={link.href} {...link} />
+            ))}
           </div>
         </div>
       </div>

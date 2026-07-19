@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { api } from "@/lib/api";
-import { formatBRL, formatDate } from "@/lib/format";
+import { formatMZN, formatDate } from "@/lib/format";
 import type { Coupon } from "@/lib/types";
 
 export default function PainelCuponsPage() {
@@ -212,7 +212,7 @@ function CuponsContent() {
                 <p className="mt-1 text-sm text-taupe">
                   {c.discountType === "PERCENT"
                     ? `${c.discountValue}%`
-                    : formatBRL(c.discountValue)}
+                    : formatMZN(c.discountValue)}
                   {c.description ? ` · ${c.description}` : ""}
                 </p>
                 {c.createdAt && (

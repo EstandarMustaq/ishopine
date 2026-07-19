@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-/** Edge security headers + request id (low latency) */
 export function middleware(request: NextRequest) {
   const response = NextResponse.next();
   const requestId =

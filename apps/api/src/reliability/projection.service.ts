@@ -12,7 +12,6 @@ export class ProjectionService {
     return createHash('sha256').update(JSON.stringify(data)).digest('hex').slice(0, 32);
   }
 
-  /** Idempotent upsert of a read projection */
   async upsert(name: string, partitionKey: string, data: unknown, bumpVersion = true) {
     const checksum = this.checksum(data);
     const existing = await this.prisma.readProjection.findUnique({

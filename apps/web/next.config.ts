@@ -51,7 +51,6 @@ const nextConfig: NextConfig = {
     ];
   },
   async rewrites() {
-    // Optional: proxy /api/* to Nest when API_PROXY=1 (local/edge hybrid)
     if (process.env.API_PROXY === "1") {
       return [
         {

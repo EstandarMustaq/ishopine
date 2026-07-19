@@ -9,13 +9,6 @@ import { PlatformRole } from '@prisma/client';
 import { AuthUser } from '../decorators/current-user.decorator';
 import { PrismaService } from '../../prisma/prisma.service';
 
-/**
- * Protects painel/dashboard routes.
- * - If totpEnabled: JWT must include tfa=true
- * - PLATFORM_ADMIN / PLATFORM_OPERATOR / sellers: 2FA expected after login
- * - Seed/dev: users without totpEnabled may access when NODE_ENV !== production
- *   or PlatformSettings.requireSeller2fa is false
- */
 @Injectable()
 export class TwoFactorGuard implements CanActivate {
   constructor(

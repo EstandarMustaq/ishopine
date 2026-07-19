@@ -2,7 +2,20 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Bell, Heart, Menu, MessageCircle, ShoppingBag, User } from "lucide-react";
+import {
+  ArrowRight,
+  Bell,
+  CircleDollarSign,
+  Heart,
+  LayoutDashboard,
+  LogIn,
+  Menu,
+  MessageCircle,
+  Package,
+  ShoppingBag,
+  Store,
+  User,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,11 +30,11 @@ import { useAuthStore } from "@/lib/auth-store";
 import { cn } from "@/lib/utils";
 
 const navLinks = [
-  { href: "/produtos", label: "Mercado" },
-  { href: "/lojas", label: "Lojas" },
-  { href: "/vender", label: "Vender" },
-  { href: "/carrinho", label: "Carrinho" },
-  { href: "/conta", label: "Minha conta" },
+  { href: "/produtos", label: "Mercado", icon: Package },
+  { href: "/lojas", label: "Lojas", icon: Store },
+  { href: "/vender", label: "Vender", icon: CircleDollarSign },
+  { href: "/carrinho", label: "Carrinho", icon: ShoppingBag },
+  { href: "/conta", label: "Minha conta", icon: User },
 ];
 
 export function SiteHeader() {
@@ -75,32 +88,38 @@ export function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-40 border-b border-white/40 bg-white/70 backdrop-blur-xl supports-[backdrop-filter]:bg-white/60">
-      <div className="mx-auto flex h-12 max-w-6xl items-center justify-between gap-4 px-4 sm:h-14 sm:px-6">
+      <div className="mx-auto flex h-12 max-w-6xl items-center justify-between gap-2 px-3 sm:h-14 sm:gap-4 sm:px-6">
         <Link
           href="/"
-          className="text-[15px] font-semibold tracking-tight text-zinc-900 sm:text-base"
+          className="shrink-0 text-[15px] font-semibold tracking-tight text-zinc-900 sm:text-base"
         >
           iShopine
         </Link>
 
-        <nav className="hidden items-center gap-5 md:flex">
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={cn(
-                "text-[13px] font-medium text-zinc-500 transition-colors duration-200 hover:text-zinc-900",
-                pathname.startsWith(link.href) && "text-zinc-900",
-              )}
-            >
-              {link.label}
-            </Link>
-          ))}
+        <nav className="hidden items-center gap-1 md:flex">
+          {navLinks.map((link) => {
+            const Icon = link.icon;
+            const active = pathname.startsWith(link.href);
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[13px] font-medium text-zinc-500 transition-colors duration-200 hover:bg-zinc-100/70 hover:text-zinc-900",
+                  active && "bg-zinc-100/80 text-zinc-900",
+                )}
+              >
+                <Icon className="size-3.5 shrink-0 opacity-70" />
+                {link.label}
+              </Link>
+            );
+          })}
           {showPainel && (
             <Link
               href="/painel"
-              className="text-[13px] font-medium text-zinc-400 transition-colors duration-200 hover:text-zinc-900"
+              className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[13px] font-medium text-zinc-400 transition-colors duration-200 hover:bg-zinc-100/70 hover:text-zinc-900"
             >
+              <LayoutDashboard className="size-3.5 shrink-0 opacity-70" />
               Painel
             </Link>
           )}
@@ -178,8 +197,16 @@ export function SiteHeader() {
               </Button>
             </div>
           ) : (
-            <Button variant="default" size="sm" asChild className="hidden sm:inline-flex">
-              <Link href="/entrar">Entrar</Link>
+            <Button
+              variant="default"
+              size="sm"
+              asChild
+              className="h-8 gap-1 px-2.5 text-[12px] sm:h-8 sm:px-3 sm:text-[13px]"
+            >
+              <Link href="/entrar" aria-label="Entrar">
+                <LogIn className="size-3.5 shrink-0" />
+                <span>Entrar</span>
+              </Link>
             </Button>
           )}
 
@@ -197,39 +224,52 @@ export function SiteHeader() {
                 </SheetTitle>
               </SheetHeader>
               <div className="mt-6 flex flex-col gap-1">
-                {navLinks.map((link) => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    onClick={() => setOpen(false)}
-                    className="rounded-xl px-3 py-2 text-[13px] font-medium text-zinc-700 transition-colors hover:bg-zinc-100/80"
-                  >
-                    {link.label}
-                  </Link>
-                ))}
+                {navLinks.map((link) => {
+                  const Icon = link.icon;
+                  return (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      onClick={() => setOpen(false)}
+                      className="group flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[13px] font-medium text-zinc-700 transition-colors hover:bg-zinc-100/80"
+                    >
+                      <Icon className="size-4 shrink-0 text-zinc-500" />
+                      <span className="flex-1">{link.label}</span>
+                      <ArrowRight className="size-3.5 text-zinc-300 transition-transform group-hover:translate-x-0.5 group-hover:text-zinc-500" />
+                    </Link>
+                  );
+                })}
                 {mounted && user && (
                   <>
                     <Link
                       href="/favoritos"
                       onClick={() => setOpen(false)}
-                      className="rounded-xl px-3 py-2 text-[13px] font-medium text-zinc-700 transition-colors hover:bg-zinc-100/80"
+                      className="group flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[13px] font-medium text-zinc-700 transition-colors hover:bg-zinc-100/80"
                     >
-                      Favoritos
+                      <Heart className="size-4 shrink-0 text-zinc-500" />
+                      <span className="flex-1">Favoritos</span>
+                      <ArrowRight className="size-3.5 text-zinc-300 transition-transform group-hover:translate-x-0.5 group-hover:text-zinc-500" />
                     </Link>
                     <Link
                       href="/mensagens"
                       onClick={() => setOpen(false)}
-                      className="rounded-xl px-3 py-2 text-[13px] font-medium text-zinc-700 transition-colors hover:bg-zinc-100/80"
+                      className="group flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[13px] font-medium text-zinc-700 transition-colors hover:bg-zinc-100/80"
                     >
-                      Mensagens
+                      <MessageCircle className="size-4 shrink-0 text-zinc-500" />
+                      <span className="flex-1">Mensagens</span>
+                      <ArrowRight className="size-3.5 text-zinc-300 transition-transform group-hover:translate-x-0.5 group-hover:text-zinc-500" />
                     </Link>
                     <Link
                       href="/notificacoes"
                       onClick={() => setOpen(false)}
-                      className="rounded-xl px-3 py-2 text-[13px] font-medium text-zinc-700 transition-colors hover:bg-zinc-100/80"
+                      className="group flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[13px] font-medium text-zinc-700 transition-colors hover:bg-zinc-100/80"
                     >
-                      Notificações
-                      {unreadCount > 0 ? ` (${unreadCount})` : ""}
+                      <Bell className="size-4 shrink-0 text-zinc-500" />
+                      <span className="flex-1">
+                        Notificações
+                        {unreadCount > 0 ? ` (${unreadCount})` : ""}
+                      </span>
+                      <ArrowRight className="size-3.5 text-zinc-300 transition-transform group-hover:translate-x-0.5 group-hover:text-zinc-500" />
                     </Link>
                   </>
                 )}
@@ -237,9 +277,11 @@ export function SiteHeader() {
                   <Link
                     href="/painel"
                     onClick={() => setOpen(false)}
-                    className="rounded-xl px-3 py-2 text-[13px] font-medium text-zinc-700 transition-colors hover:bg-zinc-100/80"
+                    className="group flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[13px] font-medium text-zinc-700 transition-colors hover:bg-zinc-100/80"
                   >
-                    Painel
+                    <LayoutDashboard className="size-4 shrink-0 text-zinc-500" />
+                    <span className="flex-1">Painel</span>
+                    <ArrowRight className="size-3.5 text-zinc-300 transition-transform group-hover:translate-x-0.5 group-hover:text-zinc-500" />
                   </Link>
                 )}
                 {mounted && user ? (
@@ -255,9 +297,11 @@ export function SiteHeader() {
                     Sair
                   </Button>
                 ) : (
-                  <Button asChild className="mt-3">
+                  <Button asChild className="mt-3 h-11 gap-2">
                     <Link href="/entrar" onClick={() => setOpen(false)}>
+                      <LogIn className="size-4" />
                       Entrar
+                      <ArrowRight className="size-3.5 opacity-70" />
                     </Link>
                   </Button>
                 )}

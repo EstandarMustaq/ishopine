@@ -16,12 +16,12 @@ interface AuthState {
   setAuth: (accessToken: string, user: User) => void;
   setUser: (user: User) => void;
   logout: () => void;
-  /** Platform staff (admin or operator) */
+
   isStaff: () => boolean;
   isAdmin: () => boolean;
-  /** Sellers, shop members (canSell), or platform staff */
+
   canAccessPainel: () => boolean;
-  /** Staff/sellers must enable 2FA for painel routes */
+
   requiresTwoFactor: () => boolean;
 }
 

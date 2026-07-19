@@ -25,7 +25,7 @@ export default function VenderPage() {
       </h1>
       <p className="mt-4 text-base text-taupe">
         Venda no mercado aberto do iShopine. Crie sua vitrine, publique produtos
-        e receba pedidos de compradores em todo o Brasil.
+        e receba pedidos de compradores em todo o Moçambique.
       </p>
       <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
         {accessToken ? (

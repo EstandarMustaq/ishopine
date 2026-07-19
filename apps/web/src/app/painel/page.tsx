@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
-import { formatBRL, formatDateTime } from "@/lib/format";
+import { formatMZN, formatDateTime } from "@/lib/format";
 import type { DashboardOverview } from "@/lib/types";
 
 export default function PainelOverviewPage() {
@@ -25,7 +25,7 @@ export default function PainelOverviewPage() {
 
   const k = data.kpis;
   const cards = [
-    { label: "GMV", value: formatBRL(k.gmvCents ?? k.revenueCents ?? 0) },
+    { label: "GMV", value: formatMZN(k.gmvCents ?? k.revenueCents ?? 0) },
     { label: "Lojas ativas", value: String(k.activeShops ?? k.shopCount ?? "—") },
     { label: "Vendedores", value: String(k.sellerCount ?? "—") },
     { label: "Pedidos", value: String(k.orderCount) },
@@ -80,7 +80,7 @@ export default function PainelOverviewPage() {
                   <td className="px-4 py-3">
                     {order.buyer?.name ?? order.user?.name ?? "—"}
                   </td>
-                  <td className="px-4 py-3">{formatBRL(order.totalCents)}</td>
+                  <td className="px-4 py-3">{formatMZN(order.totalCents)}</td>
                   <td className="px-4 py-3">{order.status}</td>
                   <td className="px-4 py-3 text-taupe">
                     {formatDateTime(order.createdAt)}

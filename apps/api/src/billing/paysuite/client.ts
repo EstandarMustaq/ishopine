@@ -50,14 +50,10 @@ export interface PaysuiteClientOptions {
   token: string;
   baseUrl?: string;
   timeoutMs?: number;
-  /** Max retries on 429 / 5xx (default 3) */
+
   maxRetries?: number;
 }
 
-/**
- * TypeScript SDK for PaySuite (paysuite.co.mz / paysuite.tech),
- * aligned with hypertech/paysuite-php-sdk + official REST API.
- */
 export class PaysuiteClient {
   private readonly token: string;
   private readonly baseUrl: string;

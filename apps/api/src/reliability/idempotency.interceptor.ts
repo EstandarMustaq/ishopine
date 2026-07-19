@@ -12,11 +12,6 @@ import type { Request, Response } from 'express';
 import { IdempotencyService } from './idempotency.service';
 import { RELIABILITY_RULES } from './rules';
 
-/**
- * Applies when handler sets metadata scope via Reflector — used selectively
- * through IdempotencyService in controllers for critical POSTs.
- * This interceptor activates when header Idempotency-Key is present on mutating routes.
- */
 @Injectable()
 export class IdempotencyInterceptor implements NestInterceptor {
   constructor(private readonly idempotency: IdempotencyService) {}

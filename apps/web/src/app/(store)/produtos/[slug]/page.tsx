@@ -6,7 +6,7 @@ import { StartConversationButton } from "@/components/messages/start-conversatio
 import { ProductReviews } from "@/components/products/product-reviews";
 import { WishlistButton } from "@/components/products/wishlist-button";
 import { apiFetch } from "@/lib/api";
-import { formatBRL } from "@/lib/format";
+import { formatMZN } from "@/lib/format";
 import type { Product } from "@/lib/types";
 
 interface ProductPageProps {
@@ -91,12 +91,12 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
           </h1>
           <div className="mt-4 flex items-baseline gap-3">
             <span className="text-2xl font-bold text-[#111111]">
-              {formatBRL(product.priceCents)}
+              {formatMZN(product.priceCents)}
             </span>
             {product.compareAtCents &&
               product.compareAtCents > product.priceCents && (
                 <span className="text-base text-taupe line-through">
-                  {formatBRL(product.compareAtCents)}
+                  {formatMZN(product.compareAtCents)}
                 </span>
               )}
           </div>

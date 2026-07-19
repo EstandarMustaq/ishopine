@@ -10,9 +10,9 @@ interface AuthGateProps {
   children: React.ReactNode;
   roles?: PlatformRole[];
   adminOnly?: boolean;
-  /** When true, require painel access (staff / seller / canSell) */
+
   painelAccess?: boolean;
-  /** Skip 2FA enforcement (security page) */
+
   allowWithout2fa?: boolean;
 }
 
@@ -45,7 +45,6 @@ export function AuthGate({
         if (!cancelled) setUser(me);
       })
       .catch(() => {
-        /* keep cached user */
       });
     return () => {
       cancelled = true;

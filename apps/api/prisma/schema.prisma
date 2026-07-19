@@ -7,7 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-/// Platform-level roles (iShopine operators)
 enum PlatformRole {
   BUYER
   SELLER
@@ -15,7 +14,6 @@ enum PlatformRole {
   PLATFORM_ADMIN
 }
 
-/// Membership role inside a shop (future multi-tenant ready)
 enum ShopRole {
   OWNER
   MANAGER
@@ -61,13 +59,13 @@ enum PaymentMethod {
   CASH
   MPESA
   EMOLA
-  STRIPE // legacy — prefer PaySuite credit_card
+  STRIPE
 }
 
 enum PaymentProvider {
   PAYSUITE
-  STRIPE // legacy
-  MPESA // legacy direct Vodacom
+  STRIPE
+  MPESA
   MANUAL
 }
 
@@ -168,7 +166,6 @@ enum FindingStatus {
   CLOSED
 }
 
-/// Tenant root — today one platform org; ready for multi-tenant later
 model Organization {
   id          String   @id @default(cuid())
   name        String
@@ -179,7 +176,7 @@ model Organization {
   logoUrl     String?
   primaryColor String  @default("#61005D")
   isActive    Boolean  @default(true)
-  /// Reserved for future per-tenant billing / plan
+
   plan        String   @default("platform")
   metadata    Json?
   createdAt   DateTime @default(now())
@@ -197,12 +194,12 @@ model PlatformSettings {
   organizationId    String @unique
   marketplaceName   String @default("iShopine")
   tagline           String @default("Mercado aberto — compre e venda com confiança")
-  currency          String @default("BRL")
+  currency          String @default("MZN")
   shippingFlatCents Int    @default(4900)
   freeShippingCents Int    @default(99900)
   requireSeller2fa  Boolean @default(true)
   requireEmailVerify Boolean @default(true)
-  commissionBps     Int    @default(500) // 5%
+  commissionBps     Int    @default(500)
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
@@ -285,7 +282,7 @@ model AuthSession {
   refreshTokenHash String?
   userAgent        String?
   ipAddress        String?
-  /// Set when password/Google ok but 2FA still required
+
   pendingTwoFactor Boolean  @default(false)
   expiresAt        DateTime
   revokedAt        DateTime?
@@ -326,8 +323,8 @@ model Shop {
   status         ShopStatus @default(PENDING)
   city           String?
   state          String?
-  country        String     @default("BR")
-  /// Seller can also purchase as buyer — shop is sell-side presence
+  country        String     @default("MZ")
+
   ratingAvg      Float      @default(0)
   ratingCount    Int        @default(0)
   createdAt      DateTime   @default(now())
@@ -375,7 +372,7 @@ model Address {
   city       String
   state      String
   zipCode    String
-  country    String   @default("BR")
+  country    String   @default("MZ")
   isDefault  Boolean  @default(false)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
@@ -426,7 +423,7 @@ model Product {
   dimensions       String?
   weightKg         Float?
   color            String?
-  condition        String        @default("new") // new | used | refurbished
+  condition        String        @default("new")
   featured         Boolean       @default(false)
   metaTitle        String?
   metaDescription  String?
@@ -491,7 +488,6 @@ model CartItem {
   @@index([cartId])
 }
 
-/// Marketplace order: one buyer, one seller shop (cart splits by shop at checkout)
 model Order {
   id              String        @id @default(cuid())
   orderNumber     String        @unique
@@ -566,7 +562,6 @@ model Payment {
   @@index([status])
 }
 
-/// Unified billing ledger — PaySuite (M-Pesa, e-Mola, cartões) for Mozambique
 model BillingPayment {
   id                    String               @id @default(cuid())
   buyerId               String
@@ -575,15 +570,15 @@ model BillingPayment {
   amountCents           Int
   currency              String               @default("MZN")
   orderIds              String[]
-  /// PaySuite method: mpesa | emola | credit_card
+
   method                String?
-  /// Merchant reference sent to PaySuite (unique, max 50)
+
   reference             String               @unique
   paysuitePaymentId     String?              @unique
   paysuiteCheckoutUrl   String?
   paysuiteTransactionId String?
   msisdn                String?
-  /// Legacy Stripe / direct M-Pesa fields (nullable)
+
   stripeSessionId       String?              @unique
   stripePaymentIntentId String?
   mpesaConversationId   String?
@@ -603,7 +598,6 @@ model BillingPayment {
   @@index([paysuitePaymentId])
 }
 
-/// Idempotent webhook inbox for PaySuite (request_id)
 model BillingWebhookEvent {
   id          String    @id @default(cuid())
   requestId   String    @unique
@@ -861,7 +855,6 @@ model OrderEvent {
   @@index([orderId, createdAt])
 }
 
-/// External ingress (webhooks) — rigid unique (source, messageKey) idempotency
 model InboxMessage {
   id            String      @id @default(cuid())
   source        String
@@ -885,7 +878,6 @@ model InboxMessage {
   @@index([receivedAt])
 }
 
-/// Transactional outbox — publish after commit, at-least-once with backoff
 model OutboxMessage {
   id            String       @id @default(cuid())
   aggregateType String
@@ -908,7 +900,6 @@ model OutboxMessage {
   @@index([createdAt])
 }
 
-/// API idempotency keys (Idempotency-Key header)
 model IdempotencyRecord {
   id           String   @id @default(cuid())
   scope        String
@@ -925,7 +916,6 @@ model IdempotencyRecord {
   @@index([expiresAt])
 }
 
-/// CQRS read models / projections (low-latency dashboard & sync)
 model ReadProjection {
   id           String   @id @default(cuid())
   name         String
@@ -941,7 +931,6 @@ model ReadProjection {
   @@index([name, updatedAt])
 }
 
-/// Security findings — LOW / MEDIUM / HIGH / CRITICAL with compliance status
 model SecurityFinding {
   id          String        @id @default(cuid())
   code        String

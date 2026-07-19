@@ -92,7 +92,6 @@ export class BillingService {
   }
 
   private shortReference(): string {
-    // Max 50 chars for PaySuite; keep short + unique for high throughput
     return `ISH${Date.now().toString(36)}${randomBytes(3).toString('hex')}`.slice(
       0,
       50,
@@ -144,10 +143,6 @@ export class BillingService {
     return { orders, amountCents };
   }
 
-  /**
-   * Create PaySuite payment for one or more orders and return checkout URL.
-   * Amounts are always MZN. Real traffic goes to paysuite.tech (no sandbox).
-   */
   async createPaysuiteCheckout(
     buyerId: string,
     orderIds: string[],
@@ -399,7 +394,6 @@ export class BillingService {
       payload.request_id ||
       `${payload.event}:${payload.data?.id}:${payload.created_at || Date.now()}`;
 
-    // Rigid inbox idempotency (source + messageKey)
     const received = await this.inbox.receive({
       source: 'paysuite',
       messageKey: requestId,
@@ -408,7 +402,6 @@ export class BillingService {
       headers: { accountId, signaturePresent: Boolean(signature) },
     });
 
-    // Keep legacy BillingWebhookEvent mirror for ops dashboards
     await this.prisma.billingWebhookEvent.upsert({
       where: { requestId },
       create: {

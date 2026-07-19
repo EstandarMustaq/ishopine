@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
-import { formatBRL, formatDateTime } from "@/lib/format";
+import { formatMZN, formatDateTime } from "@/lib/format";
 import type { Order, OrderStatus } from "@/lib/types";
 
 const statusLabel: Record<OrderStatus, string> = {
@@ -135,7 +135,7 @@ export default function AccountPage() {
               </ul>
               <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
                 <p className="text-sm font-bold text-[#111111]">
-                  Total {formatBRL(order.totalCents)}
+                  Total {formatMZN(order.totalCents)}
                 </p>
                 <Button variant="ghost" size="sm" asChild>
                   <Link href={`/conta/disputas?orderId=${order.id}`}>

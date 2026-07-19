@@ -77,7 +77,7 @@ async function bootstrap() {
 
   const port = Number(config.get('API_PORT', 4000));
   await app.listen(port);
-  // eslint-disable-next-line no-console
+
   console.log(`iShopine API listening on http://localhost:${port}/api`);
 }
 

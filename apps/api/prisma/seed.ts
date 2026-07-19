@@ -79,13 +79,6 @@ async function main() {
   const passwordHash = await bcrypt.hash('IShopine@2026', 10);
   const now = new Date();
 
-  /**
-   * Seed users have totpEnabled=false for local simplicity.
-   * To enable 2FA after login:
-   *   POST /api/auth/2fa/setup  (JWT)
-   *   POST /api/auth/2fa/enable { "code": "<authenticator>" }
-   * Dashboard routes require tfa claim once totpEnabled is true.
-   */
   const admin = await prisma.user.create({
     data: {
       organizationId: org.id,
@@ -93,7 +86,7 @@ async function main() {
       name: 'Admin iShopine',
       passwordHash,
       platformRole: PlatformRole.PLATFORM_ADMIN,
-      phone: '+55 11 90000-0001',
+      phone: '+258 84 000 0001',
       emailVerifiedAt: now,
       canBuy: true,
       canSell: true,
@@ -109,7 +102,7 @@ async function main() {
       name: 'Operador Plataforma',
       passwordHash,
       platformRole: PlatformRole.PLATFORM_OPERATOR,
-      phone: '+55 11 90000-0002',
+      phone: '+258 84 000 0002',
       emailVerifiedAt: now,
       canBuy: true,
       canSell: false,
@@ -125,7 +118,7 @@ async function main() {
       name: 'Casa Atlas',
       passwordHash,
       platformRole: PlatformRole.SELLER,
-      phone: '+55 11 90000-0010',
+      phone: '+258 84 000 0010',
       emailVerifiedAt: now,
       canBuy: true,
       canSell: true,
@@ -141,7 +134,7 @@ async function main() {
       name: 'Studio Horizonte',
       passwordHash,
       platformRole: PlatformRole.SELLER,
-      phone: '+55 11 90000-0011',
+      phone: '+258 84 000 0011',
       emailVerifiedAt: now,
       canBuy: true,
       canSell: true,
@@ -157,7 +150,7 @@ async function main() {
       name: 'Ana Compradora',
       passwordHash,
       platformRole: PlatformRole.BUYER,
-      phone: '+55 11 90000-0003',
+      phone: '+258 84 000 0003',
       emailVerifiedAt: now,
       canBuy: true,
       canSell: false,
@@ -166,12 +159,12 @@ async function main() {
       addresses: {
         create: {
           label: 'Casa',
-          street: 'Rua das Palmeiras',
+          street: 'Av. Julius Nyerere',
           number: '120',
-          district: 'Pinheiros',
-          city: 'São Paulo',
-          state: 'SP',
-          zipCode: '05422-000',
+          district: 'Polana',
+          city: 'Maputo',
+          state: 'Maputo',
+          zipCode: '1100',
           isDefault: true,
         },
       },
@@ -186,8 +179,8 @@ async function main() {
       slug: 'casa-atlas',
       description: 'Móveis e decoração contemporânea',
       status: ShopStatus.ACTIVE,
-      city: 'São Paulo',
-      state: 'SP',
+      city: 'Maputo',
+      state: 'Maputo',
       members: {
         create: { userId: seller1.id, role: ShopRole.OWNER },
       },
@@ -202,8 +195,8 @@ async function main() {
       slug: 'studio-horizonte',
       description: 'Design autoral e peças sob medida',
       status: ShopStatus.ACTIVE,
-      city: 'Curitiba',
-      state: 'PR',
+      city: 'Beira',
+      state: 'Sofala',
       members: {
         create: { userId: seller2.id, role: ShopRole.OWNER },
       },
@@ -515,7 +508,6 @@ async function main() {
   void buyer;
   void shopAtlas;
   void shopHorizonte;
-
 
   await prisma.coupon.createMany({
     data: [

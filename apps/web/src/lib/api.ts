@@ -31,13 +31,11 @@ async function parseError(res: Response): Promise<string> {
     if (Array.isArray(body.message)) return body.message.join(", ");
     if (body.message) return body.message;
   } catch {
-    // ignore
   }
   return res.statusText || "Erro na requisição";
 }
 
 export type ApiOptions = RequestInit & {
-  /** Pass a token explicitly. Pass `null` to force unauthenticated. Omit to auto-read from localStorage on the client. */
   token?: string | null;
 };
 
@@ -90,7 +88,6 @@ export async function apiFetch<T>(
   return JSON.parse(text) as T;
 }
 
-/** Fetch helper with Bearer token from localStorage when available. */
 export async function api<T>(path: string, options: ApiOptions = {}): Promise<T> {
   return apiFetch<T>(path, options);
 }

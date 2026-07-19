@@ -9,9 +9,8 @@ export type PaysuitePaymentStatus =
   | string;
 
 export interface CreatePaymentRequest {
-  /** Amount in MZN (meticais), e.g. 100.50 */
   amount: number | string;
-  /** Unique merchant reference (max 50 chars) */
+
   reference: string;
   description?: string;
   method?: PaysuitePaymentMethod;

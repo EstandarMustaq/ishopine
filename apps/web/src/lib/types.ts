@@ -4,7 +4,6 @@ export type PlatformRole =
   | "PLATFORM_OPERATOR"
   | "PLATFORM_ADMIN";
 
-/** @deprecated Use PlatformRole — kept for gradual migration */
 export type Role = PlatformRole;
 
 export type ShopStatus = "PENDING" | "ACTIVE" | "SUSPENDED" | "CLOSED";
@@ -75,10 +74,8 @@ export interface PaysuiteCheckoutResponse {
   message?: string;
 }
 
-/** @deprecated Use PaysuiteCheckoutResponse */
 export type StripeCheckoutResponse = PaysuiteCheckoutResponse;
 
-/** @deprecated Use PaysuiteCheckoutResponse */
 export type MpesaC2bResponse = PaysuiteCheckoutResponse;
 
 export interface PaysuiteStatusResponse {
@@ -88,7 +85,6 @@ export interface PaysuiteStatusResponse {
   message?: string;
 }
 
-/** @deprecated Use PaysuiteStatusResponse */
 export type MpesaStatusResponse = PaysuiteStatusResponse;
 
 export type InventoryMovementType =
@@ -113,7 +109,7 @@ export interface User {
   email: string;
   name: string;
   platformRole: PlatformRole;
-  /** Alias of platformRole returned by the API */
+
   role?: PlatformRole;
   phone?: string | null;
   avatarUrl?: string | null;
