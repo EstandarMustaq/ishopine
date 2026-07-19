@@ -102,8 +102,12 @@ npx vercel --yes          # preview
 npx vercel --prod --yes   # produção
 ```
 
-Definir na Vercel: `NEXT_PUBLIC_API_URL` apontando para a API Nest em produção.  
-A API Nest **não** corre no runtime serverless da Vercel — hospedar à parte (Railway/Fly/VM) com as vars `PAYSUITE_*`, `DATABASE_URL`, `JWT_SECRET`, `CORS_ORIGIN`, `WEB_URL`, `APP_URL`.
+Produção actual:
+- Web: https://ishopine.vercel.app (`NEXT_PUBLIC_API_URL=https://ishopine-api.vercel.app`)
+- API: https://ishopine-api.vercel.app (Nest serverless em `apps/api`)
+- Health: `GET https://ishopine-api.vercel.app/api/health`
+
+Vars API: `DATABASE_URL`, `JWT_SECRET`, `CORS_ORIGIN`, `WEB_URL`, `APP_URL`, `CRON_SECRET`, `PAYSUITE_*`.
 
 ## Licença
 

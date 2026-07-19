@@ -7,4 +7,6 @@
 - Security sync: `POST /api/security/sync` — catalog LOW/MEDIUM/HIGH/CRITICAL — `apps/api/src/security/rules.ts`.
 - PaySuite has **no sandbox** — `PAYSUITE_SIMULATE=true` only locally. Prod needs `PAYSUITE_TOKEN` + `PAYSUITE_WEBHOOK_SECRET`.
 - Demo: `IShopine@2026` / `admin@ishopine.com`.
-- Deploy web: Vercel root → `apps/web`. API stays Nest (separate host); set `NEXT_PUBLIC_API_URL`.
+- Deploy: web → Vercel `ishopine` (`apps/web`) → https://ishopine.vercel.app  
+  API → Vercel `ishopine-api` (`apps/api` serverless) → https://ishopine-api.vercel.app  
+  Set `NEXT_PUBLIC_API_URL=https://ishopine-api.vercel.app`. DB: Neon. Cron: `/api/cron/outbox` + `CRON_SECRET`.
