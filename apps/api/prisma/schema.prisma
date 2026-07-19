@@ -137,6 +137,37 @@ enum CouponType {
   FIXED
 }
 
+enum InboxStatus {
+  RECEIVED
+  PROCESSING
+  PROCESSED
+  FAILED
+  DEAD
+}
+
+enum OutboxStatus {
+  PENDING
+  PUBLISHING
+  PUBLISHED
+  FAILED
+  DEAD
+}
+
+enum VulnSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum FindingStatus {
+  OPEN
+  ACKNOWLEDGED
+  MITIGATED
+  ACCEPTED
+  CLOSED
+}
+
 /// Tenant root — today one platform org; ready for multi-tenant later
 model Organization {
   id          String   @id @default(cuid())
@@ -828,4 +859,105 @@ model OrderEvent {
   order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@index([orderId, createdAt])
+}
+
+/// External ingress (webhooks) — rigid unique (source, messageKey) idempotency
+model InboxMessage {
+  id            String      @id @default(cuid())
+  source        String
+  messageKey    String
+  eventType     String
+  payload       Json
+  headers       Json?
+  status        InboxStatus @default(RECEIVED)
+  attempts      Int         @default(0)
+  maxAttempts   Int         @default(5)
+  lastError     String?
+  receivedAt    DateTime    @default(now())
+  processedAt   DateTime?
+  nextAttemptAt DateTime?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@unique([source, messageKey])
+  @@index([status, nextAttemptAt])
+  @@index([eventType])
+  @@index([receivedAt])
+}
+
+/// Transactional outbox — publish after commit, at-least-once with backoff
+model OutboxMessage {
+  id            String       @id @default(cuid())
+  aggregateType String
+  aggregateId   String
+  eventType     String
+  payload       Json
+  headers       Json?
+  status        OutboxStatus @default(PENDING)
+  attempts      Int          @default(0)
+  maxAttempts   Int          @default(8)
+  lastError     String?
+  availableAt   DateTime     @default(now())
+  publishedAt   DateTime?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([status, availableAt])
+  @@index([aggregateType, aggregateId])
+  @@index([eventType])
+  @@index([createdAt])
+}
+
+/// API idempotency keys (Idempotency-Key header)
+model IdempotencyRecord {
+  id           String   @id @default(cuid())
+  scope        String
+  key          String
+  requestHash  String?
+  responseCode Int?
+  responseBody Json?
+  status       String   @default("STARTED")
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([scope, key])
+  @@index([expiresAt])
+}
+
+/// CQRS read models / projections (low-latency dashboard & sync)
+model ReadProjection {
+  id           String   @id @default(cuid())
+  name         String
+  partitionKey String
+  version      Int      @default(1)
+  data         Json
+  checksum     String?
+  projectedAt  DateTime @default(now())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([name, partitionKey])
+  @@index([name, updatedAt])
+}
+
+/// Security findings — LOW / MEDIUM / HIGH / CRITICAL with compliance status
+model SecurityFinding {
+  id          String        @id @default(cuid())
+  code        String
+  severity    VulnSeverity
+  title       String
+  description String
+  surface     String
+  status      FindingStatus @default(OPEN)
+  evidence    Json?
+  remediation String?
+  detectedAt  DateTime      @default(now())
+  resolvedAt  DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@unique([code, surface])
+  @@index([severity, status])
+  @@index([detectedAt])
 }
