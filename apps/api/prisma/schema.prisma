@@ -1,0 +1,372 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CUSTOMER
+  OPERATOR
+  ADMIN
+}
+
+enum ProductStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+  OUT_OF_STOCK
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  PIX
+  CREDIT_CARD
+  DEBIT_CARD
+  BANK_TRANSFER
+  CASH
+}
+
+enum InventoryMovementType {
+  IN
+  OUT
+  ADJUSTMENT
+  RESERVE
+  RELEASE
+}
+
+enum AccountingEntryType {
+  REVENUE
+  EXPENSE
+  ASSET
+  LIABILITY
+  EQUITY
+  TRANSFER
+}
+
+enum AccountingEntryStatus {
+  DRAFT
+  POSTED
+  VOID
+}
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String
+  name         String
+  phone        String?
+  role         Role      @default(CUSTOMER)
+  avatarUrl    String?
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  addresses         Address[]
+  orders            Order[]
+  cart              Cart?
+  inventoryMoves    InventoryMovement[] @relation("InventoryOperator")
+  accountingEntries AccountingEntry[]   @relation("AccountingCreator")
+  reviewedEntries   AccountingEntry[]   @relation("AccountingReviewer")
+
+  @@index([role])
+  @@index([email])
+}
+
+model Address {
+  id         String   @id @default(cuid())
+  userId     String
+  label      String   @default("Principal")
+  street     String
+  number     String
+  complement String?
+  district   String
+  city       String
+  state      String
+  zipCode    String
+  country    String   @default("BR")
+  isDefault  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orders Order[]
+
+  @@index([userId])
+}
+
+model Category {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  imageUrl    String?
+  parentId    String?
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  parent   Category?  @relation("CategoryTree", fields: [parentId], references: [id])
+  children Category[] @relation("CategoryTree")
+  products Product[]
+
+  @@index([parentId])
+  @@index([slug])
+}
+
+model Product {
+  id              String        @id @default(cuid())
+  sku             String        @unique
+  name            String
+  slug            String        @unique
+  description     String
+  shortDescription String?
+  priceCents      Int
+  compareAtCents  Int?
+  costCents       Int           @default(0)
+  stock           Int           @default(0)
+  reservedStock   Int           @default(0)
+  status          ProductStatus @default(DRAFT)
+  categoryId      String?
+  brand           String?
+  material        String?
+  dimensions      String?
+  weightKg        Float?
+  color           String?
+  featured        Boolean       @default(false)
+  metaTitle       String?
+  metaDescription String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  category   Category?           @relation(fields: [categoryId], references: [id])
+  images     ProductImage[]
+  cartItems  CartItem[]
+  orderItems OrderItem[]
+  movements  InventoryMovement[]
+
+  @@index([categoryId])
+  @@index([status])
+  @@index([featured])
+  @@index([slug])
+}
+
+model ProductImage {
+  id        String   @id @default(cuid())
+  productId String
+  url       String
+  publicId  String?
+  alt       String?
+  sortOrder Int      @default(0)
+  isPrimary Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+}
+
+model Cart {
+  id        String     @id @default(cuid())
+  userId    String     @unique
+  updatedAt DateTime   @updatedAt
+  createdAt DateTime   @default(now())
+
+  user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items CartItem[]
+}
+
+model CartItem {
+  id        String   @id @default(cuid())
+  cartId    String
+  productId String
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  cart    Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
+  @@unique([cartId, productId])
+  @@index([cartId])
+}
+
+model Order {
+  id              String        @id @default(cuid())
+  orderNumber     String        @unique
+  userId          String
+  addressId       String?
+  status          OrderStatus   @default(PENDING)
+  paymentStatus   PaymentStatus @default(PENDING)
+  paymentMethod   PaymentMethod @default(PIX)
+  subtotalCents   Int
+  shippingCents   Int           @default(0)
+  discountCents   Int           @default(0)
+  totalCents      Int
+  notes           String?
+  shippedAt       DateTime?
+  deliveredAt     DateTime?
+  cancelledAt     DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  user              User              @relation(fields: [userId], references: [id])
+  address           Address?          @relation(fields: [addressId], references: [id])
+  items             OrderItem[]
+  payments          Payment[]
+  accountingEntries AccountingEntry[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([orderNumber])
+  @@index([createdAt])
+}
+
+model OrderItem {
+  id              String @id @default(cuid())
+  orderId         String
+  productId       String
+  productName     String
+  productSku      String
+  unitPriceCents  Int
+  quantity        Int
+  totalCents      Int
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+model Payment {
+  id              String        @id @default(cuid())
+  orderId         String
+  method          PaymentMethod
+  status          PaymentStatus @default(PENDING)
+  amountCents     Int
+  externalId      String?
+  paidAt          DateTime?
+  metadata        Json?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([status])
+}
+
+model InventoryMovement {
+  id          String                @id @default(cuid())
+  productId   String
+  type        InventoryMovementType
+  quantity    Int
+  reason      String
+  reference   String?
+  operatorId  String?
+  createdAt   DateTime              @default(now())
+
+  product  Product @relation(fields: [productId], references: [id])
+  operator User?   @relation("InventoryOperator", fields: [operatorId], references: [id])
+
+  @@index([productId])
+  @@index([createdAt])
+}
+
+model AccountingAccount {
+  id          String              @id @default(cuid())
+  code        String              @unique
+  name        String
+  type        AccountingEntryType
+  description String?
+  isActive    Boolean             @default(true)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  debitEntries  AccountingEntry[] @relation("DebitAccount")
+  creditEntries AccountingEntry[] @relation("CreditAccount")
+
+  @@index([type])
+}
+
+model AccountingEntry {
+  id             String                 @id @default(cuid())
+  entryNumber    String                 @unique
+  description    String
+  type           AccountingEntryType
+  status         AccountingEntryStatus  @default(DRAFT)
+  amountCents    Int
+  entryDate      DateTime               @default(now())
+  debitAccountId String
+  creditAccountId String
+  orderId        String?
+  createdById    String
+  reviewedById   String?
+  notes          String?
+  postedAt       DateTime?
+  voidedAt       DateTime?
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
+
+  debitAccount  AccountingAccount @relation("DebitAccount", fields: [debitAccountId], references: [id])
+  creditAccount AccountingAccount @relation("CreditAccount", fields: [creditAccountId], references: [id])
+  order         Order?            @relation(fields: [orderId], references: [id])
+  createdBy     User              @relation("AccountingCreator", fields: [createdById], references: [id])
+  reviewedBy    User?             @relation("AccountingReviewer", fields: [reviewedById], references: [id])
+
+  @@index([status])
+  @@index([entryDate])
+  @@index([type])
+  @@index([orderId])
+}
+
+model StoreSettings {
+  id              String   @id @default(cuid())
+  storeName       String   @default("Mavula Móveis")
+  storeSlug       String   @default("mavula")
+  tagline         String   @default("Móveis com alma brasileira")
+  supportEmail    String   @default("contato@mavula.com.br")
+  supportPhone    String?
+  currency        String   @default("BRL")
+  shippingFlatCents Int    @default(4900)
+  freeShippingCents Int    @default(99900)
+  logoUrl         String?
+  primaryColor    String   @default("#61005D")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model MediaAsset {
+  id        String   @id @default(cuid())
+  url       String
+  publicId  String?
+  provider  String   @default("local")
+  mimeType  String?
+  sizeBytes Int?
+  folder    String?
+  alt       String?
+  createdAt DateTime @default(now())
+
+  @@index([provider])
+  @@index([folder])
+}
