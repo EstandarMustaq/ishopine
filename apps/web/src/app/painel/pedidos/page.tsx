@@ -125,7 +125,7 @@ export default function PainelPedidosPage() {
                   <Badge variant="secondary">
                     {statusLabel[order.status]}
                   </Badge>
-                  <p className="mt-2 font-bold text-[#61005D]">
+                  <p className="mt-2 font-bold text-[#111111]">
                     {formatBRL(order.totalCents)}
                   </p>
                 </div>

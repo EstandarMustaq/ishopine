@@ -20,11 +20,11 @@ export default function VenderPage() {
 
   return (
     <div className="mx-auto flex min-h-[70vh] max-w-lg flex-col justify-center px-4 py-16 text-center">
-      <h1 className="text-3xl font-bold text-[#61005D] sm:text-4xl">
+      <h1 className="text-3xl font-bold text-[#111111] sm:text-4xl">
         Abra sua loja
       </h1>
       <p className="mt-4 text-base text-taupe">
-        Venda no mercado aberto do iShoppine. Crie sua vitrine, publique produtos
+        Venda no mercado aberto do iShopine. Crie sua vitrine, publique produtos
         e receba pedidos de compradores em todo o Brasil.
       </p>
       <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">

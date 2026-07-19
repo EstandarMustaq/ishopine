@@ -25,7 +25,7 @@ export class ShopsService {
   ) {}
 
   private async organizationId() {
-    const slug = this.config.get<string>('PLATFORM_ORG_SLUG', 'ishoppine');
+    const slug = this.config.get<string>('PLATFORM_ORG_SLUG', 'ishopine');
     const org = await this.prisma.organization.findUnique({ where: { slug } });
     if (!org) {
       throw new NotFoundException('Organização da plataforma não encontrada');

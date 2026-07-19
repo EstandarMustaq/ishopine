@@ -109,7 +109,7 @@ function ContaDisputasContent() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
       <nav className="mb-4 text-sm text-taupe">
-        <Link href="/conta" className="hover:text-[#61005D]">
+        <Link href="/conta" className="hover:text-[#111111]">
           Conta
         </Link>
         <span className="mx-2">/</span>

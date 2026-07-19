@@ -46,18 +46,18 @@ export class AuthService {
   }
 
   private async resolveOrganization() {
-    const slug = this.config.get<string>('PLATFORM_ORG_SLUG', 'ishoppine');
+    const slug = this.config.get<string>('PLATFORM_ORG_SLUG', 'ishopine');
     let org = await this.prisma.organization.findUnique({ where: { slug } });
     if (!org) {
       org = await this.prisma.organization.create({
         data: {
-          name: 'iShoppine',
+          name: 'iShopine',
           slug,
           legalName: 'Nkateko Investment and Service',
-          supportEmail: 'contato@ishoppine.com',
+          supportEmail: 'contato@ishopine.com',
           settings: {
             create: {
-              marketplaceName: 'iShoppine',
+              marketplaceName: 'iShopine',
               tagline: 'Mercado aberto — compre e venda com confiança',
             },
           },

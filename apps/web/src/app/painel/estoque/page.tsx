@@ -62,7 +62,7 @@ export default function PainelEstoquePage() {
                   <tr key={p.id} className="border-t border-border">
                     <td className="px-4 py-3 font-medium">{p.name}</td>
                     <td className="px-4 py-3 text-taupe">{p.sku}</td>
-                    <td className="px-4 py-3 font-bold text-[#61005D]">
+                    <td className="px-4 py-3 font-bold text-[#111111]">
                       {p.stock}
                     </td>
                     <td className="px-4 py-3">{p.reservedStock}</td>

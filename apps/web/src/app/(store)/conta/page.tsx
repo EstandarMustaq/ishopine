@@ -134,7 +134,7 @@ export default function AccountPage() {
                 ))}
               </ul>
               <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
-                <p className="text-sm font-bold text-[#61005D]">
+                <p className="text-sm font-bold text-[#111111]">
                   Total {formatBRL(order.totalCents)}
                 </p>
                 <Button variant="ghost" size="sm" asChild>

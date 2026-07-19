@@ -57,7 +57,7 @@ export function FollowShopButton({
       className={
         following
           ? "border-white/70 bg-white/10 text-white hover:bg-white/20 hover:text-white"
-          : "bg-white text-[#61005D] hover:bg-white/90"
+          : "bg-white text-[#111111] hover:bg-white/90"
       }
     >
       {loading ? "..." : following ? "Seguindo" : "Seguir loja"}

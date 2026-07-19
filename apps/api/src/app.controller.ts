@@ -6,8 +6,8 @@ export class AppController {
   health() {
     return {
       ok: true,
-      service: 'ishoppine-api',
-      marketplace: 'iShoppine',
+      service: 'ishopine-api',
+      marketplace: 'iShopine',
       operator: 'Nkateko Investment and Service',
       timestamp: new Date().toISOString(),
     };

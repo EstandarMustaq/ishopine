@@ -18,7 +18,7 @@ export class DashboardService {
   ) {}
 
   private async organization() {
-    const slug = this.config.get<string>('PLATFORM_ORG_SLUG', 'ishoppine');
+    const slug = this.config.get<string>('PLATFORM_ORG_SLUG', 'ishopine');
     const org = await this.prisma.organization.findUnique({
       where: { slug },
       include: { settings: true },
@@ -136,7 +136,7 @@ export class DashboardService {
       return this.prisma.platformSettings.create({
         data: {
           organizationId: org.id,
-          marketplaceName: 'iShoppine',
+          marketplaceName: 'iShopine',
           tagline: 'Mercado aberto — compre e venda com confiança',
         },
       });

@@ -1,21 +1,22 @@
 import type { Metadata } from "next";
-import { Montserrat } from "next/font/google";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
-const montserrat = Montserrat({
+const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
-  variable: "--font-montserrat",
+  variable: "--font-jakarta",
   display: "swap",
 });
 
 export const metadata: Metadata = {
   title: {
-    default: "iShoppine — mercado aberto de bens",
-    template: "%s · iShoppine",
+    default: "iShopine — mercado aberto de bens",
+    template: "%s · iShopine",
   },
   description:
-    "iShoppine — mercado aberto de bens. Compre e venda com segurança. Operado por Nkateko Investment and Service.",
+    "iShopine — mercado aberto de bens. Compre e venda com segurança. Operado por Nkateko Investment and Service.",
+  metadataBase: new URL("https://ishopine.com"),
 };
 
 export default function RootLayout({
@@ -25,7 +26,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR">
-      <body className={`${montserrat.variable} font-sans antialiased`}>
+      <body className={`${jakarta.variable} font-sans antialiased`}>
         {children}
         <Toaster theme="light" position="top-center" richColors />
       </body>

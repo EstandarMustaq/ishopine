@@ -91,7 +91,7 @@ function SettingsContent() {
     <div>
       <h1 className="text-2xl font-bold text-charcoal">Configurações</h1>
       <p className="mt-1 text-sm text-taupe">
-        Configurações da plataforma iShoppine (somente admin).
+        Configurações da plataforma iShopine (somente admin).
       </p>
 
       <form

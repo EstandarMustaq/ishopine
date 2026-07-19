@@ -72,7 +72,7 @@ export default function PainelLojaPage() {
     <div className="max-w-2xl">
       <h1 className="text-2xl font-bold text-charcoal">Minha loja</h1>
       <p className="mt-1 text-sm text-taupe">
-        Abra ou gerencie sua vitrine no mercado iShoppine.
+        Abra ou gerencie sua vitrine no mercado iShopine.
       </p>
 
       {loading ? (
@@ -165,7 +165,7 @@ export default function PainelLojaPage() {
       {shops.length > 0 && (
         <p className="mt-6 text-sm text-taupe">
           Cadastre produtos em{" "}
-          <Link href="/painel/produtos" className="font-medium text-[#61005D]">
+          <Link href="/painel/produtos" className="font-medium text-[#111111]">
             Produtos
           </Link>
           .

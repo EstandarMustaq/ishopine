@@ -1,7 +1,7 @@
 {
-  "name": "@ishoppine/api",
+  "name": "@ishopine/api",
   "version": "0.0.1",
-  "description": "iShoppine API by Nkateko Investment and Service",
+  "description": "iShopine API by Nkateko Investment and Service",
   "author": "",
   "private": true,
   "license": "UNLICENSED",
@@ -51,6 +51,7 @@
     "qrcode": "^1.5.4",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
+    "stripe": "^22.3.2",
     "uuid": "^14.0.1"
   },
   "devDependencies": {

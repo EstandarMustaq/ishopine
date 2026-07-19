@@ -92,7 +92,7 @@ export default function MensagemDetailPage() {
   return (
     <div className="mx-auto flex max-w-3xl flex-col px-4 py-10 sm:px-6">
       <nav className="mb-4 text-sm text-taupe">
-        <Link href="/mensagens" className="hover:text-[#61005D]">
+        <Link href="/mensagens" className="hover:text-[#111111]">
           Mensagens
         </Link>
         <span className="mx-2">/</span>
@@ -109,7 +109,7 @@ export default function MensagemDetailPage() {
           Loja{" "}
           <Link
             href={`/lojas/${conversation.shop.slug}`}
-            className="font-medium text-[#61005D] hover:underline"
+            className="font-medium text-[#111111] hover:underline"
           >
             {conversation.shop.name}
           </Link>
@@ -134,7 +134,7 @@ export default function MensagemDetailPage() {
                   className={cn(
                     "max-w-[85%] rounded-[12px] px-3 py-2 text-sm",
                     mine
-                      ? "ml-auto bg-[#61005D] text-white"
+                      ? "ml-auto bg-[#111111] text-white"
                       : "bg-beige text-charcoal",
                   )}
                 >

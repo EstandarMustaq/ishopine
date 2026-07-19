@@ -29,7 +29,51 @@ export type PaymentMethod =
   | "CREDIT_CARD"
   | "DEBIT_CARD"
   | "BANK_TRANSFER"
-  | "CASH";
+  | "CASH"
+  | "STRIPE"
+  | "MPESA";
+
+export type BillingProvider = "STRIPE" | "MPESA";
+
+export type BillingPaymentStatus =
+  | "PENDING"
+  | "PROCESSING"
+  | "PAID"
+  | "FAILED"
+  | "CANCELLED"
+  | "REFUNDED";
+
+export interface BillingPayment {
+  id: string;
+  provider: BillingProvider | string;
+  status: BillingPaymentStatus | string;
+  amountCents?: number;
+  currency?: string;
+  orderIds?: string[];
+  msisdn?: string | null;
+  externalId?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface StripeCheckoutResponse {
+  url?: string;
+  checkoutUrl?: string;
+  sessionId?: string;
+  paymentId?: string;
+}
+
+export interface MpesaC2bResponse {
+  paymentId: string;
+  status?: BillingPaymentStatus | string;
+  message?: string;
+}
+
+export interface MpesaStatusResponse {
+  paymentId: string;
+  status: BillingPaymentStatus | string;
+  message?: string;
+}
 
 export type InventoryMovementType =
   | "IN"
@@ -200,6 +244,12 @@ export interface Order {
   buyer?: Pick<User, "name" | "email">;
   sellerShop?: Pick<Shop, "id" | "name" | "slug"> | null;
   sellerShopId?: string | null;
+}
+
+export interface CheckoutResult {
+  orders: Order[];
+  orderCount: number;
+  totalCents: number;
 }
 
 export interface InventoryMovement {

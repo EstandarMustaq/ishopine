@@ -36,7 +36,7 @@ function Stars({
           disabled={!onChange}
           onClick={() => onChange?.(n)}
           className={cn(
-            "text-[#61005D]",
+            "text-[#111111]",
             onChange && "cursor-pointer hover:opacity-80",
             !onChange && "cursor-default",
           )}

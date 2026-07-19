@@ -41,7 +41,7 @@ export default function PainelOverviewPage() {
         Visão geral
       </h1>
       <p className="mt-1 text-sm text-taupe">
-        Indicadores do mercado iShoppine.
+        Indicadores do mercado iShopine.
       </p>
 
       <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -53,7 +53,7 @@ export default function PainelOverviewPage() {
             <p className="text-xs font-medium uppercase tracking-wide text-taupe">
               {card.label}
             </p>
-            <p className="mt-2 text-2xl font-bold text-[#61005D]">
+            <p className="mt-2 text-2xl font-bold text-[#111111]">
               {card.value}
             </p>
           </div>

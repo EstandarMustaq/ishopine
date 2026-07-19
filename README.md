@@ -1,6 +1,6 @@
-# iShoppine
+# iShopine
 
-Marketplace aberto oficial **iShoppine** — operado por **Nkateko Investment and Service**.
+Marketplace aberto oficial **iShopine** — operado por **Nkateko Investment and Service**.
 
 Multi-vendedor, multi-usuário, com autenticação Google + OTP + 2FA e arquitetura pronta para multi-tenant.
 
@@ -21,6 +21,7 @@ Multi-vendedor, multi-usuário, com autenticação Google + OTP + 2FA e arquitet
 - Favoritos / wishlist
 - Avaliações de produtos (pós-compra)
 - Carrinho e checkout com **cupons**
+- **Billing**: Stripe Checkout (cartões) + Vodacom **M-Pesa Moçambique** C2B (paralelo — M-Pesa não passa pelo Stripe)
 - Mensagens comprador ↔ vendedor
 - Notificações in-app
 - Disputas de pedido
@@ -48,8 +49,8 @@ pnpm install
 cp apps/api/.env.example apps/api/.env
 cp apps/web/.env.example apps/web/.env.local
 pnpm db:push && pnpm db:seed
-pnpm --filter @ishoppine/api start:dev
-pnpm --filter @ishoppine/web dev
+pnpm --filter @ishopine/api start:dev
+pnpm --filter @ishopine/web dev
 ```
 
 - Marketplace: http://localhost:3000  
@@ -57,19 +58,38 @@ pnpm --filter @ishoppine/web dev
 
 ## Contas demo
 
-Senha: `IShoppine@2026`
+Senha: `IShopine@2026`
 
 | Perfil | E-mail |
 |--------|--------|
-| Admin | `admin@ishoppine.com` |
-| Operador | `operador@ishoppine.com` |
-| Vendedor 1 | `vendedor1@ishoppine.com` |
-| Vendedor 2 | `vendedor2@ishoppine.com` |
-| Comprador | `comprador@ishoppine.com` |
+| Admin | `admin@ishopine.com` |
+| Operador | `operador@ishopine.com` |
+| Vendedor 1 | `vendedor1@ishopine.com` |
+| Vendedor 2 | `vendedor2@ishopine.com` |
+| Comprador | `comprador@ishopine.com` |
 
 Cupons seed: `ISHOP10` (10%) · `BEMVINDO50` (R$ 50)
+
+## Pagamentos
+
+Stripe e M-Pesa são provedores **paralelos** na mesma camada de billing (`BillingPayment`):
+
+| Provedor | Uso | Integração |
+|----------|-----|------------|
+| **Stripe** | Cartões / métodos dinâmicos do Checkout | `POST /api/billing/stripe/checkout` + webhook `checkout.session.completed` |
+| **M-Pesa MZ** | Carteira Vodacom Moçambique (USSD Push C2B) | Open API em [developer.mpesa.vm.co.mz](https://developer.mpesa.vm.co.mz/) — RSA + sessão + C2B single-stage |
+
+Variáveis (ver `apps/api/.env.example`):
+
+- `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_CURRENCY` (default `usd`)
+- `MPESA_API_KEY`, `MPESA_PUBLIC_KEY`, `MPESA_SERVICE_PROVIDER_CODE` (sandbox `171717`), `MPESA_ENV`
+
+Sem chaves configuradas, a API **simula** sucesso em desenvolvimento para demos locais.
+
+Webhook Stripe: `POST /api/billing/stripe/webhook`  
+Callback M-Pesa: `POST /api/billing/mpesa/callback`
 
 ## Licença
 
 GNU GPL v3 — ver `LICENSE`.  
-Produto **iShoppine** · Operador **Nkateko Investment and Service**.
+Produto **iShopine** · Operador **Nkateko Investment and Service**.

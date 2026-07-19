@@ -1,12 +1,12 @@
-# iShoppine Web
+# iShopine Web
 
-Frontend Next.js do **iShoppine** — mercado aberto de bens (compre e venda).  
+Frontend Next.js do **iShopine** — mercado aberto de bens (compre e venda).  
 Operado por **Nkateko Investment and Service**.
 
 ## Desenvolvimento
 
 ```bash
-pnpm --filter @ishoppine/web dev
+pnpm --filter @ishopine/web dev
 ```
 
 Abra [http://localhost:3000](http://localhost:3000).
@@ -43,4 +43,4 @@ NEXT_PUBLIC_API_URL=http://localhost:4000
 | `/painel/disputas` | Disputas (admin) |
 | `/painel/seguranca` | Setup 2FA |
 
-Demo: `admin@ishoppine.com` / `IShoppine@2026`
+Demo: `admin@ishopine.com` / `IShopine@2026`

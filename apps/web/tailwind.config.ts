@@ -22,8 +22,8 @@ export default {
         primary: {
           DEFAULT: "var(--primary)",
           foreground: "var(--primary-foreground)",
-          hover: "var(--brand-purple-hover)",
-          active: "var(--brand-purple-active)",
+          hover: "var(--brand-ink-hover)",
+          active: "var(--brand-ink-active)",
         },
         secondary: {
           DEFAULT: "var(--secondary)",
@@ -47,6 +47,7 @@ export default {
         beige: "var(--brand-beige)",
         taupe: "var(--brand-taupe)",
         charcoal: "var(--brand-charcoal)",
+        ink: "var(--brand-ink)",
         sidebar: {
           DEFAULT: "var(--sidebar)",
           foreground: "var(--sidebar-foreground)",
@@ -59,16 +60,26 @@ export default {
         },
       },
       fontFamily: {
-        sans: ["var(--font-montserrat)", "system-ui", "sans-serif"],
-        heading: ["var(--font-montserrat)", "system-ui", "sans-serif"],
+        sans: ["var(--font-jakarta)", "ui-sans-serif", "sans-serif"],
+        heading: ["var(--font-jakarta)", "ui-sans-serif", "sans-serif"],
       },
       borderRadius: {
-        button: "14px",
-        input: "16px",
-        card: "12px",
+        button: "12px",
+        input: "12px",
+        card: "14px",
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+      },
+      fontSize: {
+        "ui-xs": ["12px", { lineHeight: "16px" }],
+        "ui-sm": ["13px", { lineHeight: "18px" }],
+        "ui": ["14px", { lineHeight: "20px" }],
+        "ui-md": ["15px", { lineHeight: "22px" }],
+      },
+      boxShadow: {
+        glass: "0 1px 2px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.04)",
+        soft: "0 1px 3px rgba(0,0,0,0.06)",
       },
     },
   },

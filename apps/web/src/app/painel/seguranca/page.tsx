@@ -113,7 +113,7 @@ function SegurancaContent() {
       </p>
 
       {required && !totpEnabled && (
-        <p className="mt-4 rounded-[12px] border border-[#61005D]/30 bg-[var(--brand-purple-light)] px-4 py-3 text-sm text-charcoal">
+        <p className="mt-4 rounded-[12px] border border-[#111111]/30 bg-[var(--brand-purple-light)] px-4 py-3 text-sm text-charcoal">
           Ative o 2FA para acessar o painel de vendas e administração.
         </p>
       )}

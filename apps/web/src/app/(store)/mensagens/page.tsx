@@ -72,7 +72,7 @@ export default function MensagensPage() {
             <li key={c.id}>
               <Link
                 href={`/mensagens/${c.id}`}
-                className="block rounded-[12px] border border-border p-4 transition-colors hover:border-[#61005D]/40"
+                className="block rounded-[12px] border border-border p-4 transition-colors hover:border-[#111111]/40"
               >
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div>
@@ -95,7 +95,7 @@ export default function MensagensPage() {
                       </p>
                     )}
                     {(c.unreadCount ?? 0) > 0 && (
-                      <span className="mt-1 inline-flex rounded-full bg-[#61005D] px-2 py-0.5 text-[10px] font-semibold text-white">
+                      <span className="mt-1 inline-flex rounded-full bg-[#111111] px-2 py-0.5 text-[10px] font-semibold text-white">
                         {c.unreadCount}
                       </span>
                     )}

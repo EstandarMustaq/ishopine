@@ -1,7 +1,7 @@
 import type { ApiErrorBody } from "@/lib/types";
 
-export const AUTH_STORAGE_KEY = "ishoppine-auth";
-export const DEV_CODE_STORAGE_KEY = "ishoppine-dev-code";
+export const AUTH_STORAGE_KEY = "ishopine-auth";
+export const DEV_CODE_STORAGE_KEY = "ishopine-dev-code";
 
 export function getApiBase(): string {
   return process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
