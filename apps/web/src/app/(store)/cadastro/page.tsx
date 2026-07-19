@@ -7,13 +7,11 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { api } from "@/lib/api";
-import { useAuthStore } from "@/lib/auth-store";
-import type { AuthResponse } from "@/lib/types";
+import { api, getGoogleAuthUrl } from "@/lib/api";
+import type { RegisterResult } from "@/lib/types";
 
 export default function RegisterPage() {
   const router = useRouter();
-  const setAuth = useAuthStore((s) => s.setAuth);
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -26,7 +24,7 @@ export default function RegisterPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      const data = await api<AuthResponse>("/auth/register", {
+      const data = await api<RegisterResult>("/auth/register", {
         method: "POST",
         token: null,
         body: JSON.stringify({
@@ -36,9 +34,15 @@ export default function RegisterPage() {
           phone: form.phone || undefined,
         }),
       });
-      setAuth(data.accessToken, data.user);
-      toast.success("Conta criada com sucesso!");
-      router.push("/conta");
+
+      if (data.devCode) {
+        sessionStorage.setItem("nkateko-dev-code", data.devCode);
+      }
+
+      toast.success(data.message || "Conta criada. Verifique seu e-mail.");
+      router.push(
+        `/verificar-email?email=${encodeURIComponent(data.email || form.email)}`,
+      );
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Falha no cadastro",
@@ -50,8 +54,10 @@ export default function RegisterPage() {
 
   return (
     <div className="mx-auto flex min-h-[70vh] max-w-md flex-col justify-center px-4 py-12">
-      <h1 className="text-3xl font-bold text-[#61005D]">Mavula</h1>
-      <p className="mt-2 text-sm text-taupe">Crie sua conta</p>
+      <h1 className="text-3xl font-bold text-[#61005D]">Nkateko</h1>
+      <p className="mt-2 text-sm text-taupe">
+        Crie sua conta para comprar e vender
+      </p>
 
       <form onSubmit={onSubmit} className="mt-8 space-y-4">
         <div>
@@ -98,6 +104,16 @@ export default function RegisterPage() {
           {loading ? "Criando..." : "Criar conta"}
         </Button>
       </form>
+
+      <div className="my-6 flex items-center gap-3 text-xs text-taupe">
+        <span className="h-px flex-1 bg-border" />
+        ou
+        <span className="h-px flex-1 bg-border" />
+      </div>
+
+      <Button variant="outline" className="w-full" asChild>
+        <a href={getGoogleAuthUrl()}>Continuar com Google</a>
+      </Button>
 
       <p className="mt-6 text-center text-sm text-taupe">
         Já tem conta?{" "}

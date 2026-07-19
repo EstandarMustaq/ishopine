@@ -22,8 +22,8 @@ export default {
         primary: {
           DEFAULT: "var(--primary)",
           foreground: "var(--primary-foreground)",
-          hover: "var(--mavula-purple-hover)",
-          active: "var(--mavula-purple-active)",
+          hover: "var(--brand-purple-hover)",
+          active: "var(--brand-purple-active)",
         },
         secondary: {
           DEFAULT: "var(--secondary)",
@@ -44,9 +44,9 @@ export default {
         border: "var(--border)",
         input: "var(--input)",
         ring: "var(--ring)",
-        beige: "var(--mavula-beige)",
-        taupe: "var(--mavula-taupe)",
-        charcoal: "var(--mavula-charcoal)",
+        beige: "var(--brand-beige)",
+        taupe: "var(--brand-taupe)",
+        charcoal: "var(--brand-charcoal)",
         sidebar: {
           DEFAULT: "var(--sidebar)",
           foreground: "var(--sidebar-foreground)",

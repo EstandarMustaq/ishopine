@@ -1,4 +1,15 @@
-export type Role = "CUSTOMER" | "OPERATOR" | "ADMIN";
+export type PlatformRole =
+  | "BUYER"
+  | "SELLER"
+  | "PLATFORM_OPERATOR"
+  | "PLATFORM_ADMIN";
+
+/** @deprecated Use PlatformRole — kept for gradual migration */
+export type Role = PlatformRole;
+
+export type ShopStatus = "PENDING" | "ACTIVE" | "SUSPENDED" | "CLOSED";
+
+export type ShopRole = "OWNER" | "MANAGER" | "STAFF";
 
 export type ProductStatus = "DRAFT" | "ACTIVE" | "ARCHIVED" | "OUT_OF_STOCK";
 
@@ -41,10 +52,16 @@ export interface User {
   id: string;
   email: string;
   name: string;
-  role: Role;
+  platformRole: PlatformRole;
+  /** Alias of platformRole returned by the API */
+  role?: PlatformRole;
   phone?: string | null;
   avatarUrl?: string | null;
   isActive?: boolean;
+  totpEnabled?: boolean;
+  emailVerifiedAt?: string | null;
+  canBuy?: boolean;
+  canSell?: boolean;
   createdAt?: string;
   addresses?: Address[];
 }
@@ -74,6 +91,23 @@ export interface Category {
   _count?: { products: number };
 }
 
+export interface Shop {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string | null;
+  logoUrl?: string | null;
+  bannerUrl?: string | null;
+  city?: string | null;
+  state?: string | null;
+  status: ShopStatus;
+  ownerId?: string;
+  owner?: Pick<User, "id" | "name" | "email">;
+  members?: Array<{ role: ShopRole; userId?: string }>;
+  _count?: { products?: number; orders?: number };
+  createdAt?: string;
+}
+
 export interface ProductImage {
   id: string;
   url: string;
@@ -95,12 +129,17 @@ export interface Product {
   reservedStock: number;
   status: ProductStatus;
   categoryId?: string | null;
+  shopId?: string | null;
   brand?: string | null;
   material?: string | null;
   dimensions?: string | null;
   color?: string | null;
   featured: boolean;
   category?: Category | null;
+  shop?: Pick<
+    Shop,
+    "id" | "name" | "slug" | "status" | "city" | "state" | "logoUrl"
+  > | null;
   images: ProductImage[];
   createdAt?: string;
 }
@@ -156,6 +195,8 @@ export interface Order {
   items: OrderItem[];
   address?: Address | null;
   user?: Pick<User, "name" | "email">;
+  sellerShop?: Pick<Shop, "id" | "name" | "slug"> | null;
+  sellerShopId?: string | null;
 }
 
 export interface InventoryMovement {
@@ -229,6 +270,35 @@ export interface DashboardOverview {
 export interface AuthResponse {
   accessToken: string;
   user: User;
+}
+
+export type LoginResult =
+  | AuthResponse
+  | {
+      requiresEmailVerification: true;
+      email: string;
+      message?: string;
+      devCode?: string;
+    }
+  | {
+      requiresTwoFactor: true;
+      sessionToken: string;
+      message?: string;
+    };
+
+export interface RegisterResult {
+  message: string;
+  email: string;
+  requiresEmailVerification: true;
+  devCode?: string;
+}
+
+export interface TwoFactorSetupResult {
+  secret: string;
+  otpauthUrl: string;
+  qrCodeDataUrl?: string;
+  qrDataUrl?: string;
+  message?: string;
 }
 
 export interface ApiErrorBody {

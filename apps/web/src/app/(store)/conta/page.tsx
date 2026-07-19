@@ -66,13 +66,19 @@ export default function AccountPage() {
       <h1 className="text-3xl font-bold text-charcoal">Olá, {user.name}</h1>
       <p className="mt-2 text-sm text-taupe">{user.email}</p>
 
-      {(user.role === "ADMIN" || user.role === "OPERATOR") && (
+      {(user.canSell ||
+        user.platformRole === "SELLER" ||
+        user.platformRole === "PLATFORM_ADMIN" ||
+        user.platformRole === "PLATFORM_OPERATOR" ||
+        user.role === "SELLER" ||
+        user.role === "PLATFORM_ADMIN" ||
+        user.role === "PLATFORM_OPERATOR") && (
         <Button asChild variant="outline" className="mt-4" size="sm">
           <Link href="/painel">Ir para o painel</Link>
         </Button>
       )}
 
-      <h2 className="mt-10 text-xl font-semibold">Meus pedidos</h2>
+      <h2 className="mt-10 text-xl font-semibold">Pedidos de compra</h2>
 
       {loading ? (
         <p className="mt-6 text-sm text-taupe">Carregando...</p>
@@ -97,6 +103,9 @@ export default function AccountPage() {
                   </p>
                   <p className="mt-1 text-xs text-taupe">
                     {formatDateTime(order.createdAt)}
+                    {order.sellerShop?.name
+                      ? ` · ${order.sellerShop.name}`
+                      : ""}
                   </p>
                 </div>
                 <Badge variant="secondary">

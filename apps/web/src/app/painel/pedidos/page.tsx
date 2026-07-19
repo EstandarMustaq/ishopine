@@ -113,6 +113,9 @@ export default function PainelPedidosPage() {
                   <p className="font-semibold">{order.orderNumber}</p>
                   <p className="text-sm text-taupe">
                     {order.user?.name} · {order.user?.email}
+                    {order.sellerShop?.name
+                      ? ` · Loja: ${order.sellerShop.name}`
+                      : ""}
                   </p>
                   <p className="mt-1 text-xs text-taupe">
                     {formatDateTime(order.createdAt)}

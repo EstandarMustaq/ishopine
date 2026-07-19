@@ -16,7 +16,9 @@ import { useAuthStore } from "@/lib/auth-store";
 import { cn } from "@/lib/utils";
 
 const navLinks = [
-  { href: "/produtos", label: "Produtos" },
+  { href: "/produtos", label: "Mercado" },
+  { href: "/lojas", label: "Lojas" },
+  { href: "/vender", label: "Vender" },
   { href: "/carrinho", label: "Carrinho" },
   { href: "/conta", label: "Minha conta" },
 ];
@@ -26,7 +28,7 @@ export function SiteHeader() {
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
-  const isStaff = useAuthStore((s) => s.isStaff);
+  const canAccessPainel = useAuthStore((s) => s.canAccessPainel);
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -34,16 +36,16 @@ export function SiteHeader() {
     setMounted(true);
   }, []);
 
-  const staff = mounted && isStaff();
+  const showPainel = mounted && canAccessPainel();
 
   return (
-    <header className="sticky top-0 z-40 border-b border-[var(--mavula-nav-divider)] bg-white/95 backdrop-blur">
+    <header className="sticky top-0 z-40 border-b border-[var(--brand-nav-divider)] bg-white/95 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
         <Link
           href="/"
           className="text-xl font-bold tracking-tight text-[#61005D] sm:text-2xl"
         >
-          Mavula
+          Nkateko
         </Link>
 
         <nav className="hidden items-center gap-6 md:flex">
@@ -59,7 +61,7 @@ export function SiteHeader() {
               {link.label}
             </Link>
           ))}
-          {staff && (
+          {showPainel && (
             <Link
               href="/painel"
               className="text-sm font-medium text-taupe transition-colors hover:text-[#61005D]"
@@ -115,7 +117,7 @@ export function SiteHeader() {
             </SheetTrigger>
             <SheetContent side="right" className="w-[280px]">
               <SheetHeader>
-                <SheetTitle className="text-[#61005D]">Mavula</SheetTitle>
+                <SheetTitle className="text-[#61005D]">Nkateko</SheetTitle>
               </SheetHeader>
               <div className="mt-6 flex flex-col gap-3">
                 {navLinks.map((link) => (
@@ -128,7 +130,7 @@ export function SiteHeader() {
                     {link.label}
                   </Link>
                 ))}
-                {staff && (
+                {showPainel && (
                   <Link
                     href="/painel"
                     onClick={() => setOpen(false)}

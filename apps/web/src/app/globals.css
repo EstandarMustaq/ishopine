@@ -5,17 +5,17 @@
 
 @layer base {
   :root {
-    /* Mavula / Enjoei-inspired */
-    --mavula-purple: #61005d;
-    --mavula-purple-hover: #4a0048;
-    --mavula-purple-active: #330032;
-    --mavula-beige: #f9f8f5;
-    --mavula-purple-light: #f1f1f1;
-    --mavula-charcoal: #222222;
-    --mavula-taupe: #7d7a77;
-    --mavula-border: #d5d2d5;
-    --mavula-nav-divider: #e2e0e2;
-    --mavula-white: #ffffff;
+    /* Enjoei-inspired purple design tokens */
+    --brand-purple: #61005d;
+    --brand-purple-hover: #4a0048;
+    --brand-purple-active: #330032;
+    --brand-beige: #f9f8f5;
+    --brand-purple-light: #f1f1f1;
+    --brand-charcoal: #222222;
+    --brand-taupe: #7d7a77;
+    --brand-border: #d5d2d5;
+    --brand-nav-divider: #e2e0e2;
+    --brand-white: #ffffff;
 
     --background: #ffffff;
     --foreground: #222222;

@@ -15,7 +15,7 @@ export function ProductCard({ product }: ProductCardProps) {
 
   return (
     <Link
-      href={`/produtos/${product.slug}`}
+      href={`/produtos/${product.id}`}
       className="group block overflow-hidden rounded-[12px] transition-transform duration-300 hover:scale-[1.02]"
     >
       <div className="relative aspect-[4/5] overflow-hidden bg-beige">
@@ -28,11 +28,15 @@ export function ProductCard({ product }: ProductCardProps) {
         />
       </div>
       <div className="pt-3">
-        {product.category?.name && (
+        {product.shop?.name ? (
+          <p className="text-xs font-medium uppercase tracking-wide text-taupe">
+            {product.shop.name}
+          </p>
+        ) : product.category?.name ? (
           <p className="text-xs font-medium uppercase tracking-wide text-taupe">
             {product.category.name}
           </p>
-        )}
+        ) : null}
         <h3 className="mt-1 text-sm font-semibold text-charcoal line-clamp-2">
           {product.name}
         </h3>

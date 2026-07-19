@@ -11,11 +11,11 @@ const montserrat = Montserrat({
 
 export const metadata: Metadata = {
   title: {
-    default: "Mavula Móveis",
-    template: "%s · Mavula",
+    default: "Nkateko — mercado aberto de bens",
+    template: "%s · Nkateko",
   },
   description:
-    "Mavula — marketplace de móveis com alma brasileira. Compre sofás, mesas, cadeiras e mais.",
+    "Nkateko Investment and Service — mercado aberto de bens. Compre e venda com segurança.",
 };
 
 export default function RootLayout({

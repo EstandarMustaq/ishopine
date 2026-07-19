@@ -117,7 +117,7 @@ export default function PainelProdutosPage() {
                     </td>
                     <td className="px-4 py-3 text-right">
                       <Button variant="ghost" size="sm" asChild>
-                        <Link href={`/produtos/${product.slug}`}>Ver</Link>
+                        <Link href={`/produtos/${product.id}`}>Ver</Link>
                       </Button>
                     </td>
                   </tr>

@@ -9,7 +9,9 @@ import {
   Package,
   Receipt,
   Settings,
+  Shield,
   ShoppingBag,
+  Store,
   Users,
 } from "lucide-react";
 import { useAuthStore } from "@/lib/auth-store";
@@ -27,13 +29,20 @@ const links: Array<{
   { href: "/painel/pedidos", label: "Pedidos", icon: ShoppingBag },
   { href: "/painel/produtos", label: "Produtos", icon: Package },
   { href: "/painel/estoque", label: "Estoque", icon: Boxes },
-  { href: "/painel/contabilidade", label: "Contabilidade", icon: Receipt },
+  {
+    href: "/painel/contabilidade",
+    label: "Contabilidade",
+    icon: Receipt,
+    adminOnly: true,
+  },
   {
     href: "/painel/usuarios",
     label: "Usuários",
     icon: Users,
     adminOnly: true,
   },
+  { href: "/painel/loja", label: "Loja", icon: Store },
+  { href: "/painel/seguranca", label: "Segurança", icon: Shield },
   {
     href: "/painel/configuracoes",
     label: "Configurações",
@@ -47,20 +56,20 @@ export function DashboardSidebar() {
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
-  const isAdmin = user?.role === "ADMIN";
+  const isAdmin = useAuthStore((s) => s.isAdmin);
 
   return (
-    <aside className="flex h-full w-64 flex-col border-r border-[var(--mavula-nav-divider)] bg-beige">
-      <div className="border-b border-[var(--mavula-nav-divider)] px-5 py-5">
+    <aside className="flex h-full w-64 flex-col border-r border-[var(--brand-nav-divider)] bg-beige">
+      <div className="border-b border-[var(--brand-nav-divider)] px-5 py-5">
         <Link href="/" className="text-xl font-bold text-[#61005D]">
-          Mavula
+          Nkateko
         </Link>
-        <p className="mt-1 text-xs text-taupe">Painel operacional</p>
+        <p className="mt-1 text-xs text-taupe">Painel do mercado</p>
       </div>
 
       <nav className="flex flex-1 flex-col gap-1 p-3">
         {links.map((link) => {
-          if ("adminOnly" in link && link.adminOnly && !isAdmin) return null;
+          if (link.adminOnly && !isAdmin()) return null;
           const active = link.exact
             ? pathname === link.href
             : pathname.startsWith(link.href);
@@ -83,14 +92,14 @@ export function DashboardSidebar() {
         })}
       </nav>
 
-      <div className="border-t border-[var(--mavula-nav-divider)] p-4">
+      <div className="border-t border-[var(--brand-nav-divider)] p-4">
         <p className="truncate text-sm font-medium text-charcoal">
           {user?.name}
         </p>
         <p className="truncate text-xs text-taupe">{user?.email}</p>
         <div className="mt-3 flex flex-col gap-2">
           <Button variant="outline" size="sm" asChild>
-            <Link href="/">Ver loja</Link>
+            <Link href="/">Ver mercado</Link>
           </Button>
           <Button
             variant="ghost"

@@ -92,7 +92,7 @@ export default function CartPage() {
         </div>
       ) : (
         <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_280px]">
-          <ul className="divide-y divide-[var(--mavula-nav-divider)]">
+          <ul className="divide-y divide-[var(--brand-nav-divider)]">
             {items.map((item) => {
               const image =
                 item.product.images?.[0]?.url ??
@@ -110,7 +110,7 @@ export default function CartPage() {
                   </div>
                   <div className="flex flex-1 flex-col">
                     <Link
-                      href={`/produtos/${item.product.slug}`}
+                      href={`/produtos/${item.product.id}`}
                       className="font-semibold text-charcoal hover:text-[#61005D]"
                     >
                       {item.product.name}
