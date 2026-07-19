@@ -17,10 +17,6 @@ export class InboxService {
 
   constructor(private readonly prisma: PrismaService) {}
 
-  /**
-   * Rigid idempotent receive: unique (source, messageKey).
-   * Returns { duplicate: true } if already processed or already stored.
-   */
   async receive(input: InboxReceiveInput) {
     const existing = await this.prisma.inboxMessage.findUnique({
       where: {
@@ -55,7 +51,6 @@ export class InboxService {
       });
       return { message, duplicate: false, alreadyProcessed: false };
     } catch (error) {
-      // Race on unique constraint → treat as duplicate
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
         error.code === 'P2002'
@@ -108,7 +103,6 @@ export class InboxService {
     });
   }
 
-  /** Claim next failed/received messages for retry (low-latency reclaim) */
   async claimBatch(limit = 20) {
     const now = new Date();
     const leaseCutoff = new Date(

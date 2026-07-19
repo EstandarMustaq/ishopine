@@ -5,9 +5,6 @@ import { ProjectionService } from './projection.service';
 import { RELIABILITY_RULES } from './rules';
 import { NotificationsService } from '../notifications/notifications.service';
 
-/**
- * Low-latency outbox poller. Processes PENDING/FAILED messages and updates projections.
- */
 @Injectable()
 export class OutboxDispatcher {
   private readonly logger = new Logger(OutboxDispatcher.name);

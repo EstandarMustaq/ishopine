@@ -85,7 +85,6 @@ export class OrdersService {
     const flatShipping = settings?.shippingFlatCents ?? 4900;
     const commissionBps = settings?.commissionBps ?? 500;
 
-    // Split cart by shop
     const byShop = new Map<string, typeof cart.items>();
     for (const item of cart.items) {
       const list = byShop.get(item.product.shopId) ?? [];
@@ -356,7 +355,6 @@ export class OrdersService {
     return order;
   }
 
-  /** Called by billing after PaySuite confirmation */
   async settlePaidOrders(orderIds: string[]) {
     for (const id of orderIds) {
       const order = await this.prisma.order.findUnique({ where: { id } });

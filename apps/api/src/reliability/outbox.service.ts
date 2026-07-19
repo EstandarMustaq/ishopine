@@ -18,7 +18,6 @@ export class OutboxService {
 
   constructor(private readonly prisma: PrismaService) {}
 
-  /** Enqueue within an optional transaction client */
   async enqueue(
     input: OutboxEnqueueInput,
     tx: Prisma.TransactionClient | PrismaService = this.prisma,

@@ -30,7 +30,6 @@ import type { PaysuitePaymentMethod } from './paysuite';
 export class BillingController {
   constructor(private readonly billing: BillingService) {}
 
-  /** Primary checkout — PaySuite hosted page (M-Pesa, e-Mola, cartão) */
   @UseGuards(JwtAuthGuard)
   @Post('paysuite/checkout')
   paysuiteCheckout(
@@ -54,11 +53,6 @@ export class BillingController {
     return this.billing.syncPaysuiteStatus(user.id, paymentId);
   }
 
-  /**
-   * PaySuite webhooks (payment.success / payment.failed).
-   * Configure URL in merchant dashboard + PAYSUITE_WEBHOOK_SECRET.
-   * Also accepted as payment callback_url.
-   */
   @Post('paysuite/webhook')
   paysuiteWebhook(
     @Req() req: RawBodyRequest<Request>,
@@ -108,8 +102,6 @@ export class BillingController {
       },
     );
   }
-
-  // ---- Compatibility aliases (previous Stripe / direct M-Pesa routes) ----
 
   @UseGuards(JwtAuthGuard)
   @Post('stripe/checkout')

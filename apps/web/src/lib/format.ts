@@ -1,12 +1,10 @@
 import { format, parseISO } from "date-fns";
 import { pt } from "date-fns/locale";
 
-/** Primary marketplace currency — Metical moçambicano */
 export function formatMZN(cents: number): string {
   return formatMoney(cents, "MZN", "pt-MZ");
 }
 
-/** @deprecated Prefer formatMZN — kept as alias for Moçambique */
 export function formatBRL(cents: number): string {
   return formatMZN(cents);
 }

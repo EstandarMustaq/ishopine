@@ -13,11 +13,9 @@ export class SecurityModule implements OnModuleInit {
   constructor(private readonly security: SecurityService) {}
 
   async onModuleInit() {
-    // Boot-time security sync (non-blocking failures)
     try {
       await this.security.syncSystem();
     } catch {
-      // DB may not be ready during generate-only builds
     }
   }
 }

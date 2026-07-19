@@ -5,7 +5,6 @@
 
 @layer base {
   :root {
-    /* iShopine — neutral Apple/Linear tokens */
     --brand-ink: #111111;
     --brand-ink-hover: #000000;
     --brand-ink-active: #1a1a1a;
@@ -20,7 +19,6 @@
     --brand-mesh-via: #fafafa;
     --brand-mesh-to: #ffffff;
 
-    /* Legacy aliases (kept for existing class usage) */
     --brand-purple: #111111;
     --brand-purple-hover: #000000;
     --brand-purple-active: #1a1a1a;

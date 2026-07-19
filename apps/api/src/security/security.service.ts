@@ -44,9 +44,6 @@ export class SecurityService {
     };
   }
 
-  /**
-   * Full-system security sync: evaluate catalog, upsert findings, project summary.
-   */
   async syncSystem() {
     const ctx = this.context();
     const simulate =

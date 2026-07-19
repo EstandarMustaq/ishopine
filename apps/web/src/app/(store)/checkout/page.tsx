@@ -203,7 +203,6 @@ export default function CheckoutPage() {
             }
           }
         } catch {
-          // keep polling
         }
         if (attempts >= 40) {
           stopPolling();

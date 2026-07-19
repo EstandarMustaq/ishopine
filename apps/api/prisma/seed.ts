@@ -79,13 +79,6 @@ async function main() {
   const passwordHash = await bcrypt.hash('IShopine@2026', 10);
   const now = new Date();
 
-  /**
-   * Seed users have totpEnabled=false for local simplicity.
-   * To enable 2FA after login:
-   *   POST /api/auth/2fa/setup  (JWT)
-   *   POST /api/auth/2fa/enable { "code": "<authenticator>" }
-   * Dashboard routes require tfa claim once totpEnabled is true.
-   */
   const admin = await prisma.user.create({
     data: {
       organizationId: org.id,
@@ -515,7 +508,6 @@ async function main() {
   void buyer;
   void shopAtlas;
   void shopHorizonte;
-
 
   await prisma.coupon.createMany({
     data: [

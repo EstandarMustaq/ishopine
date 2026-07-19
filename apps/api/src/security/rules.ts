@@ -1,9 +1,5 @@
 import { VulnSeverity } from '@prisma/client';
 
-/**
- * iShopine — rigid security & compliance rules.
- * Severity policy: HIGH/CRITICAL block ship; MEDIUM require ticket; LOW tracked.
- */
 export const SECURITY_RULES = {
   headers: {
     required: [
@@ -28,7 +24,7 @@ export const SECURITY_RULES = {
     provider: 'PAYSUITE' as const,
     currency: 'MZN' as const,
     webhookSignatureRequired: true,
-    /** Never log full MSISDN / tokens */
+
     redactFields: [
       'msisdn',
       'Authorization',
@@ -81,7 +77,6 @@ export type SecurityCheckContext = {
   httpsEnforced: boolean;
 };
 
-/** Built-in catalog — sync creates/updates findings from these checks */
 export const SECURITY_CATALOG: SecurityCatalogEntry[] = [
   {
     code: 'SEC-HIGH-001',
@@ -153,6 +148,6 @@ export const SECURITY_CATALOG: SecurityCatalogEntry[] = [
     description: 'PAYSUITE_SIMULATE não deve estar activo em produção.',
     surface: 'billing',
     remediation: 'Remover PAYSUITE_SIMULATE em produção.',
-    check: () => true, // evaluated in security.service with env
+    check: () => true,
   },
 ];

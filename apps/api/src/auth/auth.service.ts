@@ -259,7 +259,6 @@ export class AuthService {
     });
 
     if (!user) {
-      // Avoid account enumeration
       return { message: 'Se o e-mail existir, um novo código foi enviado.' };
     }
 
