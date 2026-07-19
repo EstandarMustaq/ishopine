@@ -122,7 +122,7 @@ export default function PainelBillingPage() {
                   </td>
                   <td className="px-4 py-3 text-zinc-500">
                     {p.createdAt
-                      ? new Date(p.createdAt).toLocaleString("pt-BR")
+                      ? new Date(p.createdAt).toLocaleString("pt-MZ")
                       : "—"}
                   </td>
                 </tr>

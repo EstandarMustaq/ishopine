@@ -5,10 +5,6 @@ export function formatMZN(cents: number): string {
   return formatMoney(cents, "MZN", "pt-MZ");
 }
 
-export function formatBRL(cents: number): string {
-  return formatMZN(cents);
-}
-
 export function formatMoney(
   cents: number,
   currency: string = "MZN",

@@ -194,7 +194,7 @@ model PlatformSettings {
   organizationId    String @unique
   marketplaceName   String @default("iShopine")
   tagline           String @default("Mercado aberto — compre e venda com confiança")
-  currency          String @default("BRL")
+  currency          String @default("MZN")
   shippingFlatCents Int    @default(4900)
   freeShippingCents Int    @default(99900)
   requireSeller2fa  Boolean @default(true)
@@ -323,7 +323,7 @@ model Shop {
   status         ShopStatus @default(PENDING)
   city           String?
   state          String?
-  country        String     @default("BR")
+  country        String     @default("MZ")
 
   ratingAvg      Float      @default(0)
   ratingCount    Int        @default(0)
@@ -372,7 +372,7 @@ model Address {
   city       String
   state      String
   zipCode    String
-  country    String   @default("BR")
+  country    String   @default("MZ")
   isDefault  Boolean  @default(false)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt

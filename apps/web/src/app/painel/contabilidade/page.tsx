@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/select";
 import { api } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
-import { formatBRL, formatDate } from "@/lib/format";
+import { formatMZN, formatDate } from "@/lib/format";
 import type {
   AccountingAccount,
   AccountingEntry,
@@ -160,7 +160,7 @@ export default function PainelContabilidadePage() {
           >
             <p className="text-xs uppercase tracking-wide text-taupe">{label}</p>
             <p className="mt-1 text-lg font-bold text-[#111111]">
-              {formatBRL(value ?? 0)}
+              {formatMZN(value ?? 0)}
             </p>
           </div>
         ))}
@@ -279,7 +279,7 @@ export default function PainelContabilidadePage() {
               <tr key={entry.id} className="border-t border-border">
                 <td className="px-4 py-3 font-medium">{entry.entryNumber}</td>
                 <td className="px-4 py-3">{entry.description}</td>
-                <td className="px-4 py-3">{formatBRL(entry.amountCents)}</td>
+                <td className="px-4 py-3">{formatMZN(entry.amountCents)}</td>
                 <td className="px-4 py-3">
                   <Badge variant="secondary">{entry.status}</Badge>
                 </td>

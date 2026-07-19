@@ -8,7 +8,7 @@ import { Minus, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
-import { formatBRL } from "@/lib/format";
+import { formatMZN } from "@/lib/format";
 import type { Cart } from "@/lib/types";
 
 export default function CartPage() {
@@ -116,7 +116,7 @@ export default function CartPage() {
                       {item.product.name}
                     </Link>
                     <p className="mt-1 text-sm font-bold text-[#111111]">
-                      {formatBRL(item.product.priceCents)}
+                      {formatMZN(item.product.priceCents)}
                     </p>
                     <div className="mt-auto flex items-center gap-2 pt-3">
                       <Button
@@ -160,7 +160,7 @@ export default function CartPage() {
             <div className="mt-4 flex justify-between text-sm">
               <span className="text-taupe">Subtotal</span>
               <span className="font-bold text-charcoal">
-                {formatBRL(cart?.subtotalCents ?? 0)}
+                {formatMZN(cart?.subtotalCents ?? 0)}
               </span>
             </div>
             <p className="mt-2 text-xs text-taupe">

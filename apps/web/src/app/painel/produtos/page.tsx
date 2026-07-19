@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { api } from "@/lib/api";
-import { formatBRL } from "@/lib/format";
+import { formatMZN } from "@/lib/format";
 import type { Paginated, Product } from "@/lib/types";
 
 export default function PainelProdutosPage() {
@@ -109,7 +109,7 @@ export default function PainelProdutosPage() {
                     </td>
                     <td className="px-4 py-3 text-taupe">{product.sku}</td>
                     <td className="px-4 py-3 font-medium">
-                      {formatBRL(product.priceCents)}
+                      {formatMZN(product.priceCents)}
                     </td>
                     <td className="px-4 py-3">{product.stock}</td>
                     <td className="px-4 py-3">

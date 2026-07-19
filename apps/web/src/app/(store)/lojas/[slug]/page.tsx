@@ -71,7 +71,7 @@ export default async function ShopDetailPage({ params }: ShopPageProps) {
             </p>
           )}
           <p className="mt-2 text-xs text-white/70">
-            {[shop.city, shop.state].filter(Boolean).join(", ") || "Brasil"}
+            {[shop.city, shop.state].filter(Boolean).join(", ") || "Moçambique"}
             {shop._count?.products != null
               ? ` · ${shop._count.products} produtos`
               : ""}

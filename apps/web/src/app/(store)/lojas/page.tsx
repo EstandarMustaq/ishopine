@@ -79,7 +79,7 @@ export default async function LojasPage({ searchParams }: LojasPageProps) {
               )}
               <p className="mt-2 text-xs text-taupe">
                 {[shop.city, shop.state].filter(Boolean).join(", ") ||
-                  "Brasil"}
+                  "Moçambique"}
                 {shop._count?.products != null
                   ? ` · ${shop._count.products} produtos`
                   : ""}
