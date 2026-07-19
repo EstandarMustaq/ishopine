@@ -1,7 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { StartConversationButton } from "@/components/messages/start-conversation-button";
 import { ProductCard } from "@/components/products/product-card";
+import { FollowShopButton } from "@/components/shops/follow-shop-button";
 import { apiFetch } from "@/lib/api";
 import type { Paginated, Product, Shop } from "@/lib/types";
 
@@ -74,6 +76,15 @@ export default async function ShopDetailPage({ params }: ShopPageProps) {
               ? ` · ${shop._count.products} produtos`
               : ""}
           </p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <FollowShopButton shopId={shop.id} />
+            <StartConversationButton
+              shopId={shop.id}
+              subject={`Contato — ${shop.name}`}
+              label="Mensagem"
+              className="border-white/70 bg-white/10 text-white hover:bg-white/20 hover:text-white"
+            />
+          </div>
         </div>
       </section>
 

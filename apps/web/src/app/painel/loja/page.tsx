@@ -72,7 +72,7 @@ export default function PainelLojaPage() {
     <div className="max-w-2xl">
       <h1 className="text-2xl font-bold text-charcoal">Minha loja</h1>
       <p className="mt-1 text-sm text-taupe">
-        Abra ou gerencie sua vitrine no mercado Nkateko.
+        Abra ou gerencie sua vitrine no mercado iShoppine.
       </p>
 
       {loading ? (

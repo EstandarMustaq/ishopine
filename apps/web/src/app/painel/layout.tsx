@@ -42,7 +42,7 @@ export default function PainelLayout({
                 <DashboardSidebar />
               </SheetContent>
             </Sheet>
-            <span className="text-lg font-bold text-[#61005D]">Nkateko</span>
+            <span className="text-lg font-bold text-[#61005D]">iShoppine</span>
           </div>
           <div className="flex-1 p-4 sm:p-6 lg:p-8">{children}</div>
         </div>

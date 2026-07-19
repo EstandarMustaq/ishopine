@@ -11,11 +11,11 @@ const montserrat = Montserrat({
 
 export const metadata: Metadata = {
   title: {
-    default: "Nkateko — mercado aberto de bens",
-    template: "%s · Nkateko",
+    default: "iShoppine — mercado aberto de bens",
+    template: "%s · iShoppine",
   },
   description:
-    "Nkateko Investment and Service — mercado aberto de bens. Compre e venda com segurança.",
+    "iShoppine — mercado aberto de bens. Compre e venda com segurança. Operado por Nkateko Investment and Service.",
 };
 
 export default function RootLayout({

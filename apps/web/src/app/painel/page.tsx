@@ -41,7 +41,7 @@ export default function PainelOverviewPage() {
         Visão geral
       </h1>
       <p className="mt-1 text-sm text-taupe">
-        Indicadores do mercado Nkateko.
+        Indicadores do mercado iShoppine.
       </p>
 
       <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">

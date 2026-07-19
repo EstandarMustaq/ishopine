@@ -47,7 +47,7 @@ function TwoFactorForm() {
 
   return (
     <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-4 py-12">
-      <h1 className="text-3xl font-bold text-[#61005D]">Nkateko</h1>
+      <h1 className="text-3xl font-bold text-[#61005D]">iShoppine</h1>
       <p className="mt-2 text-sm text-taupe">
         Confirme o código do autenticador para continuar
       </p>

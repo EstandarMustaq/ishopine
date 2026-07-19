@@ -5,9 +5,9 @@ export function SiteFooter() {
     <footer className="mt-auto border-t border-[var(--brand-nav-divider)] bg-beige">
       <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-12 sm:px-6 md:flex-row md:items-start md:justify-between">
         <div>
-          <p className="text-2xl font-bold text-[#61005D]">Nkateko</p>
+          <p className="text-2xl font-bold text-[#61005D]">iShoppine</p>
           <p className="mt-1 text-sm font-medium text-charcoal">
-            Nkateko Investment and Service
+            Operado por Nkateko Investment and Service
           </p>
           <p className="mt-2 max-w-sm text-sm text-taupe">
             Mercado aberto de bens — compre e venda com confiança.
@@ -37,21 +37,24 @@ export function SiteFooter() {
             <Link href="/conta" className="text-taupe hover:text-[#61005D]">
               Meus pedidos
             </Link>
+            <Link href="/favoritos" className="text-taupe hover:text-[#61005D]">
+              Favoritos
+            </Link>
           </div>
           <div className="flex flex-col gap-2">
             <p className="font-semibold text-charcoal">Contato</p>
             <a
-              href="mailto:contato@nkateko.com"
+              href="mailto:contato@ishoppine.com"
               className="text-taupe hover:text-[#61005D]"
             >
-              contato@nkateko.com
+              contato@ishoppine.com
             </a>
           </div>
         </div>
       </div>
       <div className="border-t border-[var(--brand-nav-divider)] py-4 text-center text-xs text-taupe">
         © {new Date().getFullYear()} Nkateko Investment and Service. Todos os
-        direitos reservados.
+        direitos reservados. iShoppine é a plataforma de mercado.
       </div>
     </footer>
   );

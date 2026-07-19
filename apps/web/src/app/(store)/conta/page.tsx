@@ -66,17 +66,31 @@ export default function AccountPage() {
       <h1 className="text-3xl font-bold text-charcoal">Olá, {user.name}</h1>
       <p className="mt-2 text-sm text-taupe">{user.email}</p>
 
-      {(user.canSell ||
-        user.platformRole === "SELLER" ||
-        user.platformRole === "PLATFORM_ADMIN" ||
-        user.platformRole === "PLATFORM_OPERATOR" ||
-        user.role === "SELLER" ||
-        user.role === "PLATFORM_ADMIN" ||
-        user.role === "PLATFORM_OPERATOR") && (
-        <Button asChild variant="outline" className="mt-4" size="sm">
-          <Link href="/painel">Ir para o painel</Link>
+      <div className="mt-4 flex flex-wrap gap-2">
+        {(user.canSell ||
+          user.platformRole === "SELLER" ||
+          user.platformRole === "PLATFORM_ADMIN" ||
+          user.platformRole === "PLATFORM_OPERATOR" ||
+          user.role === "SELLER" ||
+          user.role === "PLATFORM_ADMIN" ||
+          user.role === "PLATFORM_OPERATOR") && (
+          <Button asChild variant="outline" size="sm">
+            <Link href="/painel">Ir para o painel</Link>
+          </Button>
+        )}
+        <Button asChild variant="outline" size="sm">
+          <Link href="/favoritos">Favoritos</Link>
         </Button>
-      )}
+        <Button asChild variant="outline" size="sm">
+          <Link href="/mensagens">Mensagens</Link>
+        </Button>
+        <Button asChild variant="outline" size="sm">
+          <Link href="/notificacoes">Notificações</Link>
+        </Button>
+        <Button asChild variant="outline" size="sm">
+          <Link href="/conta/disputas">Disputas</Link>
+        </Button>
+      </div>
 
       <h2 className="mt-10 text-xl font-semibold">Pedidos de compra</h2>
 
@@ -119,9 +133,16 @@ export default function AccountPage() {
                   </li>
                 ))}
               </ul>
-              <p className="mt-4 text-sm font-bold text-[#61005D]">
-                Total {formatBRL(order.totalCents)}
-              </p>
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
+                <p className="text-sm font-bold text-[#61005D]">
+                  Total {formatBRL(order.totalCents)}
+                </p>
+                <Button variant="ghost" size="sm" asChild>
+                  <Link href={`/conta/disputas?orderId=${order.id}`}>
+                    Abrir disputa
+                  </Link>
+                </Button>
+              </div>
             </li>
           ))}
         </ul>

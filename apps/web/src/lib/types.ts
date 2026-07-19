@@ -314,3 +314,95 @@ export interface ApiErrorBody {
   message?: string | string[];
   statusCode?: number;
 }
+
+export interface WishlistItem {
+  id: string;
+  productId: string;
+  product: Product;
+  createdAt?: string;
+}
+
+export interface Review {
+  id: string;
+  productId: string;
+  userId: string;
+  rating: number;
+  title?: string | null;
+  comment?: string | null;
+  createdAt: string;
+  user?: Pick<User, "id" | "name" | "avatarUrl">;
+}
+
+export interface NotificationItem {
+  id: string;
+  title: string;
+  body?: string | null;
+  type?: string | null;
+  linkUrl?: string | null;
+  isRead?: boolean;
+  readAt?: string | null;
+  createdAt: string;
+}
+
+export interface Conversation {
+  id: string;
+  subject?: string | null;
+  shopId: string;
+  productId?: string | null;
+  shop?: Pick<Shop, "id" | "name" | "slug" | "logoUrl">;
+  product?: Pick<Product, "id" | "name" | "slug"> | null;
+  lastMessageAt?: string | null;
+  lastMessage?: Pick<Message, "id" | "body" | "createdAt" | "senderId"> | null;
+  unreadCount?: number;
+  createdAt?: string;
+}
+
+export interface Message {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  body: string;
+  createdAt: string;
+  sender?: Pick<User, "id" | "name" | "avatarUrl">;
+}
+
+export interface Coupon {
+  id: string;
+  code: string;
+  description?: string | null;
+  discountType: "PERCENT" | "FIXED";
+  discountValue: number;
+  minSubtotalCents?: number | null;
+  maxUses?: number | null;
+  usedCount?: number;
+  startsAt?: string | null;
+  endsAt?: string | null;
+  isActive: boolean;
+  createdAt?: string;
+}
+
+export interface CouponValidation {
+  valid: boolean;
+  code: string;
+  discountCents: number;
+  message?: string;
+}
+
+export type DisputeStatus =
+  | "OPEN"
+  | "IN_REVIEW"
+  | "RESOLVED"
+  | "REJECTED"
+  | "CLOSED";
+
+export interface Dispute {
+  id: string;
+  orderId: string;
+  reason: string;
+  description: string;
+  status: DisputeStatus;
+  createdAt: string;
+  updatedAt?: string;
+  order?: Pick<Order, "id" | "orderNumber" | "totalCents" | "status">;
+  user?: Pick<User, "id" | "name" | "email">;
+}

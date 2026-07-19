@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { api, getGoogleAuthUrl } from "@/lib/api";
+import { api, DEV_CODE_STORAGE_KEY, getGoogleAuthUrl } from "@/lib/api";
 import type { RegisterResult } from "@/lib/types";
 
 export default function RegisterPage() {
@@ -36,7 +36,7 @@ export default function RegisterPage() {
       });
 
       if (data.devCode) {
-        sessionStorage.setItem("nkateko-dev-code", data.devCode);
+        sessionStorage.setItem(DEV_CODE_STORAGE_KEY, data.devCode);
       }
 
       toast.success(data.message || "Conta criada. Verifique seu e-mail.");
@@ -54,7 +54,7 @@ export default function RegisterPage() {
 
   return (
     <div className="mx-auto flex min-h-[70vh] max-w-md flex-col justify-center px-4 py-12">
-      <h1 className="text-3xl font-bold text-[#61005D]">Nkateko</h1>
+      <h1 className="text-3xl font-bold text-[#61005D]">iShoppine</h1>
       <p className="mt-2 text-sm text-taupe">
         Crie sua conta para comprar e vender
       </p>

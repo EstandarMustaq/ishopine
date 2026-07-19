@@ -32,7 +32,7 @@ export default async function LojasPage({ searchParams }: LojasPageProps) {
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
       <h1 className="text-3xl font-bold text-charcoal">Lojas</h1>
       <p className="mt-2 text-sm text-taupe">
-        Explore vendedores do mercado aberto Nkateko.
+        Explore vendedores do mercado aberto iShoppine.
       </p>
 
       <form className="mt-6 flex gap-2" action="/lojas">

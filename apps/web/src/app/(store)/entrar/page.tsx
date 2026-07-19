@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { api, getGoogleAuthUrl } from "@/lib/api";
+import { api, DEV_CODE_STORAGE_KEY, getGoogleAuthUrl } from "@/lib/api";
 import { postLoginPath, useAuthStore } from "@/lib/auth-store";
 import type { AuthResponse, LoginResult } from "@/lib/types";
 
@@ -51,7 +51,7 @@ function LoginForm() {
 
       if ("requiresEmailVerification" in data && data.requiresEmailVerification) {
         if (data.devCode) {
-          sessionStorage.setItem("nkateko-dev-code", data.devCode);
+          sessionStorage.setItem(DEV_CODE_STORAGE_KEY, data.devCode);
         }
         toast.message(data.message ?? "Verifique seu e-mail antes de continuar.");
         router.push(`/verificar-email?email=${encodeURIComponent(data.email)}`);
@@ -78,7 +78,7 @@ function LoginForm() {
 
   return (
     <div className="mx-auto flex min-h-[70vh] max-w-md flex-col justify-center px-4 py-12">
-      <h1 className="text-3xl font-bold text-[#61005D]">Nkateko</h1>
+      <h1 className="text-3xl font-bold text-[#61005D]">iShoppine</h1>
       <p className="mt-2 text-sm text-taupe">
         Entre para comprar ou vender no mercado aberto
       </p>
@@ -176,8 +176,8 @@ function LoginForm() {
 
       <p className="mt-4 rounded-[12px] bg-beige px-3 py-2 text-center text-xs text-taupe">
         Demo:{" "}
-        <span className="font-medium text-charcoal">admin@nkateko.com</span> /{" "}
-        <span className="font-medium text-charcoal">Nkateko@2026</span>
+        <span className="font-medium text-charcoal">admin@ishoppine.com</span> /{" "}
+        <span className="font-medium text-charcoal">IShoppine@2026</span>
       </p>
     </div>
   );

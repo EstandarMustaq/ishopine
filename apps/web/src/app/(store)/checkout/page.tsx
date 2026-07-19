@@ -17,7 +17,13 @@ import {
 import { api } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
 import { formatBRL } from "@/lib/format";
-import type { Address, Cart, Order, PaymentMethod } from "@/lib/types";
+import type {
+  Address,
+  Cart,
+  CouponValidation,
+  Order,
+  PaymentMethod,
+} from "@/lib/types";
 
 const paymentLabels: Record<PaymentMethod, string> = {
   PIX: "Pix",
@@ -37,6 +43,9 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [showNewAddress, setShowNewAddress] = useState(false);
+  const [couponCode, setCouponCode] = useState("");
+  const [coupon, setCoupon] = useState<CouponValidation | null>(null);
+  const [validatingCoupon, setValidatingCoupon] = useState(false);
   const [newAddress, setNewAddress] = useState({
     street: "",
     number: "",
@@ -93,6 +102,40 @@ export default function CheckoutPage() {
     }
   }
 
+  async function validateCoupon() {
+    if (!cart || !couponCode.trim()) {
+      toast.error("Informe um código de cupom");
+      return;
+    }
+    setValidatingCoupon(true);
+    try {
+      const result = await api<CouponValidation>("/coupons/validate", {
+        method: "POST",
+        body: JSON.stringify({
+          code: couponCode.trim(),
+          subtotalCents: cart.subtotalCents,
+        }),
+      });
+      if (!result.valid) {
+        setCoupon(null);
+        toast.error(result.message || "Cupom inválido");
+        return;
+      }
+      setCoupon(result);
+      toast.success(
+        result.message ||
+          `Cupom aplicado: −${formatBRL(result.discountCents)}`,
+      );
+    } catch (error) {
+      setCoupon(null);
+      toast.error(
+        error instanceof Error ? error.message : "Erro ao validar cupom",
+      );
+    } finally {
+      setValidatingCoupon(false);
+    }
+  }
+
   async function handleCheckout() {
     if (!addressId) {
       toast.error("Selecione ou cadastre um endereço");
@@ -102,7 +145,11 @@ export default function CheckoutPage() {
     try {
       const order = await api<Order>("/orders/checkout", {
         method: "POST",
-        body: JSON.stringify({ addressId, paymentMethod }),
+        body: JSON.stringify({
+          addressId,
+          paymentMethod,
+          couponCode: coupon?.valid ? coupon.code : undefined,
+        }),
       });
       toast.success(`Pedido ${order.orderNumber} realizado!`);
       router.push("/conta");
@@ -146,6 +193,9 @@ export default function CheckoutPage() {
       </div>
     );
   }
+
+  const discountCents = coupon?.valid ? coupon.discountCents : 0;
+  const totalCents = Math.max(0, cart.subtotalCents - discountCents);
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
@@ -290,10 +340,50 @@ export default function CheckoutPage() {
           </div>
         </section>
 
+        <section className="rounded-[12px] border border-border p-5">
+          <h2 className="font-semibold">Cupom</h2>
+          <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+            <Input
+              value={couponCode}
+              onChange={(e) => {
+                setCouponCode(e.target.value.toUpperCase());
+                setCoupon(null);
+              }}
+              placeholder="Código do cupom"
+              className="sm:flex-1"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              disabled={validatingCoupon}
+              onClick={() => void validateCoupon()}
+            >
+              {validatingCoupon ? "Validando..." : "Aplicar"}
+            </Button>
+          </div>
+          {coupon?.valid && (
+            <p className="mt-2 text-sm text-[#61005D]">
+              Cupom {coupon.code} aplicado (−{formatBRL(coupon.discountCents)})
+            </p>
+          )}
+        </section>
+
         <section className="rounded-[12px] bg-beige p-5">
           <div className="flex justify-between text-sm">
             <span className="text-taupe">Subtotal</span>
             <span className="font-bold">{formatBRL(cart.subtotalCents)}</span>
+          </div>
+          {discountCents > 0 && (
+            <div className="mt-2 flex justify-between text-sm">
+              <span className="text-taupe">Desconto</span>
+              <span className="font-bold text-[#61005D]">
+                −{formatBRL(discountCents)}
+              </span>
+            </div>
+          )}
+          <div className="mt-2 flex justify-between text-sm">
+            <span className="text-taupe">Total</span>
+            <span className="font-bold">{formatBRL(totalCents)}</span>
           </div>
           <p className="mt-2 text-xs text-taupe">
             O frete será calculado pela loja no pedido.

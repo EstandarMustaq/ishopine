@@ -2,6 +2,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AddToCartButton } from "./add-to-cart-button";
+import { StartConversationButton } from "@/components/messages/start-conversation-button";
+import { ProductReviews } from "@/components/products/product-reviews";
+import { WishlistButton } from "@/components/products/wishlist-button";
 import { apiFetch } from "@/lib/api";
 import { formatBRL } from "@/lib/format";
 import type { Product } from "@/lib/types";
@@ -61,6 +64,9 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
             className="object-cover"
             sizes="(max-width: 1024px) 100vw, 50vw"
           />
+          <div className="absolute right-3 top-3 z-10">
+            <WishlistButton productId={product.id} />
+          </div>
         </div>
 
         <div>
@@ -128,14 +134,24 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
             </dd>
           </dl>
 
-          <div className="mt-8">
+          <div className="mt-8 flex flex-wrap gap-3">
             <AddToCartButton
               productId={product.id}
               disabled={available <= 0}
             />
+            {product.shopId && (
+              <StartConversationButton
+                shopId={product.shopId}
+                productId={product.id}
+                subject={product.name}
+                label="Falar com vendedor"
+              />
+            )}
           </div>
         </div>
       </div>
+
+      <ProductReviews productId={product.id} />
     </div>
   );
 }
