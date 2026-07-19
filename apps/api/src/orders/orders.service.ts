@@ -38,6 +38,7 @@ export class OrdersService {
       addressId?: string;
       paymentMethod?: PaymentMethod;
       notes?: string;
+      couponCode?: string;
     },
   ) {
     const buyer = await this.prisma.user.findUnique({ where: { id: buyerId } });
@@ -76,7 +77,7 @@ export class OrdersService {
       }
     }
 
-    const orgSlug = this.config.get<string>('PLATFORM_ORG_SLUG', 'nkateko');
+    const orgSlug = this.config.get<string>('PLATFORM_ORG_SLUG', 'ishoppine');
     const settings = await this.prisma.platformSettings.findFirst({
       where: { organization: { slug: orgSlug } },
     });
@@ -92,8 +93,33 @@ export class OrdersService {
       byShop.set(item.product.shopId, list);
     }
 
+    let coupon:
+      | {
+          id: string;
+          code: string;
+          type: 'PERCENT' | 'FIXED';
+          value: number;
+          minSubtotalCents: number;
+          maxUses: number | null;
+          usedCount: number;
+          isActive: boolean;
+          startsAt: Date;
+          endsAt: Date | null;
+        }
+      | null = null;
+
+    if (data.couponCode) {
+      coupon = await this.prisma.coupon.findUnique({
+        where: { code: data.couponCode.trim().toUpperCase() },
+      });
+      if (!coupon?.isActive) {
+        throw new BadRequestException('Cupom inválido');
+      }
+    }
+
     const orders = await this.prisma.$transaction(async (tx) => {
       const createdOrders = [];
+      let couponApplied = false;
 
       for (const [sellerShopId, items] of byShop) {
         const subtotalCents = items.reduce(
@@ -105,7 +131,30 @@ export class OrdersService {
         const platformFeeCents = Math.round(
           (subtotalCents * commissionBps) / 10_000,
         );
-        const totalCents = subtotalCents + shippingCents;
+
+        let discountCents = 0;
+        let appliedCode: string | undefined;
+        if (coupon && !couponApplied) {
+          const now = new Date();
+          if (
+            coupon.startsAt <= now &&
+            (!coupon.endsAt || coupon.endsAt >= now) &&
+            (coupon.maxUses == null || coupon.usedCount < coupon.maxUses) &&
+            subtotalCents >= coupon.minSubtotalCents
+          ) {
+            discountCents =
+              coupon.type === 'PERCENT'
+                ? Math.floor((subtotalCents * coupon.value) / 100)
+                : Math.min(coupon.value, subtotalCents);
+            appliedCode = coupon.code;
+            couponApplied = true;
+          }
+        }
+
+        const totalCents = Math.max(
+          0,
+          subtotalCents + shippingCents - discountCents,
+        );
         const orderNumber = await this.nextOrderNumber(tx);
 
         for (const item of items) {
@@ -126,9 +175,27 @@ export class OrdersService {
             paymentMethod: data.paymentMethod ?? PaymentMethod.PIX,
             subtotalCents,
             shippingCents,
+            discountCents,
             platformFeeCents,
             totalCents,
             notes: data.notes,
+            couponCode: appliedCode,
+            events: {
+              create: {
+                status: OrderStatus.PENDING,
+                note: 'Pedido criado no iShoppine',
+              },
+            },
+            ...(coupon && appliedCode
+              ? {
+                  couponRedemptions: {
+                    create: {
+                      couponId: coupon.id,
+                      amountCents: discountCents,
+                    },
+                  },
+                }
+              : {}),
             items: {
               create: items.map((item) => ({
                 productId: item.productId,
@@ -158,6 +225,13 @@ export class OrdersService {
         });
 
         createdOrders.push(created);
+      }
+
+      if (coupon && couponApplied) {
+        await tx.coupon.update({
+          where: { id: coupon.id },
+          data: { usedCount: { increment: 1 } },
+        });
       }
 
       await tx.cartItem.deleteMany({ where: { cartId: cart.id } });

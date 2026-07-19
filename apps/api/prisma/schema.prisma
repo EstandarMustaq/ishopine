@@ -7,7 +7,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-/// Platform-level roles (Nkateko operators)
+/// Platform-level roles (iShoppine operators)
 enum PlatformRole {
   BUYER
   SELLER
@@ -96,6 +96,28 @@ enum VerificationPurpose {
   PASSWORD_RESET
 }
 
+enum NotificationType {
+  ORDER
+  MESSAGE
+  REVIEW
+  DISPUTE
+  SYSTEM
+  PROMO
+}
+
+enum DisputeStatus {
+  OPEN
+  IN_REVIEW
+  RESOLVED_BUYER
+  RESOLVED_SELLER
+  CLOSED
+}
+
+enum CouponType {
+  PERCENT
+  FIXED
+}
+
 /// Tenant root — today one platform org; ready for multi-tenant later
 model Organization {
   id          String   @id @default(cuid())
@@ -123,8 +145,8 @@ model Organization {
 model PlatformSettings {
   id                String @id @default(cuid())
   organizationId    String @unique
-  marketplaceName   String @default("Nkateko Marketplace")
-  tagline           String @default("Mercado aberto de bens — compra e venda")
+  marketplaceName   String @default("iShoppine")
+  tagline           String @default("Mercado aberto — compre e venda com confiança")
   currency          String @default("BRL")
   shippingFlatCents Int    @default(4900)
   freeShippingCents Int    @default(99900)
@@ -172,6 +194,14 @@ model User {
   verificationCodes EmailVerificationCode[]
   authSessions      AuthSession[]
   auditLogs         AuditLog[]
+  wishlistItems     WishlistItem[]
+  reviews           Review[]
+  notifications     Notification[]
+  conversationsAsBuyer Conversation[]   @relation("ConversationBuyer")
+  messagesSent      Message[]
+  disputesOpened    Dispute[]           @relation("DisputeOpener")
+  shopFollows       ShopFollow[]
+  couponsCreated    Coupon[]            @relation("CouponCreator")
 
   @@unique([organizationId, email])
   @@index([email])
@@ -252,11 +282,14 @@ model Shop {
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
 
-  organization Organization @relation(fields: [organizationId], references: [id])
-  owner        User         @relation("ShopOwner", fields: [ownerId], references: [id])
-  members      ShopMember[]
-  products     Product[]
-  orders       Order[]      @relation("SellerOrders")
+  organization  Organization   @relation(fields: [organizationId], references: [id])
+  owner         User           @relation("ShopOwner", fields: [ownerId], references: [id])
+  members       ShopMember[]
+  products      Product[]
+  orders        Order[]        @relation("SellerOrders")
+  conversations Conversation[]
+  followers     ShopFollow[]
+  reviews       Review[]
 
   @@unique([organizationId, slug])
   @@index([status])
@@ -349,12 +382,15 @@ model Product {
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
 
-  shop       Shop                @relation(fields: [shopId], references: [id], onDelete: Cascade)
-  category   Category?           @relation(fields: [categoryId], references: [id])
-  images     ProductImage[]
-  cartItems  CartItem[]
-  orderItems OrderItem[]
-  movements  InventoryMovement[]
+  shop          Shop                @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  category      Category?           @relation(fields: [categoryId], references: [id])
+  images        ProductImage[]
+  cartItems     CartItem[]
+  orderItems    OrderItem[]
+  movements     InventoryMovement[]
+  wishlistItems WishlistItem[]
+  reviews       Review[]
+  conversations Conversation[]
 
   @@unique([shopId, sku])
   @@unique([shopId, slug])
@@ -432,6 +468,10 @@ model Order {
   items             OrderItem[]
   payments          Payment[]
   accountingEntries AccountingEntry[]
+  events            OrderEvent[]
+  couponRedemptions CouponRedemption[]
+  disputes          Dispute[]
+  couponCode        String?
 
   @@index([buyerId])
   @@index([sellerShopId])
@@ -552,4 +592,169 @@ model MediaAsset {
 
   @@index([provider])
   @@index([folder])
+}
+
+model WishlistItem {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@index([userId])
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  shopId    String
+  orderId   String?
+  rating    Int
+  title     String?
+  comment   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  shop    Shop    @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@index([productId])
+  @@index([shopId])
+  @@index([rating])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType @default(SYSTEM)
+  title     String
+  body      String
+  href      String?
+  readAt    DateTime?
+  metadata  Json?
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt])
+  @@index([createdAt])
+}
+
+model Conversation {
+  id        String   @id @default(cuid())
+  buyerId   String
+  shopId    String
+  productId String?
+  subject   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  buyer    User      @relation("ConversationBuyer", fields: [buyerId], references: [id], onDelete: Cascade)
+  shop     Shop      @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  product  Product?  @relation(fields: [productId], references: [id], onDelete: SetNull)
+  messages Message[]
+
+  @@index([buyerId, shopId])
+  @@index([buyerId])
+  @@index([shopId])
+}
+
+model Message {
+  id             String   @id @default(cuid())
+  conversationId String
+  senderId       String
+  body           String
+  readAt         DateTime?
+  createdAt      DateTime @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
+}
+
+model Coupon {
+  id              String     @id @default(cuid())
+  code            String     @unique
+  type            CouponType
+  value           Int
+  minSubtotalCents Int       @default(0)
+  maxUses         Int?
+  usedCount       Int        @default(0)
+  startsAt        DateTime   @default(now())
+  endsAt          DateTime?
+  isActive        Boolean    @default(true)
+  createdById     String?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  createdBy   User?              @relation("CouponCreator", fields: [createdById], references: [id])
+  redemptions CouponRedemption[]
+
+  @@index([code])
+  @@index([isActive])
+}
+
+model CouponRedemption {
+  id          String   @id @default(cuid())
+  couponId    String
+  orderId     String
+  amountCents Int
+  createdAt   DateTime @default(now())
+
+  coupon Coupon @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  order  Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@unique([couponId, orderId])
+}
+
+model Dispute {
+  id          String        @id @default(cuid())
+  orderId     String
+  openedById  String
+  reason      String
+  description String
+  status      DisputeStatus @default(OPEN)
+  resolution  String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  resolvedAt  DateTime?
+
+  order    Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  openedBy User  @relation("DisputeOpener", fields: [openedById], references: [id])
+
+  @@index([orderId])
+  @@index([status])
+  @@index([openedById])
+}
+
+model ShopFollow {
+  id        String   @id @default(cuid())
+  userId    String
+  shopId    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, shopId])
+  @@index([shopId])
+}
+
+model OrderEvent {
+  id        String      @id @default(cuid())
+  orderId   String
+  status    OrderStatus
+  note      String?
+  createdAt DateTime    @default(now())
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId, createdAt])
 }

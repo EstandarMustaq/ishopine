@@ -15,6 +15,16 @@ const unsplash = (id: string) =>
   `https://images.unsplash.com/${id}?auto=format&fit=crop&w=1200&q=80`;
 
 async function main() {
+  await prisma.message.deleteMany();
+  await prisma.conversation.deleteMany();
+  await prisma.notification.deleteMany();
+  await prisma.review.deleteMany();
+  await prisma.wishlistItem.deleteMany();
+  await prisma.shopFollow.deleteMany();
+  await prisma.couponRedemption.deleteMany();
+  await prisma.coupon.deleteMany();
+  await prisma.dispute.deleteMany();
+  await prisma.orderEvent.deleteMany();
   await prisma.accountingEntry.deleteMany();
   await prisma.payment.deleteMany();
   await prisma.orderItem.deleteMany();
@@ -39,16 +49,16 @@ async function main() {
 
   const org = await prisma.organization.create({
     data: {
-      name: 'Nkateko Investment and Service',
-      slug: 'nkateko',
+      name: 'iShoppine',
+      slug: 'ishoppine',
       legalName: 'Nkateko Investment and Service',
-      supportEmail: 'contato@nkateko.com',
+      supportEmail: 'contato@ishoppine.com',
       supportPhone: '+55 11 4000-2026',
       primaryColor: '#61005D',
       settings: {
         create: {
-          marketplaceName: 'Nkateko Marketplace',
-          tagline: 'Mercado aberto de bens — compra e venda',
+          marketplaceName: 'iShoppine',
+          tagline: 'Mercado aberto — compre e venda com confiança',
           shippingFlatCents: 4900,
           freeShippingCents: 99900,
           requireSeller2fa: true,
@@ -59,7 +69,7 @@ async function main() {
     },
   });
 
-  const passwordHash = await bcrypt.hash('Nkateko@2026', 10);
+  const passwordHash = await bcrypt.hash('IShoppine@2026', 10);
   const now = new Date();
 
   /**
@@ -72,8 +82,8 @@ async function main() {
   const admin = await prisma.user.create({
     data: {
       organizationId: org.id,
-      email: 'admin@nkateko.com',
-      name: 'Admin Nkateko',
+      email: 'admin@ishoppine.com',
+      name: 'Admin iShoppine',
       passwordHash,
       platformRole: PlatformRole.PLATFORM_ADMIN,
       phone: '+55 11 90000-0001',
@@ -88,7 +98,7 @@ async function main() {
   const operator = await prisma.user.create({
     data: {
       organizationId: org.id,
-      email: 'operador@nkateko.com',
+      email: 'operador@ishoppine.com',
       name: 'Operador Plataforma',
       passwordHash,
       platformRole: PlatformRole.PLATFORM_OPERATOR,
@@ -104,7 +114,7 @@ async function main() {
   const seller1 = await prisma.user.create({
     data: {
       organizationId: org.id,
-      email: 'vendedor1@nkateko.com',
+      email: 'vendedor1@ishoppine.com',
       name: 'Casa Atlas',
       passwordHash,
       platformRole: PlatformRole.SELLER,
@@ -120,7 +130,7 @@ async function main() {
   const seller2 = await prisma.user.create({
     data: {
       organizationId: org.id,
-      email: 'vendedor2@nkateko.com',
+      email: 'vendedor2@ishoppine.com',
       name: 'Studio Horizonte',
       passwordHash,
       platformRole: PlatformRole.SELLER,
@@ -136,7 +146,7 @@ async function main() {
   const buyer = await prisma.user.create({
     data: {
       organizationId: org.id,
-      email: 'comprador@nkateko.com',
+      email: 'comprador@ishoppine.com',
       name: 'Ana Compradora',
       passwordHash,
       platformRole: PlatformRole.BUYER,
@@ -499,15 +509,47 @@ async function main() {
   void shopAtlas;
   void shopHorizonte;
 
-  console.log('Seed Nkateko concluído');
-  console.log('Org: Nkateko Investment and Service (slug=nkateko)');
-  console.log('Admin: admin@nkateko.com / Nkateko@2026 (2FA desativado no seed)');
-  console.log('Operador: operador@nkateko.com / Nkateko@2026');
-  console.log('Vendedor 1: vendedor1@nkateko.com / Nkateko@2026 (loja Casa Atlas)');
+
+  await prisma.coupon.createMany({
+    data: [
+      {
+        code: 'ISHOP10',
+        type: 'PERCENT',
+        value: 10,
+        minSubtotalCents: 10000,
+        maxUses: 100,
+        createdById: admin.id,
+      },
+      {
+        code: 'BEMVINDO50',
+        type: 'FIXED',
+        value: 5000,
+        minSubtotalCents: 20000,
+        maxUses: 50,
+        createdById: admin.id,
+      },
+    ],
+  });
+
+  await prisma.notification.create({
+    data: {
+      userId: buyer.id,
+      type: 'SYSTEM',
+      title: 'Bem-vindo ao iShoppine',
+      body: 'Explore o mercado, favorite produtos e converse com vendedores.',
+      href: '/produtos',
+    },
+  });
+
+  console.log('Seed iShoppine concluído');
+  console.log('Org: iShoppine (slug=ishoppine) · operado por Nkateko Investment and Service');
+  console.log('Admin: admin@ishoppine.com / IShoppine@2026 (2FA desativado no seed)');
+  console.log('Operador: operador@ishoppine.com / IShoppine@2026');
+  console.log('Vendedor 1: vendedor1@ishoppine.com / IShoppine@2026 (loja Casa Atlas)');
   console.log(
-    'Vendedor 2: vendedor2@nkateko.com / Nkateko@2026 (loja Studio Horizonte)',
+    'Vendedor 2: vendedor2@ishoppine.com / IShoppine@2026 (loja Studio Horizonte)',
   );
-  console.log('Comprador: comprador@nkateko.com / Nkateko@2026');
+  console.log('Comprador: comprador@ishoppine.com / IShoppine@2026');
   console.log(
     'Para ativar 2FA: POST /api/auth/2fa/setup → POST /api/auth/2fa/enable',
   );

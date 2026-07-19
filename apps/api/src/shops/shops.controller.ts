@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -70,5 +71,23 @@ export class ShopsController {
     }>,
   ) {
     return this.shops.updateShop(id, user.id, body);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post(':id/follow')
+  follow(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.shops.follow(user.id, id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete(':id/follow')
+  unfollow(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.shops.unfollow(user.id, id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get(':id/following')
+  following(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.shops.isFollowing(user.id, id);
   }
 }

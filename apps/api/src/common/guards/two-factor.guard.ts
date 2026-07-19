@@ -58,7 +58,7 @@ export class TwoFactorGuard implements CanActivate {
       return true;
     }
 
-    const orgSlug = this.config.get<string>('PLATFORM_ORG_SLUG', 'nkateko');
+    const orgSlug = this.config.get<string>('PLATFORM_ORG_SLUG', 'ishoppine');
     const settings = await this.prisma.platformSettings.findFirst({
       where: { organization: { slug: orgSlug } },
     });

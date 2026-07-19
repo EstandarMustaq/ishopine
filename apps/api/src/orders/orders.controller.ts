@@ -30,6 +30,7 @@ export class OrdersController {
       addressId?: string;
       paymentMethod?: PaymentMethod;
       notes?: string;
+      couponCode?: string;
     },
   ) {
     return this.orders.checkout(user.id, body);
