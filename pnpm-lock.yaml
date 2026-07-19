@@ -46,6 +46,9 @@ importers:
       cloudinary:
         specifier: ^2.10.0
         version: 2.10.0
+      ms:
+        specifier: ^2.1.3
+        version: 2.1.3
       multer:
         specifier: ^2.2.0
         version: 2.2.0
@@ -89,6 +92,9 @@ importers:
       '@types/jest':
         specifier: ^30.0.0
         version: 30.0.0
+      '@types/ms':
+        specifier: ^2.1.0
+        version: 2.1.0
       '@types/multer':
         specifier: ^2.2.0
         version: 2.2.0
