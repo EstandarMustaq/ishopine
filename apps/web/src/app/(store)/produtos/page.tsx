@@ -90,8 +90,8 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
           className={cn(
             "rounded-full border px-4 py-2 text-sm font-medium transition-colors",
             !currentCategory
-              ? "border-[#61005D] bg-[#61005D] text-white"
-              : "border-border bg-white text-charcoal hover:border-[#61005D]",
+              ? "border-[#111111] bg-[#111111] text-white"
+              : "border-border bg-white text-charcoal hover:border-[#111111]",
           )}
         >
           Todos
@@ -103,8 +103,8 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
             className={cn(
               "rounded-full border px-4 py-2 text-sm font-medium transition-colors",
               currentCategory === category.slug
-                ? "border-[#61005D] bg-[#61005D] text-white"
-                : "border-border bg-white text-charcoal hover:border-[#61005D]",
+                ? "border-[#111111] bg-[#111111] text-white"
+                : "border-border bg-white text-charcoal hover:border-[#111111]",
             )}
           >
             {category.name}
@@ -121,7 +121,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
             className={cn(
               "rounded-[12px] px-3 py-1.5 text-sm font-medium",
               currentSort === option.value
-                ? "bg-beige text-[#61005D]"
+                ? "bg-beige text-[#111111]"
                 : "text-taupe hover:text-charcoal",
             )}
           >

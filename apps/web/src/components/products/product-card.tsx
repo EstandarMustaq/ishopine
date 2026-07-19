@@ -40,7 +40,7 @@ export function ProductCard({ product }: ProductCardProps) {
             {product.name}
           </h3>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-base font-bold text-[#61005D]">
+            <span className="text-base font-bold text-[#111111]">
               {formatBRL(product.priceCents)}
             </span>
             {product.compareAtCents &&

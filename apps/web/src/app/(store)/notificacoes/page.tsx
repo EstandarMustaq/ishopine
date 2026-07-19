@@ -120,7 +120,7 @@ export default function NotificacoesPage() {
                 key={item.id}
                 className={cn(
                   "rounded-[12px] border border-border p-4",
-                  isUnread && "border-[#61005D]/20 bg-[var(--brand-purple-light)]/40",
+                  isUnread && "border-[#111111]/20 bg-[var(--brand-purple-light)]/40",
                 )}
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">

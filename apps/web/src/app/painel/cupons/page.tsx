@@ -101,7 +101,7 @@ function CuponsContent() {
     <div>
       <h1 className="text-2xl font-bold text-charcoal">Cupons</h1>
       <p className="mt-1 text-sm text-taupe">
-        Gerencie códigos de desconto do iShoppine.
+        Gerencie códigos de desconto do iShopine.
       </p>
 
       <form
@@ -206,7 +206,7 @@ function CuponsContent() {
               className="flex flex-wrap items-center justify-between gap-3 rounded-[12px] border border-border p-4"
             >
               <div>
-                <p className="font-mono font-semibold text-[#61005D]">
+                <p className="font-mono font-semibold text-[#111111]">
                   {c.code}
                 </p>
                 <p className="mt-1 text-sm text-taupe">

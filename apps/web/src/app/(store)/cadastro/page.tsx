@@ -54,7 +54,7 @@ export default function RegisterPage() {
 
   return (
     <div className="mx-auto flex min-h-[70vh] max-w-md flex-col justify-center px-4 py-12">
-      <h1 className="text-3xl font-bold text-[#61005D]">iShoppine</h1>
+      <h1 className="text-3xl font-bold text-[#111111]">iShopine</h1>
       <p className="mt-2 text-sm text-taupe">
         Crie sua conta para comprar e vender
       </p>
@@ -117,7 +117,7 @@ export default function RegisterPage() {
 
       <p className="mt-6 text-center text-sm text-taupe">
         Já tem conta?{" "}
-        <Link href="/entrar" className="font-semibold text-[#61005D]">
+        <Link href="/entrar" className="font-semibold text-[#111111]">
           Entrar
         </Link>
       </p>

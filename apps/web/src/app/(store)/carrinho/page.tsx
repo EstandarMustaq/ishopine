@@ -111,11 +111,11 @@ export default function CartPage() {
                   <div className="flex flex-1 flex-col">
                     <Link
                       href={`/produtos/${item.product.id}`}
-                      className="font-semibold text-charcoal hover:text-[#61005D]"
+                      className="font-semibold text-charcoal hover:text-[#111111]"
                     >
                       {item.product.name}
                     </Link>
-                    <p className="mt-1 text-sm font-bold text-[#61005D]">
+                    <p className="mt-1 text-sm font-bold text-[#111111]">
                       {formatBRL(item.product.priceCents)}
                     </p>
                     <div className="mt-auto flex items-center gap-2 pt-3">

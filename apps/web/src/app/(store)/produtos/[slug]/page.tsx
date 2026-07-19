@@ -36,7 +36,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
       <nav className="mb-6 text-sm text-taupe">
-        <Link href="/produtos" className="hover:text-[#61005D]">
+        <Link href="/produtos" className="hover:text-[#111111]">
           Mercado
         </Link>
         <span className="mx-2">/</span>
@@ -44,7 +44,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
           <>
             <Link
               href={`/lojas/${product.shop.slug}`}
-              className="hover:text-[#61005D]"
+              className="hover:text-[#111111]"
             >
               {product.shop.name}
             </Link>
@@ -75,7 +75,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
               Vendido por{" "}
               <Link
                 href={`/lojas/${product.shop.slug}`}
-                className="text-[#61005D] hover:underline"
+                className="text-[#111111] hover:underline"
               >
                 {product.shop.name}
               </Link>
@@ -90,7 +90,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
             {product.name}
           </h1>
           <div className="mt-4 flex items-baseline gap-3">
-            <span className="text-2xl font-bold text-[#61005D]">
+            <span className="text-2xl font-bold text-[#111111]">
               {formatBRL(product.priceCents)}
             </span>
             {product.compareAtCents &&

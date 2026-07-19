@@ -32,7 +32,7 @@ export default async function LojasPage({ searchParams }: LojasPageProps) {
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
       <h1 className="text-3xl font-bold text-charcoal">Lojas</h1>
       <p className="mt-2 text-sm text-taupe">
-        Explore vendedores do mercado aberto iShoppine.
+        Explore vendedores do mercado aberto iShopine.
       </p>
 
       <form className="mt-6 flex gap-2" action="/lojas">
@@ -44,7 +44,7 @@ export default async function LojasPage({ searchParams }: LojasPageProps) {
         />
         <button
           type="submit"
-          className="h-10 rounded-button bg-[#61005D] px-4 text-sm font-medium text-white"
+          className="h-10 rounded-button bg-[#111111] px-4 text-sm font-medium text-white"
         >
           Buscar
         </button>
@@ -69,7 +69,7 @@ export default async function LojasPage({ searchParams }: LojasPageProps) {
               ) : null}
             </div>
             <div className="p-4">
-              <p className="font-semibold text-charcoal group-hover:text-[#61005D]">
+              <p className="font-semibold text-charcoal group-hover:text-[#111111]">
                 {shop.name}
               </p>
               {shop.description && (

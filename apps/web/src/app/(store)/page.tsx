@@ -40,34 +40,34 @@ export default async function HomePage() {
       <section className="relative min-h-[100svh] w-full overflow-hidden">
         <Image
           src={HERO_IMAGE}
-          alt="iShoppine — mercado aberto, compre e venda"
+          alt="iShopine — mercado aberto, compre e venda"
           fill
           priority
           className="object-cover"
           sizes="100vw"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-black/20" />
+        <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/70 via-zinc-900/35 to-zinc-900/20" />
         <div className="relative z-10 flex min-h-[100svh] flex-col justify-end px-4 pb-16 pt-28 sm:px-8 sm:pb-20 lg:px-16">
-          <div className="max-w-xl text-white">
-            <p className="animate-hero-in text-5xl font-bold tracking-tight sm:text-6xl md:text-7xl">
-              iShoppine
+          <div className="glass-dark animate-hero-in max-w-lg rounded-2xl p-6 sm:p-8">
+            <p className="text-4xl font-semibold tracking-tight sm:text-5xl md:text-6xl">
+              iShopine
             </p>
-            <h1 className="animate-hero-in-delay mt-4 text-2xl font-semibold leading-snug sm:text-3xl">
+            <h1 className="animate-hero-in-delay mt-3 text-lg font-medium leading-snug text-white/95 sm:text-xl">
               Compre e venda no mercado aberto
             </h1>
-            <p className="animate-hero-in-delay-2 mt-3 max-w-md text-base text-white/90 sm:text-lg">
-              Marketplace aberto onde qualquer pessoa compra e vende bens com
+            <p className="animate-hero-in-delay-2 mt-2 max-w-md text-[14px] leading-relaxed text-white/75">
+              Marketplace onde qualquer pessoa compra e vende bens com
               segurança.
             </p>
-            <div className="animate-hero-in-delay-2 mt-8 flex flex-wrap gap-3">
-              <Button asChild size="lg" className="shadow-none">
+            <div className="animate-hero-in-delay-2 mt-6 flex flex-wrap gap-2.5">
+              <Button asChild size="lg" className="bg-white text-zinc-900 hover:bg-zinc-100">
                 <Link href="/produtos">Explorar mercado</Link>
               </Button>
               <Button
                 asChild
                 size="lg"
                 variant="outline"
-                className="border-white/70 bg-white/10 text-white hover:bg-white/20 hover:text-white"
+                className="border-white/30 bg-transparent text-white hover:bg-white/10 hover:text-white"
               >
                 <Link href="/vender">Abrir loja</Link>
               </Button>
@@ -76,22 +76,22 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="bg-beige px-4 py-16 sm:px-6">
+      <section className="px-4 py-14 sm:px-6">
         <div className="mx-auto max-w-6xl">
-          <h2 className="text-2xl font-bold text-charcoal sm:text-3xl">
+          <h2 className="text-xl font-semibold tracking-tight text-zinc-900 sm:text-2xl">
             Categorias
           </h2>
-          <p className="mt-2 text-sm text-taupe">
+          <p className="mt-1.5 text-[13px] text-zinc-500">
             Navegue pelo catálogo do mercado.
           </p>
-          <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+          <div className="mt-7 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
             {categories.map((category) => (
               <Link
                 key={category.id}
                 href={`/produtos?category=${category.slug}`}
-                className="group overflow-hidden rounded-[12px] bg-white transition-transform duration-300 hover:scale-[1.02]"
+                className="glass-panel group overflow-hidden transition-transform duration-300 hover:scale-[1.02]"
               >
-                <div className="relative aspect-square bg-[var(--brand-purple-light)]">
+                <div className="relative aspect-square bg-zinc-100">
                   {category.imageUrl ? (
                     <Image
                       src={category.imageUrl}
@@ -103,11 +103,11 @@ export default async function HomePage() {
                   ) : null}
                 </div>
                 <div className="px-3 py-3">
-                  <p className="text-sm font-semibold text-charcoal">
+                  <p className="text-[13px] font-semibold text-zinc-900">
                     {category.name}
                   </p>
                   {category._count && (
-                    <p className="text-xs text-taupe">
+                    <p className="text-[12px] text-zinc-500">
                       {category._count.products} itens
                     </p>
                   )}
@@ -115,7 +115,7 @@ export default async function HomePage() {
               </Link>
             ))}
             {categories.length === 0 && (
-              <p className="col-span-full text-sm text-taupe">
+              <p className="col-span-full text-[13px] text-zinc-500">
                 Categorias em breve. Inicie a API para carregar o catálogo.
               </p>
             )}
@@ -123,14 +123,14 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="px-4 py-16 sm:px-6">
+      <section className="px-4 py-14 sm:px-6">
         <div className="mx-auto max-w-6xl">
           <div className="flex items-end justify-between gap-4">
             <div>
-              <h2 className="text-2xl font-bold text-charcoal sm:text-3xl">
+              <h2 className="text-xl font-semibold tracking-tight text-zinc-900 sm:text-2xl">
                 Em destaque
               </h2>
-              <p className="mt-2 text-sm text-taupe">
+              <p className="mt-1.5 text-[13px] text-zinc-500">
                 Seleção do mercado aberto.
               </p>
             </div>
@@ -138,12 +138,12 @@ export default async function HomePage() {
               <Link href="/produtos">Ver todos</Link>
             </Button>
           </div>
-          <div className="mt-8 grid grid-cols-2 gap-x-4 gap-y-8 md:grid-cols-3 lg:grid-cols-4">
+          <div className="mt-7 grid grid-cols-2 gap-x-4 gap-y-8 md:grid-cols-3 lg:grid-cols-4">
             {featured.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
             {featured.length === 0 && (
-              <p className="col-span-full text-sm text-taupe">
+              <p className="col-span-full text-[13px] text-zinc-500">
                 Nenhum destaque disponível no momento.
               </p>
             )}
@@ -151,38 +151,40 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="bg-beige px-4 py-16 sm:px-6">
+      <section className="px-4 py-14 sm:px-6">
         <div className="mx-auto max-w-6xl">
           <div className="flex items-end justify-between gap-4">
             <div>
-              <h2 className="text-2xl font-bold text-charcoal sm:text-3xl">
+              <h2 className="text-xl font-semibold tracking-tight text-zinc-900 sm:text-2xl">
                 Lojas
               </h2>
-              <p className="mt-2 text-sm text-taupe">
-                Conheça vendedores do iShoppine.
+              <p className="mt-1.5 text-[13px] text-zinc-500">
+                Conheça vendedores do iShopine.
               </p>
             </div>
             <Button variant="outline" size="sm" asChild>
               <Link href="/lojas">Ver lojas</Link>
             </Button>
           </div>
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-7 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {shops.map((shop) => (
               <Link
                 key={shop.id}
                 href={`/lojas/${shop.slug}`}
-                className="rounded-[12px] bg-white px-5 py-4 transition-transform duration-300 hover:scale-[1.01]"
+                className="glass-panel px-5 py-4 transition-transform duration-300 hover:scale-[1.01]"
               >
-                <p className="font-semibold text-charcoal">{shop.name}</p>
-                <p className="mt-1 line-clamp-2 text-sm text-taupe">
+                <p className="text-[14px] font-semibold text-zinc-900">
+                  {shop.name}
+                </p>
+                <p className="mt-1 line-clamp-2 text-[13px] text-zinc-500">
                   {shop.description || "Vitrine no mercado aberto"}
                 </p>
               </Link>
             ))}
             {shops.length === 0 && (
-              <p className="col-span-full text-sm text-taupe">
+              <p className="col-span-full text-[13px] text-zinc-500">
                 Ainda não há lojas públicas. Seja o primeiro a{" "}
-                <Link href="/vender" className="font-medium text-[#61005D]">
+                <Link href="/vender" className="font-medium text-zinc-900 underline-offset-4 hover:underline">
                   abrir a sua
                 </Link>
                 .

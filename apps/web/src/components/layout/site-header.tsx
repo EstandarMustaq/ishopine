@@ -74,23 +74,23 @@ export function SiteHeader() {
   const showPainel = mounted && canAccessPainel();
 
   return (
-    <header className="sticky top-0 z-40 border-b border-[var(--brand-nav-divider)] bg-white/95 backdrop-blur">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
+    <header className="sticky top-0 z-40 border-b border-white/40 bg-white/70 backdrop-blur-xl supports-[backdrop-filter]:bg-white/60">
+      <div className="mx-auto flex h-12 max-w-6xl items-center justify-between gap-4 px-4 sm:h-14 sm:px-6">
         <Link
           href="/"
-          className="text-xl font-bold tracking-tight text-[#61005D] sm:text-2xl"
+          className="text-[15px] font-semibold tracking-tight text-zinc-900 sm:text-base"
         >
-          iShoppine
+          iShopine
         </Link>
 
-        <nav className="hidden items-center gap-6 md:flex">
+        <nav className="hidden items-center gap-5 md:flex">
           {navLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
               className={cn(
-                "text-sm font-medium text-charcoal transition-colors hover:text-[#61005D]",
-                pathname.startsWith(link.href) && "text-[#61005D]",
+                "text-[13px] font-medium text-zinc-500 transition-colors duration-200 hover:text-zinc-900",
+                pathname.startsWith(link.href) && "text-zinc-900",
               )}
             >
               {link.label}
@@ -99,26 +99,26 @@ export function SiteHeader() {
           {showPainel && (
             <Link
               href="/painel"
-              className="text-sm font-medium text-taupe transition-colors hover:text-[#61005D]"
+              className="text-[13px] font-medium text-zinc-400 transition-colors duration-200 hover:text-zinc-900"
             >
               Painel
             </Link>
           )}
         </nav>
 
-        <div className="flex items-center gap-1 sm:gap-2">
+        <div className="flex items-center gap-0.5 sm:gap-1">
           {mounted && user && (
             <>
               <Button
                 variant="ghost"
                 size="icon-sm"
                 asChild
-                className="relative text-charcoal"
+                className="relative text-zinc-700"
               >
                 <Link href="/notificacoes" aria-label="Notificações">
                   <Bell />
                   {unreadCount > 0 && (
-                    <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#61005D] px-1 text-[10px] font-semibold text-white">
+                    <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-zinc-900 px-1 text-[10px] font-semibold text-white">
                       {unreadCount > 9 ? "9+" : unreadCount}
                     </span>
                   )}
@@ -128,7 +128,7 @@ export function SiteHeader() {
                 variant="ghost"
                 size="icon-sm"
                 asChild
-                className="hidden text-charcoal sm:inline-flex"
+                className="hidden text-zinc-700 sm:inline-flex"
               >
                 <Link href="/mensagens" aria-label="Mensagens">
                   <MessageCircle />
@@ -138,7 +138,7 @@ export function SiteHeader() {
                 variant="ghost"
                 size="icon-sm"
                 asChild
-                className="hidden text-charcoal sm:inline-flex"
+                className="hidden text-zinc-700 sm:inline-flex"
               >
                 <Link href="/favoritos" aria-label="Favoritos">
                   <Heart />
@@ -151,7 +151,7 @@ export function SiteHeader() {
             variant="ghost"
             size="icon-sm"
             asChild
-            className="text-charcoal"
+            className="text-zinc-700"
           >
             <Link href="/carrinho" aria-label="Carrinho">
               <ShoppingBag />
@@ -159,10 +159,10 @@ export function SiteHeader() {
           </Button>
 
           {mounted && user ? (
-            <div className="hidden items-center gap-2 sm:flex">
+            <div className="hidden items-center gap-1 sm:flex">
               <Button variant="ghost" size="sm" asChild>
                 <Link href="/conta">
-                  <User className="mr-1" />
+                  <User className="mr-1 size-3.5" />
                   {user.name.split(" ")[0]}
                 </Link>
               </Button>
@@ -190,17 +190,19 @@ export function SiteHeader() {
                 <span className="sr-only">Menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-[280px]">
+            <SheetContent side="right" className="w-[280px] border-l border-zinc-200/60 bg-white/90 backdrop-blur-xl">
               <SheetHeader>
-                <SheetTitle className="text-[#61005D]">iShoppine</SheetTitle>
+                <SheetTitle className="text-[15px] font-semibold text-zinc-900">
+                  iShopine
+                </SheetTitle>
               </SheetHeader>
-              <div className="mt-6 flex flex-col gap-3">
+              <div className="mt-6 flex flex-col gap-1">
                 {navLinks.map((link) => (
                   <Link
                     key={link.href}
                     href={link.href}
                     onClick={() => setOpen(false)}
-                    className="rounded-[12px] px-3 py-2 text-sm font-medium hover:bg-beige"
+                    className="rounded-xl px-3 py-2 text-[13px] font-medium text-zinc-700 transition-colors hover:bg-zinc-100/80"
                   >
                     {link.label}
                   </Link>
@@ -210,21 +212,21 @@ export function SiteHeader() {
                     <Link
                       href="/favoritos"
                       onClick={() => setOpen(false)}
-                      className="rounded-[12px] px-3 py-2 text-sm font-medium hover:bg-beige"
+                      className="rounded-xl px-3 py-2 text-[13px] font-medium text-zinc-700 transition-colors hover:bg-zinc-100/80"
                     >
                       Favoritos
                     </Link>
                     <Link
                       href="/mensagens"
                       onClick={() => setOpen(false)}
-                      className="rounded-[12px] px-3 py-2 text-sm font-medium hover:bg-beige"
+                      className="rounded-xl px-3 py-2 text-[13px] font-medium text-zinc-700 transition-colors hover:bg-zinc-100/80"
                     >
                       Mensagens
                     </Link>
                     <Link
                       href="/notificacoes"
                       onClick={() => setOpen(false)}
-                      className="rounded-[12px] px-3 py-2 text-sm font-medium hover:bg-beige"
+                      className="rounded-xl px-3 py-2 text-[13px] font-medium text-zinc-700 transition-colors hover:bg-zinc-100/80"
                     >
                       Notificações
                       {unreadCount > 0 ? ` (${unreadCount})` : ""}
@@ -235,7 +237,7 @@ export function SiteHeader() {
                   <Link
                     href="/painel"
                     onClick={() => setOpen(false)}
-                    className="rounded-[12px] px-3 py-2 text-sm font-medium hover:bg-beige"
+                    className="rounded-xl px-3 py-2 text-[13px] font-medium text-zinc-700 transition-colors hover:bg-zinc-100/80"
                   >
                     Painel
                   </Link>
@@ -243,6 +245,7 @@ export function SiteHeader() {
                 {mounted && user ? (
                   <Button
                     variant="outline"
+                    className="mt-3"
                     onClick={() => {
                       logout();
                       setOpen(false);
@@ -252,7 +255,7 @@ export function SiteHeader() {
                     Sair
                   </Button>
                 ) : (
-                  <Button asChild>
+                  <Button asChild className="mt-3">
                     <Link href="/entrar" onClick={() => setOpen(false)}>
                       Entrar
                     </Link>

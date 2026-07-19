@@ -159,7 +159,7 @@ export default function PainelContabilidadePage() {
             className="rounded-[12px] border border-border bg-beige p-4"
           >
             <p className="text-xs uppercase tracking-wide text-taupe">{label}</p>
-            <p className="mt-1 text-lg font-bold text-[#61005D]">
+            <p className="mt-1 text-lg font-bold text-[#111111]">
               {formatBRL(value ?? 0)}
             </p>
           </div>

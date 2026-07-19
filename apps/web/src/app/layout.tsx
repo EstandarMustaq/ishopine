@@ -11,11 +11,12 @@ const montserrat = Montserrat({
 
 export const metadata: Metadata = {
   title: {
-    default: "iShoppine — mercado aberto de bens",
-    template: "%s · iShoppine",
+    default: "iShopine — mercado aberto de bens",
+    template: "%s · iShopine",
   },
   description:
-    "iShoppine — mercado aberto de bens. Compre e venda com segurança. Operado por Nkateko Investment and Service.",
+    "iShopine — mercado aberto de bens. Compre e venda com segurança. Operado por Nkateko Investment and Service.",
+  metadataBase: new URL("https://ishopine.com"),
 };
 
 export default function RootLayout({

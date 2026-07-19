@@ -78,7 +78,7 @@ function LoginForm() {
 
   return (
     <div className="mx-auto flex min-h-[70vh] max-w-md flex-col justify-center px-4 py-12">
-      <h1 className="text-3xl font-bold text-[#61005D]">iShoppine</h1>
+      <h1 className="text-3xl font-bold text-[#111111]">iShopine</h1>
       <p className="mt-2 text-sm text-taupe">
         Entre para comprar ou vender no mercado aberto
       </p>
@@ -133,7 +133,7 @@ function LoginForm() {
             </p>
             <button
               type="button"
-              className="mt-2 text-xs font-medium text-[#61005D] underline"
+              className="mt-2 text-xs font-medium text-[#111111] underline"
               onClick={() => {
                 setSessionToken(null);
                 setCode("");
@@ -169,14 +169,14 @@ function LoginForm() {
 
       <p className="mt-6 text-center text-sm text-taupe">
         Não tem conta?{" "}
-        <Link href="/cadastro" className="font-semibold text-[#61005D]">
+        <Link href="/cadastro" className="font-semibold text-[#111111]">
           Cadastre-se
         </Link>
       </p>
 
       <p className="mt-4 rounded-[12px] bg-beige px-3 py-2 text-center text-xs text-taupe">
         Demo:{" "}
-        <span className="font-medium text-charcoal">admin@ishoppine.com</span> /{" "}
+        <span className="font-medium text-charcoal">admin@ishopine.com</span> /{" "}
         <span className="font-medium text-charcoal">IShoppine@2026</span>
       </p>
     </div>

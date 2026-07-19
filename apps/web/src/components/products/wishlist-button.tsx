@@ -86,8 +86,8 @@ export function WishlistButton({
       onClick={toggle}
       aria-label={active ? "Remover dos favoritos" : "Adicionar aos favoritos"}
       className={cn(
-        "bg-white/90 text-charcoal hover:bg-white hover:text-[#61005D]",
-        active && "text-[#61005D]",
+        "bg-white/90 text-charcoal hover:bg-white hover:text-[#111111]",
+        active && "text-[#111111]",
         className,
       )}
     >
