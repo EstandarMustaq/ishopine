@@ -29,6 +29,11 @@ async function main() {
   await prisma.payment.deleteMany();
   await prisma.billingWebhookEvent.deleteMany();
   await prisma.billingPayment.deleteMany();
+  await prisma.inboxMessage.deleteMany();
+  await prisma.outboxMessage.deleteMany();
+  await prisma.idempotencyRecord.deleteMany();
+  await prisma.readProjection.deleteMany();
+  await prisma.securityFinding.deleteMany();
   await prisma.orderItem.deleteMany();
   await prisma.order.deleteMany();
   await prisma.cartItem.deleteMany();

@@ -20,6 +20,8 @@ import {
 import { randomBytes } from 'crypto';
 import { OrdersService } from '../orders/orders.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { InboxService } from '../reliability/inbox.service';
+import { OutboxService } from '../reliability/outbox.service';
 import {
   PaysuiteApiError,
   PaysuiteClient,
@@ -44,6 +46,8 @@ export class BillingService {
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
     private readonly orders: OrdersService,
+    private readonly inbox: InboxService,
+    private readonly outbox: OutboxService,
   ) {
     const token = this.config.get<string>('PAYSUITE_TOKEN')?.trim();
     if (token) {
@@ -395,21 +399,24 @@ export class BillingService {
       payload.request_id ||
       `${payload.event}:${payload.data?.id}:${payload.created_at || Date.now()}`;
 
-    // Idempotency — PaySuite may retry up to 5 times
-    const existing = await this.prisma.billingWebhookEvent.findUnique({
-      where: { requestId },
+    // Rigid inbox idempotency (source + messageKey)
+    const received = await this.inbox.receive({
+      source: 'paysuite',
+      messageKey: requestId,
+      eventType: payload.event,
+      payload,
+      headers: { accountId, signaturePresent: Boolean(signature) },
     });
-    if (existing?.processedAt) {
-      return { received: true, duplicate: true };
-    }
 
-    const eventRow = await this.prisma.billingWebhookEvent.upsert({
+    // Keep legacy BillingWebhookEvent mirror for ops dashboards
+    await this.prisma.billingWebhookEvent.upsert({
       where: { requestId },
       create: {
         requestId,
         event: payload.event,
         payload: payload as unknown as Prisma.InputJsonValue,
         paymentId: payload.data?.id,
+        processedAt: received.alreadyProcessed ? new Date() : null,
       },
       update: {
         event: payload.event,
@@ -417,60 +424,84 @@ export class BillingService {
       },
     });
 
-    const paysuiteId = payload.data?.id;
-    const reference = payload.data?.reference;
-
-    const payment = paysuiteId
-      ? await this.prisma.billingPayment.findFirst({
-          where: {
-            OR: [
-              { paysuitePaymentId: paysuiteId },
-              ...(reference ? [{ reference }] : []),
-            ],
-          },
-        })
-      : reference
-        ? await this.prisma.billingPayment.findUnique({ where: { reference } })
-        : null;
-
-    if (payment) {
-      if (payload.event === 'payment.success') {
-        await this.markBillingPaid(payment.id, {
-          paysuitePaymentId: paysuiteId || payment.paysuitePaymentId,
-          paysuiteTransactionId:
-            payload.data.transaction?.transaction_id ||
-            (payload.data.transaction?.id != null
-              ? String(payload.data.transaction.id)
-              : undefined),
-        });
-      } else if (payload.event === 'payment.failed') {
-        await this.prisma.billingPayment.update({
-          where: { id: payment.id },
-          data: {
-            status: BillingPaymentStatus.FAILED,
-            failureReason: payload.data.error || 'payment.failed',
-          },
-        });
-      }
-    } else {
-      this.logger.warn(
-        `PaySuite webhook sem pagamento local: ${payload.event} ${paysuiteId || reference}`,
-      );
+    if (received.alreadyProcessed) {
+      return { received: true, duplicate: true, via: 'inbox' };
     }
 
-    await this.prisma.billingWebhookEvent.update({
-      where: { id: eventRow.id },
-      data: {
-        processedAt: new Date(),
-        paymentId: payment?.id || paysuiteId,
-      },
-    });
+    try {
+      const paysuiteId = payload.data?.id;
+      const reference = payload.data?.reference;
 
-    this.logger.log(
-      `PaySuite webhook ok event=${payload.event} account=${accountId || '-'} requestId=${requestId}`,
-    );
+      const payment = paysuiteId
+        ? await this.prisma.billingPayment.findFirst({
+            where: {
+              OR: [
+                { paysuitePaymentId: paysuiteId },
+                ...(reference ? [{ reference }] : []),
+              ],
+            },
+          })
+        : reference
+          ? await this.prisma.billingPayment.findUnique({
+              where: { reference },
+            })
+          : null;
 
-    return { received: true, duplicate: false };
+      if (payment) {
+        if (payload.event === 'payment.success') {
+          await this.markBillingPaid(payment.id, {
+            paysuitePaymentId: paysuiteId || payment.paysuitePaymentId,
+            paysuiteTransactionId:
+              payload.data.transaction?.transaction_id ||
+              (payload.data.transaction?.id != null
+                ? String(payload.data.transaction.id)
+                : undefined),
+          });
+        } else if (payload.event === 'payment.failed') {
+          await this.prisma.billingPayment.update({
+            where: { id: payment.id },
+            data: {
+              status: BillingPaymentStatus.FAILED,
+              failureReason: payload.data.error || 'payment.failed',
+            },
+          });
+          await this.outbox.enqueue({
+            aggregateType: 'BillingPayment',
+            aggregateId: payment.id,
+            eventType: 'billing.payment.failed',
+            payload: {
+              paymentId: payment.id,
+              buyerId: payment.buyerId,
+              reference: payment.reference,
+            },
+          });
+        }
+      } else {
+        this.logger.warn(
+          `PaySuite webhook sem pagamento local: ${payload.event} ${paysuiteId || reference}`,
+        );
+      }
+
+      await this.inbox.markProcessed(received.message.id);
+      await this.prisma.billingWebhookEvent.update({
+        where: { requestId },
+        data: {
+          processedAt: new Date(),
+          paymentId: payment?.id || paysuiteId,
+        },
+      });
+
+      this.logger.log(
+        `PaySuite webhook ok event=${payload.event} account=${accountId || '-'} requestId=${requestId}`,
+      );
+
+      return { received: true, duplicate: received.duplicate, via: 'inbox' };
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'webhook processing failed';
+      await this.inbox.markFailed(received.message.id, message);
+      throw error;
+    }
   }
 
   async listPayments(buyerId: string) {
@@ -597,5 +628,19 @@ export class BillingService {
     });
 
     await this.orders.settlePaidOrders(payment.orderIds);
+
+    await this.outbox.enqueue({
+      aggregateType: 'BillingPayment',
+      aggregateId: payment.id,
+      eventType: 'billing.payment.paid',
+      payload: {
+        paymentId: payment.id,
+        buyerId: payment.buyerId,
+        reference: payment.reference,
+        amountCents: payment.amountCents,
+        currency: payment.currency,
+        orderIds: payment.orderIds,
+      },
+    });
   }
 }

@@ -79,6 +79,32 @@ Senha: `IShopine@2026`
 
 Cupons seed: `ISHOP10` (10%) · `BEMVINDO50`
 
+## Fiabilidade & segurança (regras rígidas)
+
+| Camada | Contrato |
+|--------|----------|
+| **Inbox** | Único `(source, messageKey)`; max 5 tentativas; backoff exponencial |
+| **Outbox** | Poll 750ms; batch 25; max 8 tentativas; projeções + notificações |
+| **Idempotência** | Header `Idempotency-Key` em POST/PUT/PATCH |
+| **Projeções** | `ReadProjection` único `(name, partitionKey)` |
+| **Security sync** | Catálogo LOW/MEDIUM/HIGH/CRITICAL → `POST /api/security/sync` |
+| **Conformidade** | MZ · MZN · webhook assinatura obrigatória · audit |
+
+Admin: `GET /api/reliability/health`, `POST /api/reliability/sync`, `GET /api/security/compliance`.
+
+## Deploy Vercel (web)
+
+```bash
+# Na raiz do monorepo (ou apps/web)
+npx vercel link --yes
+# Project root directory: apps/web
+npx vercel --yes          # preview
+npx vercel --prod --yes   # produção
+```
+
+Definir na Vercel: `NEXT_PUBLIC_API_URL` apontando para a API Nest em produção.  
+A API Nest **não** corre no runtime serverless da Vercel — hospedar à parte (Railway/Fly/VM) com as vars `PAYSUITE_*`, `DATABASE_URL`, `JWT_SECRET`, `CORS_ORIGIN`, `WEB_URL`, `APP_URL`.
+
 ## Licença
 
 GNU GPL v3 — ver `LICENSE`.  

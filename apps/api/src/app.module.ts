@@ -17,7 +17,9 @@ import { MessagesModule } from './messages/messages.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { OrdersModule } from './orders/orders.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { ReliabilityModule } from './reliability/reliability.module';
 import { ReviewsModule } from './reviews/reviews.module';
+import { SecurityModule } from './security/security.module';
 import { ShopsModule } from './shops/shops.module';
 import { UploadsModule } from './uploads/uploads.module';
 import { UsersModule } from './users/users.module';
@@ -33,6 +35,8 @@ import { WishlistModule } from './wishlist/wishlist.module';
       },
     ]),
     PrismaModule,
+    ReliabilityModule,
+    SecurityModule,
     MailModule,
     AuthModule,
     UsersModule,
