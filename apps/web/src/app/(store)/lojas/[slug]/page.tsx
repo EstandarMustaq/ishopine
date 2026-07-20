@@ -4,7 +4,9 @@ import { notFound } from "next/navigation";
 import { StartConversationButton } from "@/components/messages/start-conversation-button";
 import { ProductCard } from "@/components/products/product-card";
 import { FollowShopButton } from "@/components/shops/follow-shop-button";
+import { ReputationBadge } from "@/components/shops/reputation-badge";
 import { apiFetch } from "@/lib/api";
+import { shopTypeLabel } from "@/lib/mozambique";
 import type { Paginated, Product, Shop } from "@/lib/types";
 
 interface ShopPageProps {
@@ -65,13 +67,22 @@ export default async function ShopDetailPage({ params }: ShopPageProps) {
           <h1 className="mt-2 text-3xl font-bold text-white sm:text-4xl">
             {shop.name}
           </h1>
+          <p className="mt-1 text-xs font-medium uppercase tracking-wide text-white/70">
+            {shopTypeLabel(shop.shopType)}
+          </p>
           {shop.description && (
             <p className="mt-2 max-w-2xl text-sm text-white/90">
               {shop.description}
             </p>
           )}
+          <ReputationBadge
+            className="mt-3 text-white/90 [&_span]:text-white/90"
+            ratingAvg={shop.ratingAvg}
+            ratingCount={shop.ratingCount}
+            reputationScore={shop.reputationScore}
+          />
           <p className="mt-2 text-xs text-white/70">
-            {[shop.city, shop.state].filter(Boolean).join(", ") || "Moçambique"}
+            {[shop.district, shop.province].filter(Boolean).join(" · ")}
             {shop._count?.products != null
               ? ` · ${shop._count.products} produtos`
               : ""}

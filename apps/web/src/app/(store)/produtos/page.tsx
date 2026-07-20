@@ -1,5 +1,9 @@
 import Link from "next/link";
+import { Search } from "lucide-react";
 import { ProductCard } from "@/components/products/product-card";
+import { Button } from "@/components/ui/button";
+import { Field, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 import { apiFetch } from "@/lib/api";
 import type { Category, Paginated, Product } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -62,9 +66,11 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
     category?: string | null;
     sort?: string;
     page?: number;
+    q?: string | null;
   }) {
     const qs = new URLSearchParams();
-    if (params.q) qs.set("q", params.q);
+    const q = next.q === null ? undefined : (next.q ?? params.q);
+    if (q) qs.set("q", q);
     const category =
       next.category === null ? undefined : (next.category ?? currentCategory);
     if (category) qs.set("category", category);
@@ -78,11 +84,39 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-charcoal">Produtos</h1>
+        <h1 className="text-3xl font-bold text-charcoal">Mercado</h1>
         <p className="mt-2 text-sm text-taupe">
           {products.meta.total} {products.meta.total === 1 ? "item" : "itens"}
+          {params.q ? ` para “${params.q}”` : ""}
         </p>
       </div>
+
+      <form action="/produtos" className="mb-6 grid gap-3 sm:grid-cols-[1fr_auto]">
+        {currentCategory ? (
+          <input type="hidden" name="category" value={currentCategory} />
+        ) : null}
+        {currentSort ? (
+          <input type="hidden" name="sort" value={currentSort} />
+        ) : null}
+        <Field>
+          <FieldLabel htmlFor="q">Pesquisar no mercado</FieldLabel>
+          <div className="relative">
+            <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-zinc-400" />
+            <Input
+              id="q"
+              name="q"
+              defaultValue={params.q}
+              placeholder="Nome, marca, material…"
+              className="pl-9"
+            />
+          </div>
+        </Field>
+        <div className="flex items-end">
+          <Button type="submit" className="w-full sm:w-auto">
+            Buscar
+          </Button>
+        </div>
+      </form>
 
       <div className="mb-6 flex flex-wrap gap-2">
         <Link

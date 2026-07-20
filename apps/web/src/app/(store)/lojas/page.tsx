@@ -1,15 +1,20 @@
 import Image from "next/image";
 import Link from "next/link";
+import { ShopFilters } from "@/components/shops/shop-filters";
+import { ReputationBadge } from "@/components/shops/reputation-badge";
 import { apiFetch } from "@/lib/api";
+import { SHOP_TYPES, shopTypeLabel } from "@/lib/mozambique";
 import type { Paginated, Shop } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 interface LojasPageProps {
-  searchParams: Promise<{ q?: string; page?: string }>;
+  searchParams: Promise<{ q?: string; type?: string; page?: string }>;
 }
 
-async function getShops(q?: string, page?: string) {
+async function getShops(q?: string, type?: string, page?: string) {
   const qs = new URLSearchParams();
   if (q) qs.set("q", q);
+  if (type) qs.set("type", type);
   if (page) qs.set("page", page);
   qs.set("limit", "24");
   try {
@@ -26,29 +31,44 @@ async function getShops(q?: string, page?: string) {
 
 export default async function LojasPage({ searchParams }: LojasPageProps) {
   const params = await searchParams;
-  const data = await getShops(params.q, params.page);
+  const data = await getShops(params.q, params.type, params.page);
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
       <h1 className="text-3xl font-bold text-charcoal">Lojas</h1>
       <p className="mt-2 text-sm text-taupe">
-        Explore vendedores do mercado aberto iShopine.
+        Conheça vendedores do iShopine por tipo de loja e reputação.
       </p>
 
-      <form className="mt-6 flex gap-2" action="/lojas">
-        <input
-          name="q"
-          defaultValue={params.q}
-          placeholder="Buscar loja..."
-          className="h-10 flex-1 rounded-input border border-input bg-white px-3 text-sm outline-none ring-ring focus:ring-2"
-        />
-        <button
-          type="submit"
-          className="h-10 rounded-button bg-[#111111] px-4 text-sm font-medium text-white"
+      <ShopFilters initialQ={params.q} initialType={params.type} />
+
+      <div className="mt-6 flex flex-wrap gap-2">
+        <Link
+          href="/lojas"
+          className={cn(
+            "rounded-full border px-3 py-1.5 text-[12px] font-medium",
+            !params.type
+              ? "border-zinc-900 bg-zinc-900 text-white"
+              : "border-zinc-200 text-zinc-600",
+          )}
         >
-          Buscar
-        </button>
-      </form>
+          Todos
+        </Link>
+        {SHOP_TYPES.map((type) => (
+          <Link
+            key={type.value}
+            href={`/lojas?type=${type.value}${params.q ? `&q=${encodeURIComponent(params.q)}` : ""}`}
+            className={cn(
+              "rounded-full border px-3 py-1.5 text-[12px] font-medium",
+              params.type === type.value
+                ? "border-zinc-900 bg-zinc-900 text-white"
+                : "border-zinc-200 text-zinc-600",
+            )}
+          >
+            {type.label}
+          </Link>
+        ))}
+      </div>
 
       <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {data.items.map((shop) => (
@@ -72,14 +92,22 @@ export default async function LojasPage({ searchParams }: LojasPageProps) {
               <p className="font-semibold text-charcoal group-hover:text-[#111111]">
                 {shop.name}
               </p>
+              <p className="mt-1 text-[11px] font-medium uppercase tracking-wide text-zinc-400">
+                {shopTypeLabel(shop.shopType)}
+              </p>
               {shop.description && (
                 <p className="mt-1 line-clamp-2 text-sm text-taupe">
                   {shop.description}
                 </p>
               )}
+              <ReputationBadge
+                className="mt-3"
+                ratingAvg={shop.ratingAvg}
+                ratingCount={shop.ratingCount}
+                reputationScore={shop.reputationScore}
+              />
               <p className="mt-2 text-xs text-taupe">
-                {[shop.city, shop.state].filter(Boolean).join(", ") ||
-                  "Moçambique"}
+                {[shop.district, shop.province].filter(Boolean).join(" · ")}
                 {shop._count?.products != null
                   ? ` · ${shop._count.products} produtos`
                   : ""}

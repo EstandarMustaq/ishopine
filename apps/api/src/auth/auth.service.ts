@@ -120,6 +120,7 @@ export class AuthService {
     emailVerifiedAt: Date | null;
     canBuy: boolean;
     canSell: boolean;
+    affiliateEligible?: boolean;
   }) {
     return {
       id: user.id,
@@ -133,6 +134,10 @@ export class AuthService {
       emailVerifiedAt: user.emailVerifiedAt,
       canBuy: user.canBuy,
       canSell: user.canSell,
+      affiliateEligible: Boolean(
+        user.affiliateEligible ||
+          (user.canBuy && user.emailVerifiedAt),
+      ),
     };
   }
 
@@ -543,6 +548,7 @@ export class AuthService {
         emailVerifiedAt: true,
         canBuy: true,
         canSell: true,
+        affiliateEligible: true,
         createdAt: true,
         shopMemberships: {
           where: { isActive: true },

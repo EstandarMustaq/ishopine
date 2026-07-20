@@ -118,6 +118,7 @@ export interface User {
   emailVerifiedAt?: string | null;
   canBuy?: boolean;
   canSell?: boolean;
+  affiliateEligible?: boolean;
   createdAt?: string;
   addresses?: Address[];
 }
@@ -147,6 +148,16 @@ export interface Category {
   _count?: { products: number };
 }
 
+export type ShopType =
+  | "ELECTRONICS"
+  | "FASHION"
+  | "SERVICES"
+  | "REAL_ESTATE_FURNITURE"
+  | "AUTOMOTIVE"
+  | "FOOD_GROCERY"
+  | "HEALTH_BEAUTY"
+  | "OTHER";
+
 export interface Shop {
   id: string;
   name: string;
@@ -154,13 +165,20 @@ export interface Shop {
   description?: string | null;
   logoUrl?: string | null;
   bannerUrl?: string | null;
-  city?: string | null;
-  state?: string | null;
+  shopType?: ShopType;
+  province?: string | null;
+  district?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  country?: string | null;
+  ratingAvg?: number;
+  ratingCount?: number;
+  reputationScore?: number;
   status: ShopStatus;
   ownerId?: string;
   owner?: Pick<User, "id" | "name" | "email">;
   members?: Array<{ role: ShopRole; userId?: string }>;
-  _count?: { products?: number; orders?: number };
+  _count?: { products?: number; orders?: number; followers?: number };
   createdAt?: string;
 }
 
@@ -194,7 +212,17 @@ export interface Product {
   category?: Category | null;
   shop?: Pick<
     Shop,
-    "id" | "name" | "slug" | "status" | "city" | "state" | "logoUrl"
+    | "id"
+    | "name"
+    | "slug"
+    | "status"
+    | "province"
+    | "district"
+    | "shopType"
+    | "logoUrl"
+    | "ratingAvg"
+    | "ratingCount"
+    | "reputationScore"
   > | null;
   images: ProductImage[];
   createdAt?: string;
