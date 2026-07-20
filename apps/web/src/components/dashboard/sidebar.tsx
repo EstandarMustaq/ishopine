@@ -11,6 +11,7 @@ import {
   Gift,
   LayoutDashboard,
   LogOut,
+  Megaphone,
   Package,
   Receipt,
   Settings,
@@ -42,6 +43,12 @@ const links: Array<{
   { href: "/painel/produtos", label: "Produtos", icon: Package },
   { href: "/painel/estoque", label: "Estoque", icon: Boxes },
   { href: "/painel/billing", label: "Pagamentos", icon: CreditCard },
+  {
+    href: "/painel/anuncios",
+    label: "Anúncios",
+    icon: Megaphone,
+    adminOnly: true,
+  },
   {
     href: "/painel/contabilidade",
     label: "Contabilidade",

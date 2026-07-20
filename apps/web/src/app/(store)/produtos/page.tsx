@@ -1,11 +1,9 @@
 import Link from "next/link";
-import { Search } from "lucide-react";
 import { ProductCard } from "@/components/products/product-card";
-import { Button } from "@/components/ui/button";
-import { Field, FieldLabel } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
+import { AdBanner } from "@/components/ads/ad-banner";
+import { MercadoSearchBar } from "@/components/search/mercado-search-bar";
 import { apiFetch } from "@/lib/api";
-import type { Category, Paginated, Product } from "@/lib/types";
+import type { Ad, Category, Paginated, Product } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 interface ProductsPageProps {
@@ -18,10 +16,10 @@ interface ProductsPageProps {
 }
 
 const sortOptions = [
-  { value: "newest", label: "Mais recentes" },
-  { value: "price_asc", label: "Menor preço" },
-  { value: "price_desc", label: "Maior preço" },
-  { value: "name", label: "Nome" },
+  { value: "newest", label: "mais recentes" },
+  { value: "price_asc", label: "menor preço" },
+  { value: "price_desc", label: "maior preço" },
+  { value: "name", label: "nome" },
 ];
 
 async function getData(params: {
@@ -38,13 +36,16 @@ async function getData(params: {
   qs.set("limit", "12");
 
   try {
-    const [categories, products] = await Promise.all([
+    const [categories, products, ads] = await Promise.all([
       apiFetch<Category[]>("/categories", { token: null }),
       apiFetch<Paginated<Product>>(`/products?${qs.toString()}`, {
         token: null,
       }),
+      apiFetch<Ad[]>("/ads?slot=MERCADO_TOP", { token: null }).catch(
+        () => [] as Ad[],
+      ),
     ]);
-    return { categories, products };
+    return { categories, products, ads };
   } catch {
     return {
       categories: [] as Category[],
@@ -52,13 +53,14 @@ async function getData(params: {
         items: [] as Product[],
         meta: { page: 1, limit: 12, total: 0, totalPages: 1 },
       },
+      ads: [] as Ad[],
     };
   }
 }
 
 export default async function ProductsPage({ searchParams }: ProductsPageProps) {
   const params = await searchParams;
-  const { categories, products } = await getData(params);
+  const { categories, products, ads } = await getData(params);
   const currentSort = params.sort ?? "newest";
   const currentCategory = params.category;
 
@@ -82,63 +84,48 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-charcoal">Mercado</h1>
-        <p className="mt-2 text-sm text-taupe">
+    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
+      <div className="mb-6 md:hidden">
+        <MercadoSearchBar />
+      </div>
+
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold lowercase tracking-tight text-zinc-900">
+          mercado
+        </h1>
+        <p className="mt-1.5 text-[14px] text-zinc-500">
           {products.meta.total} {products.meta.total === 1 ? "item" : "itens"}
           {params.q ? ` para “${params.q}”` : ""}
         </p>
       </div>
 
-      <form action="/produtos" className="mb-6 grid gap-3 sm:grid-cols-[1fr_auto]">
-        {currentCategory ? (
-          <input type="hidden" name="category" value={currentCategory} />
-        ) : null}
-        {currentSort ? (
-          <input type="hidden" name="sort" value={currentSort} />
-        ) : null}
-        <Field>
-          <FieldLabel htmlFor="q">Pesquisar no mercado</FieldLabel>
-          <div className="relative">
-            <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-zinc-400" />
-            <Input
-              id="q"
-              name="q"
-              defaultValue={params.q}
-              placeholder="Nome, marca, material…"
-              className="pl-9"
-            />
-          </div>
-        </Field>
-        <div className="flex items-end">
-          <Button type="submit" className="w-full sm:w-auto">
-            Buscar
-          </Button>
+      {ads.length > 0 && (
+        <div className="mb-8">
+          <AdBanner ads={ads} />
         </div>
-      </form>
+      )}
 
       <div className="mb-6 flex flex-wrap gap-2">
         <Link
           href={hrefFor({ category: null, page: 1 })}
           className={cn(
-            "rounded-full border px-4 py-2 text-sm font-medium transition-colors",
+            "rounded-full border px-4 py-2 text-sm font-medium lowercase transition-colors",
             !currentCategory
-              ? "border-[#111111] bg-[#111111] text-white"
-              : "border-border bg-white text-charcoal hover:border-[#111111]",
+              ? "border-zinc-900 bg-zinc-900 text-white"
+              : "border-zinc-200 bg-white text-zinc-700 hover:border-zinc-400",
           )}
         >
-          Todos
+          todos
         </Link>
         {categories.map((category) => (
           <Link
             key={category.id}
             href={hrefFor({ category: category.slug, page: 1 })}
             className={cn(
-              "rounded-full border px-4 py-2 text-sm font-medium transition-colors",
+              "rounded-full border px-4 py-2 text-sm font-medium lowercase transition-colors",
               currentCategory === category.slug
-                ? "border-[#111111] bg-[#111111] text-white"
-                : "border-border bg-white text-charcoal hover:border-[#111111]",
+                ? "border-zinc-900 bg-zinc-900 text-white"
+                : "border-zinc-200 bg-white text-zinc-700 hover:border-zinc-400",
             )}
           >
             {category.name}
@@ -147,16 +134,16 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
       </div>
 
       <div className="mb-8 flex flex-wrap items-center gap-2">
-        <span className="text-sm text-taupe">Ordenar:</span>
+        <span className="text-sm text-zinc-400">ordenar:</span>
         {sortOptions.map((option) => (
           <Link
             key={option.value}
             href={hrefFor({ sort: option.value, page: 1 })}
             className={cn(
-              "rounded-[12px] px-3 py-1.5 text-sm font-medium",
+              "rounded-full px-3 py-1.5 text-sm font-medium lowercase",
               currentSort === option.value
-                ? "bg-beige text-[#111111]"
-                : "text-taupe hover:text-charcoal",
+                ? "bg-[var(--brand-yellow)] text-zinc-900"
+                : "text-zinc-500 hover:text-zinc-900",
             )}
           >
             {option.label}
@@ -164,15 +151,15 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
         ))}
       </div>
 
-      <div className="grid grid-cols-2 gap-x-4 gap-y-8 md:grid-cols-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-x-3 gap-y-8 md:grid-cols-3 lg:grid-cols-4 md:gap-x-4">
         {products.items.map((product) => (
           <ProductCard key={product.id} product={product} />
         ))}
       </div>
 
       {products.items.length === 0 && (
-        <p className="py-16 text-center text-sm text-taupe">
-          Nenhum produto encontrado.
+        <p className="py-16 text-center text-sm text-zinc-500">
+          nenhum produto encontrado.
         </p>
       )}
 
@@ -181,20 +168,20 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
           {products.meta.page > 1 && (
             <Link
               href={hrefFor({ page: products.meta.page - 1 })}
-              className="rounded-[14px] border px-4 py-2 text-sm font-medium"
+              className="rounded-full border px-4 py-2 text-sm font-medium"
             >
-              Anterior
+              anterior
             </Link>
           )}
-          <span className="text-sm text-taupe">
-            Página {products.meta.page} de {products.meta.totalPages}
+          <span className="text-sm text-zinc-500">
+            página {products.meta.page} de {products.meta.totalPages}
           </span>
           {products.meta.page < products.meta.totalPages && (
             <Link
               href={hrefFor({ page: products.meta.page + 1 })}
-              className="rounded-[14px] border px-4 py-2 text-sm font-medium"
+              className="rounded-full border px-4 py-2 text-sm font-medium"
             >
-              Próxima
+              próxima
             </Link>
           )}
         </div>

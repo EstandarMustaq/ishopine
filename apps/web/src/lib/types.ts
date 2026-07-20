@@ -366,6 +366,31 @@ export interface DashboardOverview {
   recentOrders: Order[];
 }
 
+export interface DashboardCharts {
+  series: Array<{ date: string; orders: number; gmvCents: number }>;
+  ordersByStatus: Array<{ status: string; count: number }>;
+}
+
+export type AdSlot = "HOME_HERO" | "HOME_STRIP" | "MERCADO_TOP" | "LOJAS_TOP";
+export type AdStatus = "DRAFT" | "ACTIVE" | "PAUSED" | "EXPIRED";
+
+export interface Ad {
+  id: string;
+  title: string;
+  subtitle?: string | null;
+  imageUrl: string;
+  linkUrl: string;
+  slot: AdSlot;
+  status: AdStatus;
+  priority: number;
+  startsAt?: string | null;
+  endsAt?: string | null;
+  shopId?: string | null;
+  shop?: { id: string; name: string; slug: string } | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface AuthResponse {
   accessToken: string;
   user: User;

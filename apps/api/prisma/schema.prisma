@@ -46,6 +46,20 @@ enum AffiliateRewardStatus {
   CANCELLED
 }
 
+enum AdSlot {
+  HOME_HERO
+  HOME_STRIP
+  MERCADO_TOP
+  LOJAS_TOP
+}
+
+enum AdStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  EXPIRED
+}
+
 enum ProductStatus {
   DRAFT
   ACTIVE
@@ -364,6 +378,7 @@ model Shop {
   followers     ShopFollow[]
   reviews       Review[]
   affiliateLinks AffiliateLink[]
+  ads            Ad[]
 
   @@unique([organizationId, slug])
   @@index([status])
@@ -371,6 +386,29 @@ model Shop {
   @@index([organizationId])
   @@index([shopType])
   @@index([province, district])
+}
+
+model Ad {
+  id        String   @id @default(cuid())
+  title     String
+  subtitle  String?
+  imageUrl  String
+  linkUrl   String
+  slot      AdSlot   @default(HOME_STRIP)
+  status    AdStatus @default(DRAFT)
+  priority  Int      @default(0)
+  startsAt  DateTime?
+  endsAt    DateTime?
+  shopId    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  shop Shop? @relation(fields: [shopId], references: [id], onDelete: SetNull)
+
+  @@index([slot, status])
+  @@index([priority])
+  @@index([shopId])
+  @@index([startsAt, endsAt])
 }
 
 model AffiliateLink {

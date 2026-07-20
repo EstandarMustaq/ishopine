@@ -8,27 +8,29 @@
     --brand-ink: #111111;
     --brand-ink-hover: #000000;
     --brand-ink-active: #1a1a1a;
-    --brand-surface: #fafafa;
+    --brand-surface: #ffffff;
     --brand-surface-elevated: #ffffff;
     --brand-muted: #71717a;
     --brand-charcoal: #18181b;
-    --brand-border: #e4e4e7;
-    --brand-nav-divider: #e4e4e7;
+    --brand-border: #f0f0f0;
+    --brand-nav-divider: #f0f0f0;
     --brand-white: #ffffff;
-    --brand-mesh-from: #f4f4f5;
-    --brand-mesh-via: #fafafa;
+    --brand-yellow: #ffdd00;
+    --brand-yellow-hover: #f5d000;
+    --brand-mesh-from: #ffffff;
+    --brand-mesh-via: #fffdf5;
     --brand-mesh-to: #ffffff;
 
     --brand-purple: #111111;
     --brand-purple-hover: #000000;
     --brand-purple-active: #1a1a1a;
-    --brand-purple-light: #f4f4f5;
+    --brand-purple-light: #fff9d6;
     --brand-beige: #fafafa;
     --brand-taupe: #71717a;
 
     --background: #ffffff;
     --foreground: #18181b;
-    --card: rgba(255, 255, 255, 0.72);
+    --card: #ffffff;
     --card-foreground: #18181b;
     --popover: #ffffff;
     --popover-foreground: #18181b;
@@ -38,26 +40,26 @@
     --secondary-foreground: #18181b;
     --muted: #f4f4f5;
     --muted-foreground: #71717a;
-    --accent: #f4f4f5;
-    --accent-foreground: #18181b;
+    --accent: #ffdd00;
+    --accent-foreground: #111111;
     --destructive: #dc2626;
-    --border: #e4e4e7;
-    --input: #e4e4e7;
-    --ring: #18181b;
-    --chart-1: #18181b;
-    --chart-2: #71717a;
+    --border: #f0f0f0;
+    --input: #e8e8e8;
+    --ring: #111111;
+    --chart-1: #111111;
+    --chart-2: #ffdd00;
     --chart-3: #a1a1aa;
-    --chart-4: #d4d4d8;
-    --chart-5: #52525b;
-    --radius: 0.875rem;
-    --sidebar: rgba(250, 250, 250, 0.82);
+    --chart-4: #52525b;
+    --chart-5: #71717a;
+    --radius: 1rem;
+    --sidebar: #ffffff;
     --sidebar-foreground: #18181b;
     --sidebar-primary: #111111;
     --sidebar-primary-foreground: #ffffff;
-    --sidebar-accent: rgba(244, 244, 245, 0.9);
+    --sidebar-accent: #fff9d6;
     --sidebar-accent-foreground: #18181b;
-    --sidebar-border: rgba(228, 228, 231, 0.7);
-    --sidebar-ring: #18181b;
+    --sidebar-border: #f0f0f0;
+    --sidebar-ring: #111111;
   }
 
   * {
@@ -66,10 +68,10 @@
 
   body {
     @apply bg-background text-foreground antialiased;
+    background-color: #ffffff;
     background-image:
-      radial-gradient(ellipse 80% 50% at 10% -10%, rgba(212, 212, 216, 0.45), transparent 55%),
-      radial-gradient(ellipse 60% 40% at 90% 0%, rgba(228, 228, 231, 0.4), transparent 50%),
-      linear-gradient(180deg, var(--brand-mesh-from) 0%, var(--brand-mesh-via) 40%, var(--brand-mesh-to) 100%);
+      radial-gradient(ellipse 70% 40% at 0% 0%, rgba(255, 221, 0, 0.12), transparent 55%),
+      radial-gradient(ellipse 50% 35% at 100% 0%, rgba(255, 221, 0, 0.06), transparent 50%);
     background-attachment: fixed;
     min-height: 100vh;
   }
@@ -81,22 +83,25 @@
 
 @layer components {
   .glass {
-    @apply border border-white/40 bg-white/70 shadow-sm backdrop-blur-xl;
+    @apply border border-zinc-100 bg-white/90 shadow-sm backdrop-blur-xl;
   }
 
   .glass-panel {
-    @apply rounded-2xl border border-zinc-200/60 bg-zinc-50/80 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_rgba(0,0,0,0.04)] backdrop-blur-xl;
+    @apply rounded-2xl border border-zinc-100 bg-white shadow-soft;
   }
 
   .glass-dark {
-    @apply border border-white/15 bg-zinc-900/70 text-white shadow-lg backdrop-blur-xl;
+    @apply border border-white/15 bg-zinc-900/75 text-white shadow-lg backdrop-blur-xl;
   }
 
   .mesh-bg {
     background-image:
-      radial-gradient(ellipse 80% 50% at 10% -10%, rgba(212, 212, 216, 0.45), transparent 55%),
-      radial-gradient(ellipse 60% 40% at 90% 0%, rgba(228, 228, 231, 0.4), transparent 50%),
-      linear-gradient(180deg, #f4f4f5 0%, #fafafa 40%, #ffffff 100%);
+      radial-gradient(ellipse 70% 40% at 0% 0%, rgba(255, 221, 0, 0.12), transparent 55%),
+      radial-gradient(ellipse 50% 35% at 100% 0%, rgba(255, 221, 0, 0.06), transparent 50%);
+  }
+
+  .section-title {
+    @apply text-2xl font-bold lowercase tracking-tight text-zinc-900 sm:text-3xl;
   }
 }
 

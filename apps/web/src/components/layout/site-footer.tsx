@@ -11,15 +11,15 @@ import {
 } from "lucide-react";
 
 const mercadoLinks = [
-  { href: "/produtos", label: "Explorar", icon: Package },
-  { href: "/lojas", label: "Lojas", icon: Store },
-  { href: "/vender", label: "Abrir loja", icon: CircleDollarSign },
+  { href: "/produtos", label: "explorar", icon: Package },
+  { href: "/lojas", label: "lojas", icon: Store },
+  { href: "/vender", label: "abrir loja", icon: CircleDollarSign },
 ];
 
 const contaLinks = [
-  { href: "/entrar", label: "Entrar", icon: LogIn },
-  { href: "/cadastro", label: "Criar conta", icon: UserPlus },
-  { href: "/painel/billing", label: "Pagamentos", icon: CreditCard },
+  { href: "/entrar", label: "entrar", icon: LogIn },
+  { href: "/cadastro", label: "criar conta", icon: UserPlus },
+  { href: "/painel/billing", label: "pagamentos", icon: CreditCard },
 ];
 
 function FooterLink({
@@ -34,7 +34,7 @@ function FooterLink({
   return (
     <Link
       href={href}
-      className="group inline-flex items-center gap-2 text-zinc-500 transition-colors hover:text-zinc-900"
+      className="group inline-flex items-center gap-2 lowercase text-zinc-500 transition-colors hover:text-zinc-900"
     >
       <Icon className="size-3.5 shrink-0 opacity-70" />
       <span>{label}</span>
@@ -45,17 +45,17 @@ function FooterLink({
 
 export function SiteFooter() {
   return (
-    <footer className="mt-auto border-t border-zinc-200/60 bg-white/50 backdrop-blur-sm">
+    <footer className="mt-auto border-t border-zinc-100 bg-white">
       <div className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-10 sm:px-6 md:flex-row md:items-start md:justify-between">
         <div>
-          <p className="text-base font-semibold tracking-tight text-zinc-900">
+          <p className="text-lg font-bold tracking-tight text-zinc-900">
             iShopine
           </p>
-          <p className="mt-1 text-[13px] font-medium text-zinc-600">
-            Mercado de Moçambique, para Moçambique
+          <p className="mt-1 text-[13px] font-medium lowercase text-zinc-600">
+            mercado de moçambique, para moçambique
           </p>
           <p className="mt-2 max-w-sm text-[13px] text-zinc-500">
-            Compre e venda bens em meticais. Pagamentos via M-pesa, e-Mola e
+            compre e venda bens em meticais. pagamentos via m-pesa, e-mola e
             cartões.
           </p>
           <a
@@ -66,26 +66,25 @@ export function SiteFooter() {
           >
             <ExternalLink className="size-3.5 opacity-70" />
             ishopine.com
-            <ArrowUpRight className="size-3 text-zinc-300 transition-all group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-zinc-600" />
           </a>
         </div>
         <div className="flex flex-wrap gap-10 text-[13px]">
           <div className="flex flex-col gap-2.5">
-            <p className="font-semibold text-zinc-800">Mercado</p>
+            <p className="font-semibold lowercase text-zinc-800">mercado</p>
             {mercadoLinks.map((link) => (
               <FooterLink key={link.href} {...link} />
             ))}
           </div>
           <div className="flex flex-col gap-2.5">
-            <p className="font-semibold text-zinc-800">Conta</p>
+            <p className="font-semibold lowercase text-zinc-800">conta</p>
             {contaLinks.map((link) => (
               <FooterLink key={link.href} {...link} />
             ))}
           </div>
         </div>
       </div>
-      <div className="border-t border-zinc-200/60 px-4 py-4 text-center text-[12px] text-zinc-400">
-        © {new Date().getFullYear()} iShopine. Todos os direitos reservados.
+      <div className="border-t border-zinc-100 px-4 py-4 text-center text-[12px] lowercase text-zinc-400">
+        © {new Date().getFullYear()} ishopine. todos os direitos reservados.
       </div>
     </footer>
   );

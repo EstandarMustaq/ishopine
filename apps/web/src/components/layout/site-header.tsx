@@ -31,11 +31,11 @@ import { useAuthStore } from "@/lib/auth-store";
 import { cn } from "@/lib/utils";
 
 const navLinks = [
-  { href: "/produtos", label: "Mercado", icon: Package },
-  { href: "/lojas", label: "Lojas", icon: Store },
-  { href: "/vender", label: "Vender", icon: CircleDollarSign },
-  { href: "/carrinho", label: "Carrinho", icon: ShoppingBag },
-  { href: "/conta", label: "Minha conta", icon: User },
+  { href: "/produtos", label: "mercado", icon: Package },
+  { href: "/lojas", label: "lojas", icon: Store },
+  { href: "/vender", label: "vender", icon: CircleDollarSign },
+  { href: "/carrinho", label: "carrinho", icon: ShoppingBag },
+  { href: "/conta", label: "conta", icon: User },
 ];
 
 export function SiteHeader() {
@@ -88,16 +88,20 @@ export function SiteHeader() {
   const showPainel = mounted && canAccessPainel();
 
   return (
-    <header className="sticky top-0 z-40 border-b border-white/40 bg-white/70 backdrop-blur-xl supports-[backdrop-filter]:bg-white/60">
-      <div className="mx-auto flex h-12 max-w-6xl items-center justify-between gap-2 px-3 sm:h-14 sm:gap-4 sm:px-6">
+    <header className="sticky top-0 z-40 border-b border-zinc-100 bg-white/95 backdrop-blur-md">
+      <div className="mx-auto flex h-14 max-w-6xl items-center gap-3 px-3 sm:h-16 sm:gap-4 sm:px-6">
         <Link
           href="/"
-          className="shrink-0 text-[15px] font-semibold tracking-tight text-zinc-900 sm:text-base"
+          className="shrink-0 text-[17px] font-bold tracking-tight text-zinc-900 sm:text-xl"
         >
           iShopine
         </Link>
 
-        <nav className="hidden items-center gap-1 md:flex">
+        <div className="hidden min-w-0 flex-1 md:block md:max-w-sm lg:max-w-md">
+          <SiteSearch variant="nav" />
+        </div>
+
+        <nav className="ml-auto hidden items-center gap-0.5 md:flex">
           {navLinks.map((link) => {
             const Icon = link.icon;
             const active = pathname.startsWith(link.href);
@@ -106,8 +110,8 @@ export function SiteHeader() {
                 key={link.href}
                 href={link.href}
                 className={cn(
-                  "inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[13px] font-medium text-zinc-500 transition-colors duration-200 hover:bg-zinc-100/70 hover:text-zinc-900",
-                  active && "bg-zinc-100/80 text-zinc-900",
+                  "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[13px] font-medium lowercase text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-900",
+                  active && "bg-zinc-100 text-zinc-900",
                 )}
               >
                 <Icon className="size-3.5 shrink-0 opacity-70" />
@@ -118,19 +122,15 @@ export function SiteHeader() {
           {showPainel && (
             <Link
               href="/painel"
-              className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[13px] font-medium text-zinc-400 transition-colors duration-200 hover:bg-zinc-100/70 hover:text-zinc-900"
+              className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[13px] font-medium lowercase text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-900"
             >
               <LayoutDashboard className="size-3.5 shrink-0 opacity-70" />
-              Painel
+              painel
             </Link>
           )}
         </nav>
 
-        <div className="mx-2 hidden min-w-0 flex-1 justify-center lg:flex">
-          <SiteSearch />
-        </div>
-
-        <div className="flex items-center gap-0.5 sm:gap-1">
+        <div className="ml-auto flex items-center gap-0.5 md:ml-0 sm:gap-1">
           {mounted && user && (
             <>
               <Button
@@ -206,11 +206,11 @@ export function SiteHeader() {
               variant="default"
               size="sm"
               asChild
-              className="h-8 gap-1 px-2.5 text-[12px] sm:h-8 sm:px-3 sm:text-[13px]"
+              className="h-8 gap-1 rounded-full bg-[var(--brand-yellow)] px-3 text-[12px] font-semibold text-zinc-900 hover:bg-[var(--brand-yellow-hover)] sm:text-[13px]"
             >
               <Link href="/entrar" aria-label="Entrar">
                 <LogIn className="size-3.5 shrink-0" />
-                <span>Entrar</span>
+                <span>entrar</span>
               </Link>
             </Button>
           )}
@@ -222,15 +222,15 @@ export function SiteHeader() {
                 <span className="sr-only">Menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-[280px] border-l border-zinc-200/60 bg-white/90 backdrop-blur-xl">
+            <SheetContent
+              side="right"
+              className="w-[280px] border-l border-zinc-100 bg-white"
+            >
               <SheetHeader>
-                <SheetTitle className="text-[15px] font-semibold text-zinc-900">
+                <SheetTitle className="text-[15px] font-bold text-zinc-900">
                   iShopine
                 </SheetTitle>
               </SheetHeader>
-              <div className="mt-4 px-1">
-                <SiteSearch className="max-w-none" />
-              </div>
               <div className="mt-4 flex flex-col gap-1">
                 {navLinks.map((link) => {
                   const Icon = link.icon;
@@ -239,7 +239,7 @@ export function SiteHeader() {
                       key={link.href}
                       href={link.href}
                       onClick={() => setOpen(false)}
-                      className="group flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[13px] font-medium text-zinc-700 transition-colors hover:bg-zinc-100/80"
+                      className="group flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[13px] font-medium lowercase text-zinc-700 transition-colors hover:bg-zinc-50"
                     >
                       <Icon className="size-4 shrink-0 text-zinc-500" />
                       <span className="flex-1">{link.label}</span>
@@ -252,32 +252,29 @@ export function SiteHeader() {
                     <Link
                       href="/favoritos"
                       onClick={() => setOpen(false)}
-                      className="group flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[13px] font-medium text-zinc-700 transition-colors hover:bg-zinc-100/80"
+                      className="group flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[13px] font-medium lowercase text-zinc-700 hover:bg-zinc-50"
                     >
                       <Heart className="size-4 shrink-0 text-zinc-500" />
-                      <span className="flex-1">Favoritos</span>
-                      <ArrowRight className="size-3.5 text-zinc-300 transition-transform group-hover:translate-x-0.5 group-hover:text-zinc-500" />
+                      <span className="flex-1">favoritos</span>
                     </Link>
                     <Link
                       href="/mensagens"
                       onClick={() => setOpen(false)}
-                      className="group flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[13px] font-medium text-zinc-700 transition-colors hover:bg-zinc-100/80"
+                      className="group flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[13px] font-medium lowercase text-zinc-700 hover:bg-zinc-50"
                     >
                       <MessageCircle className="size-4 shrink-0 text-zinc-500" />
-                      <span className="flex-1">Mensagens</span>
-                      <ArrowRight className="size-3.5 text-zinc-300 transition-transform group-hover:translate-x-0.5 group-hover:text-zinc-500" />
+                      <span className="flex-1">mensagens</span>
                     </Link>
                     <Link
                       href="/notificacoes"
                       onClick={() => setOpen(false)}
-                      className="group flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[13px] font-medium text-zinc-700 transition-colors hover:bg-zinc-100/80"
+                      className="group flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[13px] font-medium lowercase text-zinc-700 hover:bg-zinc-50"
                     >
                       <Bell className="size-4 shrink-0 text-zinc-500" />
                       <span className="flex-1">
-                        Notificações
+                        notificações
                         {unreadCount > 0 ? ` (${unreadCount})` : ""}
                       </span>
-                      <ArrowRight className="size-3.5 text-zinc-300 transition-transform group-hover:translate-x-0.5 group-hover:text-zinc-500" />
                     </Link>
                   </>
                 )}
@@ -285,31 +282,32 @@ export function SiteHeader() {
                   <Link
                     href="/painel"
                     onClick={() => setOpen(false)}
-                    className="group flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[13px] font-medium text-zinc-700 transition-colors hover:bg-zinc-100/80"
+                    className="group flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[13px] font-medium lowercase text-zinc-700 hover:bg-zinc-50"
                   >
                     <LayoutDashboard className="size-4 shrink-0 text-zinc-500" />
-                    <span className="flex-1">Painel</span>
-                    <ArrowRight className="size-3.5 text-zinc-300 transition-transform group-hover:translate-x-0.5 group-hover:text-zinc-500" />
+                    <span className="flex-1">painel</span>
                   </Link>
                 )}
                 {mounted && user ? (
                   <Button
                     variant="outline"
-                    className="mt-3"
+                    className="mt-3 rounded-full"
                     onClick={() => {
                       logout();
                       setOpen(false);
                       router.push("/");
                     }}
                   >
-                    Sair
+                    sair
                   </Button>
                 ) : (
-                  <Button asChild className="mt-3 h-11 gap-2">
+                  <Button
+                    asChild
+                    className="mt-3 h-11 gap-2 rounded-full bg-[var(--brand-yellow)] font-semibold text-zinc-900 hover:bg-[var(--brand-yellow-hover)]"
+                  >
                     <Link href="/entrar" onClick={() => setOpen(false)}>
                       <LogIn className="size-4" />
-                      Entrar
-                      <ArrowRight className="size-3.5 opacity-70" />
+                      entrar
                     </Link>
                   </Button>
                 )}
