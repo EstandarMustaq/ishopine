@@ -10,8 +10,13 @@ import { ProjectionService } from './projection.service';
 import { OutboxDispatcher } from './outbox.dispatcher';
 import { ReliabilityController } from './reliability.controller';
 
+const isServerless = Boolean(process.env.VERCEL);
+
 @Module({
-  imports: [ScheduleModule.forRoot(), NotificationsModule],
+  imports: [
+    ...(isServerless ? [] : [ScheduleModule.forRoot()]),
+    NotificationsModule,
+  ],
   controllers: [ReliabilityController],
   providers: [
     InboxService,
@@ -29,6 +34,7 @@ import { ReliabilityController } from './reliability.controller';
     OutboxService,
     IdempotencyService,
     ProjectionService,
+    OutboxDispatcher,
   ],
 })
 export class ReliabilityModule {}

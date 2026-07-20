@@ -2,7 +2,10 @@ apps/api/dist
 **/node_modules
 **/.next
 **/coverage
-**/uploads
+/uploads
+apps/api/uploads
+!apps/api/src/uploads
+!apps/api/src/uploads/**
 **/.env
 **/.env.*
 !.env.example

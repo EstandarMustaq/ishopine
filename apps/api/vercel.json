@@ -1,0 +1,33 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "version": 2,
+  "buildCommand": "pnpm exec prisma generate && pnpm exec nest build",
+  "installCommand": "cd ../.. && corepack enable && pnpm install --frozen-lockfile --config.production=false",
+  "outputDirectory": "public",
+  "rewrites": [{ "source": "/(.*)", "destination": "/api" }],
+  "functions": {
+    "api/index.js": {
+      "maxDuration": 60,
+      "includeFiles": "{dist/**,prisma/**,../../node_modules/.pnpm/@prisma+client@*/**}"
+    }
+  },
+  "crons": [
+    {
+      "path": "/api/cron/outbox",
+      "schedule": "0 12 * * *"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "DENY" },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        }
+      ]
+    }
+  ]
+}

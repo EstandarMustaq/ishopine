@@ -17,6 +17,11 @@ export class OutboxDispatcher {
   ) {}
 
   @Interval(RELIABILITY_RULES.outbox.pollIntervalMs)
+  async scheduledTick() {
+    if (process.env.VERCEL) return;
+    return this.tick();
+  }
+
   async tick() {
     if (this.running) return;
     this.running = true;

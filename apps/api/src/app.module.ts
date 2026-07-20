@@ -9,6 +9,7 @@ import { BillingModule } from './billing/billing.module';
 import { CartModule } from './cart/cart.module';
 import { CatalogModule } from './catalog/catalog.module';
 import { CouponsModule } from './coupons/coupons.module';
+import { CronModule } from './cron/cron.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { DisputesModule } from './disputes/disputes.module';
 import { InventoryModule } from './inventory/inventory.module';
@@ -36,6 +37,7 @@ import { WishlistModule } from './wishlist/wishlist.module';
     ]),
     PrismaModule,
     ReliabilityModule,
+    CronModule,
     SecurityModule,
     MailModule,
     AuthModule,

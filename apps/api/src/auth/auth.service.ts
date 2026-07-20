@@ -13,7 +13,7 @@ import {
 } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 import { createHash, randomBytes, randomInt } from 'crypto';
-import { generateSecret, generateURI, verifySync } from 'otplib';
+import { authenticator } from 'otplib';
 import * as QRCode from 'qrcode';
 import { PrismaService } from '../prisma/prisma.service';
 import { MailService } from '../mail/mail.service';
@@ -424,8 +424,7 @@ export class AuthService {
   }
 
   private verifyTotp(secret: string, token: string) {
-    const result = verifySync({ secret, token });
-    return Boolean(result.valid);
+    return authenticator.verify({ secret, token });
   }
 
   async setup2fa(userId: string) {
@@ -434,13 +433,9 @@ export class AuthService {
       throw new UnauthorizedException();
     }
 
-    const secret = generateSecret();
+    const secret = authenticator.generateSecret();
     const issuer = 'iShopine';
-    const uri = generateURI({
-      issuer,
-      label: user.email,
-      secret,
-    });
+    const uri = authenticator.keyuri(user.email, issuer, secret);
     const qrCodeDataUrl = await QRCode.toDataURL(uri);
 
     await this.prisma.user.update({
