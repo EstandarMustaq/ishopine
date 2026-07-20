@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { toast } from "sonner";
@@ -139,16 +138,22 @@ function SegurancaContent() {
         {setup && (
           <div className="mt-6 space-y-4">
             {qrUrl && (
-              <div className="relative mx-auto size-48 overflow-hidden rounded-[12px] bg-white">
-                <Image
+              <div className="mx-auto flex size-52 items-center justify-center rounded-xl bg-white p-3">
+                {/* img nativo: data-URL fiável para o Google Authenticator */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
                   src={qrUrl}
-                  alt="QR Code 2FA"
-                  fill
-                  unoptimized
-                  className="object-contain p-2"
+                  alt="QR Code 2FA iShopine"
+                  width={208}
+                  height={208}
+                  className="size-52"
                 />
               </div>
             )}
+            <p className="text-center text-xs text-taupe">
+              Escaneie no Google Authenticator ou Authy. Se o QR falhar, use a
+              chave manual.
+            </p>
             <p className="break-all text-center text-xs text-taupe">
               Chave manual:{" "}
               <span className="font-mono text-charcoal">{setup.secret}</span>

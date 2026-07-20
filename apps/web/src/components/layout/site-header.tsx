@@ -25,6 +25,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { SiteSearch } from "@/components/search/site-search";
 import { api } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
 import { cn } from "@/lib/utils";
@@ -125,6 +126,10 @@ export function SiteHeader() {
           )}
         </nav>
 
+        <div className="mx-2 hidden min-w-0 flex-1 justify-center lg:flex">
+          <SiteSearch />
+        </div>
+
         <div className="flex items-center gap-0.5 sm:gap-1">
           {mounted && user && (
             <>
@@ -223,7 +228,10 @@ export function SiteHeader() {
                   iShopine
                 </SheetTitle>
               </SheetHeader>
-              <div className="mt-6 flex flex-col gap-1">
+              <div className="mt-4 px-1">
+                <SiteSearch className="max-w-none" />
+              </div>
+              <div className="mt-4 flex flex-col gap-1">
                 {navLinks.map((link) => {
                   const Icon = link.icon;
                   return (

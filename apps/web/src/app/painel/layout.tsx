@@ -53,18 +53,13 @@ export default function PainelLayout({
             />
           </div>
 
-          <div
-            className={cn(
-              "flex h-full min-w-0 flex-1 transition-[margin] duration-200 md:ml-0",
-              mobileOpen ? "ml-56" : "ml-0",
-            )}
-          >
+          <div className="flex h-full min-w-0 flex-1">
             <div className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
               <div className="flex shrink-0 items-center gap-3 border-b border-zinc-200/60 bg-white/60 px-4 py-2.5 backdrop-blur-xl md:hidden">
                 <button
                   type="button"
                   onClick={toggleMobile}
-                  className="flex size-8 items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-700"
+                  className="flex size-8 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-700"
                   aria-label={mobileOpen ? "Fechar menu" : "Abrir menu"}
                 >
                   {mobileOpen ? (
@@ -83,6 +78,15 @@ export default function PainelLayout({
             </div>
           </div>
 
+          {mobileOpen && (
+            <button
+              type="button"
+              aria-label="Fechar menu"
+              className="fixed inset-0 z-20 bg-black/30 md:hidden"
+              onClick={() => setMobileOpen(false)}
+            />
+          )}
+
           <div
             className={cn(
               "fixed inset-y-0 left-0 z-30 h-svh w-56 transition-transform duration-200 md:hidden",
@@ -91,7 +95,7 @@ export default function PainelLayout({
           >
             <DashboardSidebar
               collapsed={false}
-              onToggle={toggleMobile}
+              onToggle={() => setMobileOpen(false)}
               className="h-full shadow-lg"
             />
           </div>

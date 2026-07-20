@@ -16,7 +16,7 @@ export const metadata: Metadata = {
     template: "%s · iShopine",
   },
   description:
-    "iShopine — mercado moçambicano de bens. Compre e venda em MZN com M-Pesa, e-Mola e cartões via PaySuite.",
+    "iShopine — mercado livre de Moçambique. Compre e venda em meticais com M-Pesa, e-Mola ou cartão.",
   metadataBase: new URL("https://ishopine.com"),
 };
 

@@ -62,8 +62,7 @@ export default async function HomePage() {
               De Moçambique, para Moçambique
             </h1>
             <p className="animate-hero-in-delay-2 mt-2 max-w-md text-[14px] leading-relaxed text-white/75">
-              Mercado em meticais. Pague com M-Pesa, e-Mola ou cartão via
-              PaySuite.
+              Mercado livre. Venda e pague com M-Pesa, e-Mola ou cartão.
             </p>
             <div className="animate-hero-in-delay-2 mt-6 flex flex-wrap gap-2.5">
               <Button asChild size="lg" className="bg-white text-zinc-900 hover:bg-zinc-100">

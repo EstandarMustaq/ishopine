@@ -429,7 +429,8 @@ export class AuthService {
   }
 
   private verifyTotp(secret: string, token: string) {
-    return authenticator.verify({ secret, token });
+    authenticator.options = { window: 1 };
+    return authenticator.check(token.replace(/\s/g, ''), secret);
   }
 
   async setup2fa(userId: string) {
@@ -440,8 +441,16 @@ export class AuthService {
 
     const secret = authenticator.generateSecret();
     const issuer = 'iShopine';
-    const uri = authenticator.keyuri(user.email, issuer, secret);
-    const qrCodeDataUrl = await QRCode.toDataURL(uri);
+    const account = user.email.trim().toLowerCase();
+    // otplib keyuri — formato aceite pelo Google Authenticator (sem params extra)
+    const uri = authenticator.keyuri(account, issuer, secret);
+    const qrCodeDataUrl = await QRCode.toDataURL(uri, {
+      errorCorrectionLevel: 'M',
+      type: 'image/png',
+      margin: 1,
+      width: 256,
+      color: { dark: '#000000', light: '#FFFFFF' },
+    });
 
     await this.prisma.user.update({
       where: { id: userId },

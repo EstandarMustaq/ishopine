@@ -62,7 +62,7 @@ export default function PainelBillingPage() {
         Pagamentos
       </h1>
       <p className="mt-1 text-[13px] text-zinc-500">
-        Histórico PaySuite — M-Pesa, e-Mola e cartões (MZN).
+        Histórico de pagamentos — M-Pesa, e-Mola e cartões (MZN).
       </p>
 
       {loading && (

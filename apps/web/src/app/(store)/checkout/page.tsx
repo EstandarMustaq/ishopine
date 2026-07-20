@@ -212,7 +212,7 @@ export default function CheckoutPage() {
         if (attempts >= 40) {
           stopPolling();
           toast.message(
-            "Aguardando confirmação PaySuite. Veja em Pagamentos.",
+            "Aguardando confirmação do pagamento. Veja em Pagamentos.",
           );
         }
       })();
@@ -273,7 +273,7 @@ export default function CheckoutPage() {
 
       const url = session.checkoutUrl ?? session.url;
       if (url && !session.simulated) {
-        toast.success(`${orderLabel} criado — a redireccionar ao PaySuite…`);
+        toast.success(`${orderLabel} criado — a redireccionar ao pagamento…`);
         window.location.href = url;
         return;
       }
@@ -343,7 +343,7 @@ export default function CheckoutPage() {
         Checkout
       </h1>
       <p className="mt-1 text-[13px] text-zinc-500">
-        Pagamentos em meticais (MZN) via PaySuite — M-Pesa, e-Mola e cartões.
+        Pagamentos em meticais via M-Pesa, e-Mola e cartões.
       </p>
 
       <div className="mt-8 space-y-4">
@@ -467,16 +467,7 @@ export default function CheckoutPage() {
         <section className="glass-panel animate-slide-up p-5">
           <h2 className="text-[14px] font-semibold text-zinc-900">Pagamento</h2>
           <p className="mt-1 text-[12px] text-zinc-500">
-            Processado por{" "}
-            <a
-              href="https://paysuite.co.mz"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline underline-offset-2"
-            >
-              PaySuite
-            </a>{" "}
-            (Moçambique). Transacções reais em produção.
+            Pague com M-Pesa, e-Mola ou cartão. Transacções em meticais (MZN).
           </p>
           <div className="mt-4 grid gap-2 sm:grid-cols-3">
             {METHODS.map((m) => {
@@ -519,7 +510,7 @@ export default function CheckoutPage() {
                 className="mt-1.5"
               />
               <p className="mt-1.5 text-[12px] text-zinc-500">
-                Será redireccionado ao checkout PaySuite para confirmar.
+                Será redireccionado para confirmar o pagamento no telemóvel.
               </p>
             </div>
           )}
