@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
 
 const jakarta = Plus_Jakarta_Sans({
@@ -15,7 +16,7 @@ export const metadata: Metadata = {
     template: "%s · iShopine",
   },
   description:
-    "iShopine — mercado moçambicano de bens. Compre e venda em MZN com M-Pesa, e-Mola e cartões via PaySuite.",
+    "iShopine — mercado livre de Moçambique. Compre e venda em meticais com M-Pesa, e-Mola ou cartão.",
   metadataBase: new URL("https://ishopine.com"),
 };
 
@@ -27,8 +28,10 @@ export default function RootLayout({
   return (
     <html lang="pt-MZ">
       <body className={`${jakarta.variable} font-sans antialiased`}>
-        {children}
-        <Toaster theme="light" position="top-center" richColors />
+        <TooltipProvider delayDuration={200}>
+          {children}
+          <Toaster theme="light" position="top-center" richColors />
+        </TooltipProvider>
       </body>
     </html>
   );

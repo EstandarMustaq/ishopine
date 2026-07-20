@@ -2,7 +2,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ProductCard } from "@/components/products/product-card";
+import {
+  HorizontalCatalog,
+  HorizontalCatalogItem,
+} from "@/components/catalog/horizontal-catalog";
+import { ReputationBadge } from "@/components/shops/reputation-badge";
 import { apiFetch } from "@/lib/api";
+import { shopTypeLabel } from "@/lib/mozambique";
 import type { Category, Paginated, Product, Shop } from "@/lib/types";
 
 const HERO_IMAGE =
@@ -16,7 +22,7 @@ async function getHomeData() {
         "/products?featured=true&limit=8&sort=newest",
         { token: null },
       ),
-      apiFetch<Paginated<Shop>>("/shops?limit=6", { token: null }),
+      apiFetch<Paginated<Shop>>("/shops?limit=12", { token: null }),
     ]);
     return {
       categories,
@@ -56,8 +62,7 @@ export default async function HomePage() {
               De Moçambique, para Moçambique
             </h1>
             <p className="animate-hero-in-delay-2 mt-2 max-w-md text-[14px] leading-relaxed text-white/75">
-              Mercado em meticais. Pague com M-Pesa, e-Mola ou cartão via
-              PaySuite.
+              Mercado livre. Venda e pague com M-Pesa, e-Mola ou cartão.
             </p>
             <div className="animate-hero-in-delay-2 mt-6 flex flex-wrap gap-2.5">
               <Button asChild size="lg" className="bg-white text-zinc-900 hover:bg-zinc-100">
@@ -82,43 +87,46 @@ export default async function HomePage() {
             Categorias
           </h2>
           <p className="mt-1.5 text-[13px] text-zinc-500">
-            Navegue pelo catálogo do mercado.
+            Catálogos do mercado — deslize para explorar.
           </p>
-          <div className="mt-7 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-            {categories.map((category) => (
-              <Link
-                key={category.id}
-                href={`/produtos?category=${category.slug}`}
-                className="glass-panel group overflow-hidden transition-transform duration-300 hover:scale-[1.02]"
-              >
-                <div className="relative aspect-square bg-zinc-100">
-                  {category.imageUrl ? (
-                    <Image
-                      src={category.imageUrl}
-                      alt={category.name}
-                      fill
-                      className="object-cover transition-transform duration-500 group-hover:scale-105"
-                      sizes="160px"
-                    />
-                  ) : null}
-                </div>
-                <div className="px-3 py-3">
-                  <p className="text-[13px] font-semibold text-zinc-900">
-                    {category.name}
-                  </p>
-                  {category._count && (
-                    <p className="text-[12px] text-zinc-500">
-                      {category._count.products} itens
-                    </p>
-                  )}
-                </div>
-              </Link>
-            ))}
-            {categories.length === 0 && (
-              <p className="col-span-full text-[13px] text-zinc-500">
-                Categorias em breve. Inicie a API para carregar o catálogo.
-              </p>
-            )}
+          <div className="mt-7">
+            <HorizontalCatalog>
+              {categories.map((category) => (
+                <HorizontalCatalogItem key={category.id}>
+                  <Link
+                    href={`/produtos?category=${category.slug}`}
+                    className="glass-panel group block overflow-hidden transition-transform duration-300 hover:scale-[1.02]"
+                  >
+                    <div className="relative aspect-square bg-zinc-100">
+                      {category.imageUrl ? (
+                        <Image
+                          src={category.imageUrl}
+                          alt={category.name}
+                          fill
+                          className="object-cover transition-transform duration-500 group-hover:scale-105"
+                          sizes="168px"
+                        />
+                      ) : null}
+                    </div>
+                    <div className="px-3 py-3">
+                      <p className="text-[13px] font-semibold text-zinc-900">
+                        {category.name}
+                      </p>
+                      {category._count && (
+                        <p className="text-[12px] text-zinc-500">
+                          {category._count.products} itens
+                        </p>
+                      )}
+                    </div>
+                  </Link>
+                </HorizontalCatalogItem>
+              ))}
+              {categories.length === 0 && (
+                <p className="text-[13px] text-zinc-500">
+                  Categorias em breve. Inicie a API para carregar o catálogo.
+                </p>
+              )}
+            </HorizontalCatalog>
           </div>
         </div>
       </section>
@@ -156,40 +164,56 @@ export default async function HomePage() {
           <div className="flex items-end justify-between gap-4">
             <div>
               <h2 className="text-xl font-semibold tracking-tight text-zinc-900 sm:text-2xl">
-                Lojas
+                Conheça vendedores do iShopine
               </h2>
               <p className="mt-1.5 text-[13px] text-zinc-500">
-                Conheça vendedores do iShopine.
+                Lojas com reputação e localização por província.
               </p>
             </div>
             <Button variant="outline" size="sm" asChild>
               <Link href="/lojas">Ver lojas</Link>
             </Button>
           </div>
-          <div className="mt-7 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {shops.map((shop) => (
-              <Link
-                key={shop.id}
-                href={`/lojas/${shop.slug}`}
-                className="glass-panel px-5 py-4 transition-transform duration-300 hover:scale-[1.01]"
-              >
-                <p className="text-[14px] font-semibold text-zinc-900">
-                  {shop.name}
+          <div className="mt-7">
+            <HorizontalCatalog>
+              {shops.map((shop) => (
+                <HorizontalCatalogItem key={shop.id} className="w-[220px] sm:w-[240px]">
+                  <Link
+                    href={`/lojas/${shop.slug}`}
+                    className="glass-panel block h-full px-4 py-4 transition-transform duration-300 hover:scale-[1.01]"
+                  >
+                    <p className="text-[14px] font-semibold text-zinc-900">
+                      {shop.name}
+                    </p>
+                    <p className="mt-1 text-[11px] font-medium uppercase tracking-wide text-zinc-400">
+                      {shopTypeLabel(shop.shopType)}
+                    </p>
+                    <p className="mt-2 line-clamp-2 text-[13px] text-zinc-500">
+                      {shop.description || "Vitrine no mercado aberto"}
+                    </p>
+                    <ReputationBadge
+                      className="mt-3"
+                      compact
+                      ratingAvg={shop.ratingAvg}
+                      ratingCount={shop.ratingCount}
+                      reputationScore={shop.reputationScore}
+                    />
+                    <p className="mt-2 text-[12px] text-zinc-500">
+                      {[shop.district, shop.province].filter(Boolean).join(" · ")}
+                    </p>
+                  </Link>
+                </HorizontalCatalogItem>
+              ))}
+              {shops.length === 0 && (
+                <p className="text-[13px] text-zinc-500">
+                  Ainda não há lojas públicas. Seja o primeiro a{" "}
+                  <Link href="/vender" className="font-medium text-zinc-900 underline-offset-4 hover:underline">
+                    abrir a sua
+                  </Link>
+                  .
                 </p>
-                <p className="mt-1 line-clamp-2 text-[13px] text-zinc-500">
-                  {shop.description || "Vitrine no mercado aberto"}
-                </p>
-              </Link>
-            ))}
-            {shops.length === 0 && (
-              <p className="col-span-full text-[13px] text-zinc-500">
-                Ainda não há lojas públicas. Seja o primeiro a{" "}
-                <Link href="/vender" className="font-medium text-zinc-900 underline-offset-4 hover:underline">
-                  abrir a sua
-                </Link>
-                .
-              </p>
-            )}
+              )}
+            </HorizontalCatalog>
           </div>
         </div>
       </section>

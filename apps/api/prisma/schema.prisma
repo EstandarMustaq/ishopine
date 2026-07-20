@@ -28,6 +28,24 @@ enum ShopStatus {
   CLOSED
 }
 
+enum ShopType {
+  ELECTRONICS
+  FASHION
+  SERVICES
+  REAL_ESTATE_FURNITURE
+  AUTOMOTIVE
+  FOOD_GROCERY
+  HEALTH_BEAUTY
+  OTHER
+}
+
+enum AffiliateRewardStatus {
+  PENDING
+  APPROVED
+  PAID
+  CANCELLED
+}
+
 enum ProductStatus {
   DRAFT
   ACTIVE
@@ -225,6 +243,7 @@ model User {
   backupCodesHash  String[]     @default([])
   canBuy           Boolean      @default(true)
   canSell          Boolean      @default(false)
+  affiliateEligible Boolean     @default(false)
   isActive         Boolean      @default(true)
   lastLoginAt      DateTime?
   createdAt        DateTime     @default(now())
@@ -251,6 +270,8 @@ model User {
   shopFollows       ShopFollow[]
   couponsCreated    Coupon[]            @relation("CouponCreator")
   billingPayments   BillingPayment[]
+  affiliateLinks    AffiliateLink[]
+  affiliateRewards  AffiliateReward[]   @relation("AffiliateEarner")
 
   @@unique([organizationId, email])
   @@index([email])
@@ -322,12 +343,15 @@ model Shop {
   logoUrl        String?
   bannerUrl      String?
   status         ShopStatus @default(PENDING)
-  city           String?
-  state          String?
+  shopType       ShopType   @default(OTHER)
+  province       String     @default("Maputo Cidade")
+  district       String     @default("KaMpfumo")
+  latitude       Float      @default(-25.9692)
+  longitude      Float      @default(32.5732)
   country        String     @default("MZ")
-
   ratingAvg      Float      @default(0)
   ratingCount    Int        @default(0)
+  reputationScore Float     @default(0)
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
 
@@ -339,11 +363,58 @@ model Shop {
   conversations Conversation[]
   followers     ShopFollow[]
   reviews       Review[]
+  affiliateLinks AffiliateLink[]
 
   @@unique([organizationId, slug])
   @@index([status])
   @@index([ownerId])
   @@index([organizationId])
+  @@index([shopType])
+  @@index([province, district])
+}
+
+model AffiliateLink {
+  id            String   @id @default(cuid())
+  userId        String
+  code          String   @unique
+  productId     String?
+  shopId        String?
+  label         String?
+  clicks        Int      @default(0)
+  conversions   Int      @default(0)
+  rewardBps     Int      @default(200)
+  pendingCents  Int      @default(0)
+  earnedCents   Int      @default(0)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user     User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product  Product?          @relation(fields: [productId], references: [id], onDelete: SetNull)
+  shop     Shop?             @relation(fields: [shopId], references: [id], onDelete: SetNull)
+  rewards  AffiliateReward[]
+
+  @@index([userId])
+  @@index([productId])
+  @@index([shopId])
+}
+
+model AffiliateReward {
+  id          String                 @id @default(cuid())
+  linkId      String
+  earnerId    String
+  orderId     String?
+  amountCents Int
+  status      AffiliateRewardStatus  @default(PENDING)
+  note        String?
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
+
+  link   AffiliateLink @relation(fields: [linkId], references: [id], onDelete: Cascade)
+  earner User          @relation("AffiliateEarner", fields: [earnerId], references: [id], onDelete: Cascade)
+
+  @@index([earnerId, status])
+  @@index([linkId])
 }
 
 model ShopMember {
@@ -374,6 +445,8 @@ model Address {
   state      String
   zipCode    String
   country    String   @default("MZ")
+  latitude   Float?
+  longitude  Float?
   isDefault  Boolean  @default(false)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
@@ -440,6 +513,7 @@ model Product {
   wishlistItems WishlistItem[]
   reviews       Review[]
   conversations Conversation[]
+  affiliateLinks AffiliateLink[]
 
   @@unique([shopId, sku])
   @@unique([shopId, slug])

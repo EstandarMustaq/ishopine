@@ -6,6 +6,7 @@ import { CreditCard, Smartphone, Wallet } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -18,6 +19,10 @@ import {
 import { api } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
 import { formatMZN } from "@/lib/format";
+import {
+  districtsForProvince,
+  MZ_PROVINCES,
+} from "@/lib/mozambique";
 import { cn } from "@/lib/utils";
 import type {
   Address,
@@ -207,7 +212,7 @@ export default function CheckoutPage() {
         if (attempts >= 40) {
           stopPolling();
           toast.message(
-            "Aguardando confirmação PaySuite. Veja em Pagamentos.",
+            "Aguardando confirmação do pagamento. Veja em Pagamentos.",
           );
         }
       })();
@@ -268,7 +273,7 @@ export default function CheckoutPage() {
 
       const url = session.checkoutUrl ?? session.url;
       if (url && !session.simulated) {
-        toast.success(`${orderLabel} criado — a redireccionar ao PaySuite…`);
+        toast.success(`${orderLabel} criado — a redireccionar ao pagamento…`);
         window.location.href = url;
         return;
       }
@@ -338,7 +343,7 @@ export default function CheckoutPage() {
         Checkout
       </h1>
       <p className="mt-1 text-[13px] text-zinc-500">
-        Pagamentos em meticais (MZN) via PaySuite — M-Pesa, e-Mola e cartões.
+        Pagamentos em meticais via M-Pesa, e-Mola e cartões.
       </p>
 
       <div className="mt-8 space-y-4">
@@ -369,9 +374,9 @@ export default function CheckoutPage() {
             </div>
           )}
           {(showNewAddress || addresses.length === 0) && (
-            <div className="mt-3 grid gap-3 sm:grid-cols-2">
-              <div className="sm:col-span-2">
-                <Label htmlFor="street">Avenida / Rua</Label>
+            <div className="mt-3 grid gap-4 sm:grid-cols-2">
+              <Field className="sm:col-span-2">
+                <FieldLabel htmlFor="street">Avenida / Rua</FieldLabel>
                 <Input
                   id="street"
                   value={newAddress.street}
@@ -379,9 +384,9 @@ export default function CheckoutPage() {
                     setNewAddress((s) => ({ ...s, street: e.target.value }))
                   }
                 />
-              </div>
-              <div>
-                <Label htmlFor="number">Nº</Label>
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="number">Nº</FieldLabel>
                 <Input
                   id="number"
                   value={newAddress.number}
@@ -389,40 +394,9 @@ export default function CheckoutPage() {
                     setNewAddress((s) => ({ ...s, number: e.target.value }))
                   }
                 />
-              </div>
-              <div>
-                <Label htmlFor="district">Bairro</Label>
-                <Input
-                  id="district"
-                  value={newAddress.district}
-                  onChange={(e) =>
-                    setNewAddress((s) => ({ ...s, district: e.target.value }))
-                  }
-                />
-              </div>
-              <div>
-                <Label htmlFor="city">Cidade</Label>
-                <Input
-                  id="city"
-                  value={newAddress.city}
-                  onChange={(e) =>
-                    setNewAddress((s) => ({ ...s, city: e.target.value }))
-                  }
-                />
-              </div>
-              <div>
-                <Label htmlFor="state">Província</Label>
-                <Input
-                  id="state"
-                  value={newAddress.state}
-                  onChange={(e) =>
-                    setNewAddress((s) => ({ ...s, state: e.target.value }))
-                  }
-                  placeholder="ex: Maputo"
-                />
-              </div>
-              <div>
-                <Label htmlFor="zipCode">Código postal</Label>
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="zipCode">Código postal</FieldLabel>
                 <Input
                   id="zipCode"
                   value={newAddress.zipCode}
@@ -430,7 +404,57 @@ export default function CheckoutPage() {
                     setNewAddress((s) => ({ ...s, zipCode: e.target.value }))
                   }
                 />
-              </div>
+              </Field>
+              <Field>
+                <FieldLabel>Província</FieldLabel>
+                <Select
+                  value={newAddress.state || undefined}
+                  onValueChange={(value) =>
+                    setNewAddress((s) => ({
+                      ...s,
+                      state: value,
+                      city: "",
+                      district: "",
+                    }))
+                  }
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Província" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {MZ_PROVINCES.map((province) => (
+                      <SelectItem key={province.name} value={province.name}>
+                        {province.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
+              <Field>
+                <FieldLabel>Distrito</FieldLabel>
+                <Select
+                  value={newAddress.district || undefined}
+                  onValueChange={(value) =>
+                    setNewAddress((s) => ({
+                      ...s,
+                      district: value,
+                      city: value,
+                    }))
+                  }
+                  disabled={!newAddress.state}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Distrito" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {districtsForProvince(newAddress.state).map((district) => (
+                      <SelectItem key={district} value={district}>
+                        {district}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
               <div className="sm:col-span-2">
                 <Button type="button" variant="outline" onClick={createAddress}>
                   Guardar endereço
@@ -443,16 +467,7 @@ export default function CheckoutPage() {
         <section className="glass-panel animate-slide-up p-5">
           <h2 className="text-[14px] font-semibold text-zinc-900">Pagamento</h2>
           <p className="mt-1 text-[12px] text-zinc-500">
-            Processado por{" "}
-            <a
-              href="https://paysuite.co.mz"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline underline-offset-2"
-            >
-              PaySuite
-            </a>{" "}
-            (Moçambique). Transacções reais em produção.
+            Pague com M-Pesa, e-Mola ou cartão. Transacções em meticais (MZN).
           </p>
           <div className="mt-4 grid gap-2 sm:grid-cols-3">
             {METHODS.map((m) => {
@@ -495,7 +510,7 @@ export default function CheckoutPage() {
                 className="mt-1.5"
               />
               <p className="mt-1.5 text-[12px] text-zinc-500">
-                Será redireccionado ao checkout PaySuite para confirmar.
+                Será redireccionado para confirmar o pagamento no telemóvel.
               </p>
             </div>
           )}

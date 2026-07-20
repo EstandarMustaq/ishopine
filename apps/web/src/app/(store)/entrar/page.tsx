@@ -5,11 +5,35 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Spinner } from "@/components/ui/spinner";
 import { api, DEV_CODE_STORAGE_KEY, getGoogleAuthUrl } from "@/lib/api";
 import { postLoginPath, useAuthStore } from "@/lib/auth-store";
 import type { AuthResponse, LoginResult } from "@/lib/types";
+
+function GoogleIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        fill="#EA4335"
+        d="M12 10.2v3.6h5.1c-.2 1.2-.9 2.2-1.9 2.9l3.1 2.4c1.8-1.7 2.9-4.1 2.9-7 0-.7-.1-1.3-.2-1.9H12z"
+      />
+      <path
+        fill="#34A853"
+        d="M6.6 14.3l-.9.7-2.5 1.9C4.8 19.6 8.1 21.6 12 21.6c2.4 0 4.4-.8 5.9-2.1l-3.1-2.4c-.8.6-1.9.9-2.8.9-2.2 0-4-1.5-4.7-3.5z"
+      />
+      <path
+        fill="#4A90E2"
+        d="M3.2 7.1C2.4 8.7 2 10.3 2 12s.4 3.3 1.2 4.9l3.4-2.6c-.2-.6-.3-1.2-.3-1.8s.1-1.3.3-1.9L3.2 7.1z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M12 5.4c1.3 0 2.5.5 3.4 1.3l2.6-2.6C16.4 2.5 14.4 1.6 12 1.6 8.1 1.6 4.8 3.6 3.2 7.1l3.4 2.6C8 6.9 9.8 5.4 12 5.4z"
+      />
+    </svg>
+  );
+}
 
 function LoginForm() {
   const router = useRouter();
@@ -89,11 +113,11 @@ function LoginForm() {
         </p>
       )}
 
-      <form onSubmit={onSubmit} className="mt-8 space-y-4">
+      <form onSubmit={onSubmit} className="mt-8 space-y-5">
         {!sessionToken ? (
           <>
-            <div>
-              <Label htmlFor="email">E-mail</Label>
+            <Field>
+              <FieldLabel htmlFor="email">E-mail</FieldLabel>
               <Input
                 id="email"
                 type="email"
@@ -102,9 +126,9 @@ function LoginForm() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
-            </div>
-            <div>
-              <Label htmlFor="password">Senha</Label>
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="password">Senha</FieldLabel>
               <Input
                 id="password"
                 type="password"
@@ -113,11 +137,11 @@ function LoginForm() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
-            </div>
+            </Field>
           </>
         ) : (
-          <div>
-            <Label htmlFor="code">Código 2FA</Label>
+          <Field>
+            <FieldLabel htmlFor="code">Código 2FA</FieldLabel>
             <Input
               id="code"
               inputMode="numeric"
@@ -128,9 +152,9 @@ function LoginForm() {
               value={code}
               onChange={(e) => setCode(e.target.value)}
             />
-            <p className="mt-2 text-xs text-taupe">
+            <FieldDescription>
               Abra o autenticador e digite o código de 6 dígitos.
-            </p>
+            </FieldDescription>
             <button
               type="button"
               className="mt-2 text-xs font-medium text-[#111111] underline"
@@ -141,10 +165,11 @@ function LoginForm() {
             >
               Voltar ao login
             </button>
-          </div>
+          </Field>
         )}
 
         <Button type="submit" className="w-full" disabled={loading}>
+          {loading ? <Spinner className="size-4" /> : null}
           {loading
             ? "Entrando..."
             : sessionToken
@@ -161,8 +186,11 @@ function LoginForm() {
             <span className="h-px flex-1 bg-border" />
           </div>
 
-          <Button variant="outline" className="w-full" asChild>
-            <a href={getGoogleAuthUrl()}>Continuar com Google</a>
+          <Button variant="outline" className="w-full gap-2" asChild>
+            <a href={getGoogleAuthUrl()}>
+              <GoogleIcon className="size-4" />
+              Continuar com Google
+            </a>
           </Button>
         </>
       )}

@@ -1,12 +1,13 @@
 import {
-  ConflictException,
+  BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { PlatformRole, ShopRole, ShopStatus } from '@prisma/client';
+import { PlatformRole, ShopRole, ShopStatus, ShopType } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { isValidMzLocation } from '../common/mozambique';
 
 function slugify(value: string) {
   return value
@@ -15,6 +16,13 @@ function slugify(value: string) {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/(^-|-$)/g, '');
+}
+
+function reputationFrom(ratingAvg: number, ratingCount: number, followers = 0) {
+  return Math.min(
+    100,
+    Math.round(ratingAvg * 18 + Math.min(ratingCount, 40) * 0.5 + Math.min(followers, 50) * 0.2),
+  );
 }
 
 @Injectable()
@@ -33,17 +41,50 @@ export class ShopsService {
     return org.id;
   }
 
+  private assertGeo(data: {
+    province?: string;
+    district?: string;
+    latitude?: number;
+    longitude?: number;
+  }) {
+    if (
+      !data.province ||
+      !data.district ||
+      typeof data.latitude !== 'number' ||
+      typeof data.longitude !== 'number'
+    ) {
+      throw new BadRequestException(
+        'Província, distrito e geolocalização são obrigatórios',
+      );
+    }
+    if (!isValidMzLocation(data.province, data.district)) {
+      throw new BadRequestException('Província ou distrito inválido em Moçambique');
+    }
+    if (
+      data.latitude < -27.5 ||
+      data.latitude > -10 ||
+      data.longitude < 30 ||
+      data.longitude > 41
+    ) {
+      throw new BadRequestException('Coordenadas fora de Moçambique');
+    }
+  }
+
   async createShop(
     userId: string,
     data: {
       name: string;
       description?: string;
-      city?: string;
-      state?: string;
+      shopType?: ShopType;
+      province: string;
+      district: string;
+      latitude: number;
+      longitude: number;
       logoUrl?: string;
       bannerUrl?: string;
     },
   ) {
+    this.assertGeo(data);
     const organizationId = await this.organizationId();
     let slug = slugify(data.name);
     const clash = await this.prisma.shop.findUnique({
@@ -63,11 +104,15 @@ export class ShopsService {
           name: data.name,
           slug,
           description: data.description,
-          city: data.city,
-          state: data.state,
+          shopType: data.shopType ?? ShopType.OTHER,
+          province: data.province,
+          district: data.district,
+          latitude: data.latitude,
+          longitude: data.longitude,
           logoUrl: data.logoUrl,
           bannerUrl: data.bannerUrl,
           status: ShopStatus.ACTIVE,
+          reputationScore: 10,
           members: {
             create: {
               userId,
@@ -99,42 +144,63 @@ export class ShopsService {
     return shop;
   }
 
-  listPublic(query: { q?: string; page?: string; limit?: string }) {
+  listPublic(query: {
+    q?: string;
+    type?: string;
+    province?: string;
+    page?: string;
+    limit?: string;
+  }) {
     const page = Math.max(1, Number(query.page ?? 1));
     const limit = Math.min(48, Math.max(1, Number(query.limit ?? 12)));
+    const shopType =
+      query.type && Object.values(ShopType).includes(query.type as ShopType)
+        ? (query.type as ShopType)
+        : undefined;
+
+    const where = {
+      status: ShopStatus.ACTIVE,
+      ...(shopType ? { shopType } : {}),
+      ...(query.province ? { province: query.province } : {}),
+      ...(query.q
+        ? {
+            OR: [
+              { name: { contains: query.q, mode: 'insensitive' as const } },
+              {
+                description: {
+                  contains: query.q,
+                  mode: 'insensitive' as const,
+                },
+              },
+              { district: { contains: query.q, mode: 'insensitive' as const } },
+              { province: { contains: query.q, mode: 'insensitive' as const } },
+            ],
+          }
+        : {}),
+    };
 
     return this.prisma.shop
       .findMany({
-        where: {
-          status: ShopStatus.ACTIVE,
-          ...(query.q
-            ? {
-                OR: [
-                  { name: { contains: query.q, mode: 'insensitive' as const } },
-                  {
-                    description: {
-                      contains: query.q,
-                      mode: 'insensitive' as const,
-                    },
-                  },
-                ],
-              }
-            : {}),
-        },
+        where,
         include: {
           owner: { select: { id: true, name: true } },
-          _count: { select: { products: true } },
+          _count: { select: { products: true, followers: true } },
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: [{ reputationScore: 'desc' }, { createdAt: 'desc' }],
         skip: (page - 1) * limit,
         take: limit,
       })
       .then(async (items) => {
-        const total = await this.prisma.shop.count({
-          where: { status: ShopStatus.ACTIVE },
-        });
+        const total = await this.prisma.shop.count({ where });
         return {
-          items,
+          items: items.map((shop) => ({
+            ...shop,
+            reputationScore: reputationFrom(
+              shop.ratingAvg,
+              shop.ratingCount,
+              shop._count.followers,
+            ),
+          })),
           meta: {
             page,
             limit,
@@ -154,7 +220,7 @@ export class ShopsService {
         ],
       },
       include: {
-        _count: { select: { products: true, orders: true } },
+        _count: { select: { products: true, orders: true, followers: true } },
         members: {
           where: { userId },
           select: { role: true },
@@ -169,13 +235,20 @@ export class ShopsService {
       where: { slug, status: ShopStatus.ACTIVE },
       include: {
         owner: { select: { id: true, name: true } },
-        _count: { select: { products: true } },
+        _count: { select: { products: true, followers: true } },
       },
     });
     if (!shop) {
       throw new NotFoundException('Loja não encontrada');
     }
-    return shop;
+    return {
+      ...shop,
+      reputationScore: reputationFrom(
+        shop.ratingAvg,
+        shop.ratingCount,
+        shop._count.followers,
+      ),
+    };
   }
 
   async assertMembership(
@@ -197,71 +270,61 @@ export class ShopsService {
   }
 
   async updateShop(
-    shopId: string,
+    id: string,
     userId: string,
     data: Partial<{
       name: string;
       description: string;
       logoUrl: string;
       bannerUrl: string;
-      city: string;
-      state: string;
+      shopType: ShopType;
+      province: string;
+      district: string;
+      latitude: number;
+      longitude: number;
       status: ShopStatus;
     }>,
   ) {
-    await this.assertMembership(shopId, userId, [
-      ShopRole.OWNER,
-      ShopRole.MANAGER,
-    ]);
-
-    if (data.name) {
-      const organizationId = await this.organizationId();
-      const slug = slugify(data.name);
-      const clash = await this.prisma.shop.findFirst({
-        where: {
-          organizationId,
-          slug,
-          NOT: { id: shopId },
-        },
-      });
-      if (clash) {
-        throw new ConflictException('Já existe loja com este nome/slug');
-      }
-      return this.prisma.shop.update({
-        where: { id: shopId },
-        data: { ...data, slug },
+    await this.assertMembership(id, userId, [ShopRole.OWNER, ShopRole.MANAGER]);
+    if (
+      data.province ||
+      data.district ||
+      data.latitude != null ||
+      data.longitude != null
+    ) {
+      const current = await this.prisma.shop.findUnique({ where: { id } });
+      if (!current) throw new NotFoundException('Loja não encontrada');
+      this.assertGeo({
+        province: data.province ?? current.province,
+        district: data.district ?? current.district,
+        latitude: data.latitude ?? current.latitude,
+        longitude: data.longitude ?? current.longitude,
       });
     }
-
     return this.prisma.shop.update({
-      where: { id: shopId },
+      where: { id },
       data,
     });
   }
 
   async follow(userId: string, shopId: string) {
-    const shop = await this.prisma.shop.findFirst({
-      where: { id: shopId, status: ShopStatus.ACTIVE },
-    });
-    if (!shop) {
-      throw new NotFoundException('Loja não encontrada');
-    }
-    return this.prisma.shopFollow.upsert({
-      where: { userId_shopId: { userId, shopId } },
-      create: { userId, shopId },
+    await this.prisma.shopFollow.upsert({
+      where: { userId_shopId: { shopId, userId } },
+      create: { shopId, userId },
       update: {},
     });
+    return { following: true };
   }
 
   async unfollow(userId: string, shopId: string) {
-    await this.prisma.shopFollow.deleteMany({ where: { userId, shopId } });
-    return { ok: true };
+    await this.prisma.shopFollow.deleteMany({ where: { shopId, userId } });
+    return { following: false };
   }
 
   async isFollowing(userId: string, shopId: string) {
-    const follow = await this.prisma.shopFollow.findUnique({
-      where: { userId_shopId: { userId, shopId } },
+    const row = await this.prisma.shopFollow.findUnique({
+      where: { userId_shopId: { shopId, userId } },
     });
-    return { following: Boolean(follow) };
+    return { following: Boolean(row) };
   }
 }

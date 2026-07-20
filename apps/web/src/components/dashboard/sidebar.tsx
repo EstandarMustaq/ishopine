@@ -5,7 +5,10 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   AlertTriangle,
   Boxes,
+  ChevronLeft,
+  ChevronRight,
   CreditCard,
+  Gift,
   LayoutDashboard,
   LogOut,
   Package,
@@ -19,7 +22,13 @@ import {
 } from "lucide-react";
 import { useAuthStore } from "@/lib/auth-store";
 import { cn } from "@/lib/utils";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const links: Array<{
   href: string;
@@ -57,6 +66,7 @@ const links: Array<{
     icon: AlertTriangle,
   },
   { href: "/painel/loja", label: "Loja", icon: Store },
+  { href: "/painel/recompensas", label: "Recompensas", icon: Gift },
   { href: "/painel/seguranca", label: "Segurança", icon: Shield },
   {
     href: "/painel/configuracoes",
@@ -66,73 +76,150 @@ const links: Array<{
   },
 ];
 
-export function DashboardSidebar() {
+export function DashboardSidebar({
+  collapsed,
+  onToggle,
+  className,
+}: {
+  collapsed: boolean;
+  onToggle: () => void;
+  className?: string;
+}) {
   const pathname = usePathname();
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
   const isAdmin = useAuthStore((s) => s.isAdmin);
+  const initials =
+    user?.name
+      ?.split(" ")
+      .map((p) => p[0])
+      .slice(0, 2)
+      .join("")
+      .toUpperCase() || "IS";
 
   return (
-    <aside className="flex h-full w-56 flex-col border-r border-zinc-200/60 bg-zinc-50/80 backdrop-blur-xl">
-      <div className="border-b border-zinc-200/60 px-4 py-4">
+    <aside
+      className={cn(
+        "relative flex h-full min-h-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground",
+        collapsed ? "w-[4.25rem]" : "w-56",
+        className,
+      )}
+    >
+      <div
+        className={cn(
+          "shrink-0 border-b border-sidebar-border px-3 py-4",
+          collapsed && "px-2 text-center",
+        )}
+      >
         <Link
           href="/"
-          className="text-[15px] font-semibold tracking-tight text-zinc-900"
+          className={cn(
+            "block text-[15px] font-semibold tracking-tight text-zinc-900",
+            collapsed && "text-[11px]",
+          )}
         >
-          iShopine
+          {collapsed ? "iS" : "iShopine"}
         </Link>
-        <p className="mt-0.5 text-[11px] text-zinc-500">Painel do mercado</p>
+        {!collapsed && (
+          <p className="mt-0.5 text-[11px] text-zinc-500">Painel do mercado</p>
+        )}
       </div>
 
-      <nav className="flex flex-1 flex-col gap-0.5 p-2">
-        {links.map((link) => {
-          if (link.adminOnly && !isAdmin()) return null;
-          const active = link.exact
-            ? pathname === link.href
-            : pathname.startsWith(link.href);
-          const Icon = link.icon;
-          return (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={cn(
-                "flex items-center gap-2 rounded-lg px-2.5 py-2 text-[13px] font-medium transition-colors duration-200",
-                active
-                  ? "bg-zinc-900 text-white shadow-soft"
-                  : "text-zinc-600 hover:bg-white/80 hover:text-zinc-900",
-              )}
-            >
-              <Icon className="size-3.5 shrink-0 opacity-80" />
-              {link.label}
-            </Link>
-          );
-        })}
+      <nav className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden p-2">
+        <div className="flex flex-col gap-0.5">
+          {links.map((link) => {
+            if (link.adminOnly && !isAdmin()) return null;
+            const active = link.exact
+              ? pathname === link.href
+              : pathname.startsWith(link.href);
+            const Icon = link.icon;
+            const item = (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={cn(
+                  "flex items-center gap-2 rounded-lg px-2.5 py-2 text-[13px] font-medium transition-colors duration-200",
+                  collapsed && "justify-center px-2",
+                  active
+                    ? "bg-zinc-900 text-white shadow-soft"
+                    : "text-zinc-600 hover:bg-white/80 hover:text-zinc-900",
+                )}
+              >
+                <Icon className="size-3.5 shrink-0 opacity-80" />
+                {!collapsed && <span className="truncate">{link.label}</span>}
+              </Link>
+            );
+            if (!collapsed) return item;
+            return (
+              <Tooltip key={link.href}>
+                <TooltipTrigger asChild>{item}</TooltipTrigger>
+                <TooltipContent side="right">{link.label}</TooltipContent>
+              </Tooltip>
+            );
+          })}
+        </div>
       </nav>
 
-      <div className="border-t border-zinc-200/60 p-3">
-        <p className="truncate text-[13px] font-medium text-zinc-900">
-          {user?.name}
-        </p>
-        <p className="truncate text-[11px] text-zinc-500">{user?.email}</p>
-        <div className="mt-2.5 flex flex-col gap-1.5">
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/">Ver mercado</Link>
-          </Button>
+      <div className="shrink-0 border-t border-sidebar-border p-3">
+        <div
+          className={cn(
+            "flex items-center gap-2",
+            collapsed && "justify-center",
+          )}
+        >
+          <Avatar className="size-8">
+            <AvatarFallback className="bg-zinc-200 text-[11px] font-semibold text-zinc-700">
+              {initials}
+            </AvatarFallback>
+          </Avatar>
+          {!collapsed && (
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[13px] font-medium text-zinc-900">
+                {user?.name}
+              </p>
+              <p className="truncate text-[11px] text-zinc-500">{user?.email}</p>
+            </div>
+          )}
+        </div>
+        <div
+          className={cn(
+            "mt-2.5 flex flex-col gap-1.5",
+            collapsed && "items-center",
+          )}
+        >
+          {!collapsed && (
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/">Ver mercado</Link>
+            </Button>
+          )}
           <Button
             variant="ghost"
-            size="sm"
-            className="justify-start"
+            size={collapsed ? "icon-sm" : "sm"}
+            className={cn(!collapsed && "justify-start")}
             onClick={() => {
               logout();
               router.push("/entrar");
             }}
           >
-            <LogOut className="mr-2 size-3.5" />
-            Sair
+            <LogOut className={cn("size-3.5", !collapsed && "mr-2")} />
+            {!collapsed && "Sair"}
           </Button>
         </div>
       </div>
+
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-label={collapsed ? "Expandir menu" : "Colapsar menu"}
+        className="absolute top-1/2 -right-3 z-20 flex size-6 -translate-y-1/2 items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-600 shadow-sm transition hover:bg-zinc-50 hover:text-zinc-900"
+      >
+        {collapsed ? (
+          <ChevronRight className="size-3.5" />
+        ) : (
+          <ChevronLeft className="size-3.5" />
+        )}
+      </button>
     </aside>
   );
 }

@@ -9,7 +9,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ShopStatus } from '@prisma/client';
+import { ShopStatus, ShopType } from '@prisma/client';
 import { ShopsService } from './shops.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -21,7 +21,8 @@ export class ShopsController {
 
   @Get()
   listPublic(
-    @Query() query: { q?: string; page?: string; limit?: string },
+    @Query()
+    query: { q?: string; type?: string; province?: string; page?: string; limit?: string },
   ) {
     return this.shops.listPublic(query);
   }
@@ -45,8 +46,11 @@ export class ShopsController {
     body: {
       name: string;
       description?: string;
-      city?: string;
-      state?: string;
+      shopType?: ShopType;
+      province: string;
+      district: string;
+      latitude: number;
+      longitude: number;
       logoUrl?: string;
       bannerUrl?: string;
     },
@@ -65,8 +69,11 @@ export class ShopsController {
       description: string;
       logoUrl: string;
       bannerUrl: string;
-      city: string;
-      state: string;
+      shopType: ShopType;
+      province: string;
+      district: string;
+      latitude: number;
+      longitude: number;
       status: ShopStatus;
     }>,
   ) {

@@ -4,12 +4,17 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import {
+  Bubble,
+  BubbleContent,
+  BubbleGroup,
+} from "@/components/ui/bubble";
 import { Button } from "@/components/ui/button";
+import { Field, FieldLabel } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
 import { formatDateTime } from "@/lib/format";
-import { cn } from "@/lib/utils";
 import type { Conversation, Message } from "@/lib/types";
 
 export default function MensagemDetailPage() {
@@ -120,7 +125,7 @@ export default function MensagemDetailPage() {
         <p className="mt-8 text-sm text-taupe">Carregando...</p>
       ) : (
         <>
-          <div className="mt-6 flex max-h-[55vh] flex-col gap-3 overflow-y-auto rounded-[12px] border border-border p-4">
+          <BubbleGroup className="mt-6 max-h-[55vh] overflow-y-auto rounded-xl border border-border p-4">
             {messages.length === 0 && (
               <p className="py-8 text-center text-sm text-taupe">
                 Nenhuma mensagem ainda. Digite abaixo para começar.
@@ -129,38 +134,38 @@ export default function MensagemDetailPage() {
             {messages.map((msg) => {
               const mine = msg.senderId === user?.id;
               return (
-                <div
+                <Bubble
                   key={msg.id}
-                  className={cn(
-                    "max-w-[85%] rounded-[12px] px-3 py-2 text-sm",
-                    mine
-                      ? "ml-auto bg-[#111111] text-white"
-                      : "bg-beige text-charcoal",
-                  )}
+                  align={mine ? "end" : "start"}
+                  variant={mine ? "default" : "muted"}
+                  className={mine ? "ml-auto" : undefined}
                 >
-                  <p className="whitespace-pre-wrap">{msg.body}</p>
-                  <p
-                    className={cn(
-                      "mt-1 text-[10px]",
-                      mine ? "text-white/70" : "text-taupe",
-                    )}
-                  >
-                    {formatDateTime(msg.createdAt)}
-                  </p>
-                </div>
+                  <BubbleContent>
+                    <p className="whitespace-pre-wrap">{msg.body}</p>
+                    <p className="mt-1 text-[10px] opacity-70">
+                      {formatDateTime(msg.createdAt)}
+                    </p>
+                  </BubbleContent>
+                </Bubble>
               );
             })}
             <div ref={bottomRef} />
-          </div>
+          </BubbleGroup>
 
           <form onSubmit={send} className="mt-4 space-y-3">
-            <Textarea
-              value={body}
-              onChange={(e) => setBody(e.target.value)}
-              placeholder="Escreva sua mensagem..."
-              rows={3}
-              required
-            />
+            <Field>
+              <FieldLabel htmlFor="message-body">Mensagem</FieldLabel>
+              <Textarea
+                id="message-body"
+                value={body}
+                onChange={(e) => setBody(e.target.value)}
+                placeholder="Escreva sua mensagem..."
+                rows={3}
+                required
+                autoComplete="off"
+                spellCheck={false}
+              />
+            </Field>
             <Button type="submit" disabled={sending || !body.trim()}>
               {sending ? "Enviando..." : "Enviar"}
             </Button>

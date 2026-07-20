@@ -55,8 +55,8 @@ export function SiteFooter() {
             Mercado de Moçambique, para Moçambique
           </p>
           <p className="mt-2 max-w-sm text-[13px] text-zinc-500">
-            Compre e venda bens em meticais (MZN). Pagamentos via PaySuite —
-            M-Pesa, e-Mola e cartões.
+            Compre e venda bens em meticais. Pagamentos via M-pesa, e-Mola e
+            cartões.
           </p>
           <a
             href="https://ishopine.com"
