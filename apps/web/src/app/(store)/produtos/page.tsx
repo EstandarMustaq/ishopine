@@ -142,7 +142,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
             className={cn(
               "rounded-full px-3 py-1.5 text-sm font-medium lowercase",
               currentSort === option.value
-                ? "bg-[var(--brand-yellow)] text-zinc-900"
+                ? "bg-[var(--brand-orange)] text-white"
                 : "text-zinc-500 hover:text-zinc-900",
             )}
           >

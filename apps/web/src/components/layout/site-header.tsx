@@ -26,6 +26,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { SiteSearch } from "@/components/search/site-search";
+import { BrandLogo } from "@/components/brand/logo";
 import { api } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
 import { cn } from "@/lib/utils";
@@ -90,12 +91,7 @@ export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-zinc-100 bg-white/95 backdrop-blur-md">
       <div className="mx-auto flex h-14 max-w-6xl items-center gap-3 px-3 sm:h-16 sm:gap-4 sm:px-6">
-        <Link
-          href="/"
-          className="shrink-0 text-[17px] font-bold tracking-tight text-zinc-900 sm:text-xl"
-        >
-          iShopine
-        </Link>
+        <BrandLogo variant="wordmark" priority className="shrink-0" />
 
         <div className="hidden min-w-0 flex-1 md:block md:max-w-sm lg:max-w-md">
           <SiteSearch variant="nav" />
@@ -206,7 +202,7 @@ export function SiteHeader() {
               variant="default"
               size="sm"
               asChild
-              className="h-8 gap-1 rounded-full bg-[var(--brand-yellow)] px-3 text-[12px] font-semibold text-zinc-900 hover:bg-[var(--brand-yellow-hover)] sm:text-[13px]"
+              className="h-8 gap-1 rounded-full px-3 text-[12px] font-semibold sm:text-[13px]"
             >
               <Link href="/entrar" aria-label="Entrar">
                 <LogIn className="size-3.5 shrink-0" />
@@ -227,8 +223,8 @@ export function SiteHeader() {
               className="w-[280px] border-l border-zinc-100 bg-white"
             >
               <SheetHeader>
-                <SheetTitle className="text-[15px] font-bold text-zinc-900">
-                  iShopine
+                <SheetTitle asChild>
+                  <BrandLogo variant="wordmark" href={null} className="justify-start" />
                 </SheetTitle>
               </SheetHeader>
               <div className="mt-4 flex flex-col gap-1">
@@ -303,7 +299,7 @@ export function SiteHeader() {
                 ) : (
                   <Button
                     asChild
-                    className="mt-3 h-11 gap-2 rounded-full bg-[var(--brand-yellow)] font-semibold text-zinc-900 hover:bg-[var(--brand-yellow-hover)]"
+                    className="mt-3 h-11 gap-2 rounded-full font-semibold"
                   >
                     <Link href="/entrar" onClick={() => setOpen(false)}>
                       <LogIn className="size-4" />

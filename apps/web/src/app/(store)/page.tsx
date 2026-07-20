@@ -63,7 +63,7 @@ export default async function HomePage() {
         <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/75 via-zinc-900/25 to-zinc-900/10" />
         <div className="relative z-10 flex min-h-[88svh] flex-col justify-end px-4 pb-14 pt-28 sm:min-h-[92svh] sm:px-8 sm:pb-20 lg:px-16">
           <div className="animate-hero-in max-w-xl">
-            <p className="inline-flex rounded-full bg-[var(--brand-yellow)] px-3 py-1 text-[12px] font-bold lowercase text-zinc-900">
+            <p className="inline-flex rounded-full bg-[var(--brand-orange)] px-3 py-1 text-[12px] font-bold lowercase text-white">
               ishopine
             </p>
             <h1 className="animate-hero-in-delay mt-4 text-4xl font-bold lowercase leading-[1.05] tracking-tight text-white sm:text-5xl md:text-6xl">
@@ -77,7 +77,7 @@ export default async function HomePage() {
               <Button
                 asChild
                 size="lg"
-                className="rounded-full bg-[var(--brand-yellow)] font-semibold text-zinc-900 hover:bg-[var(--brand-yellow-hover)]"
+                className="rounded-full font-semibold"
               >
                 <Link href={heroAd?.linkUrl || "/produtos"}>explorar mercado</Link>
               </Button>
