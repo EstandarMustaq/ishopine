@@ -4,8 +4,10 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { toast } from "sonner";
+import { BrandLogo } from "@/components/brand/logo";
+import { OtpField } from "@/components/forms/otp-field";
 import { Button } from "@/components/ui/button";
-import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
+import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { api, DEV_CODE_STORAGE_KEY, getGoogleAuthUrl } from "@/lib/api";
@@ -58,6 +60,11 @@ function LoginForm() {
     setLoading(true);
     try {
       if (sessionToken) {
+        if (code.length < 6) {
+          toast.error("Informe o código de 6 dígitos");
+          setLoading(false);
+          return;
+        }
         const data = await api<AuthResponse>("/auth/verify-2fa", {
           method: "POST",
           token: null,
@@ -102,13 +109,13 @@ function LoginForm() {
 
   return (
     <div className="mx-auto flex min-h-[70vh] max-w-md flex-col justify-center px-4 py-12">
-      <h1 className="text-3xl font-bold text-[#111111]">iShopine</h1>
-      <p className="mt-2 text-sm text-taupe">
-        Entre para comprar ou vender no mercado aberto
+      <BrandLogo variant="wordmark" href={null} className="justify-start" />
+      <p className="mt-3 text-sm text-[var(--brand-taupe)]">
+        Entre para comprar ou vender no marketplace livre
       </p>
 
       {googleError && (
-        <p className="mt-4 rounded-[12px] bg-beige px-3 py-2 text-sm text-charcoal">
+        <p className="mt-4 rounded-xl bg-[var(--brand-orange-soft)] px-3 py-2 text-sm text-[var(--brand-charcoal)]">
           Não foi possível entrar com Google. Tente e-mail e senha.
         </p>
       )}
@@ -125,6 +132,7 @@ function LoginForm() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                placeholder="voce@email.com"
               />
             </Field>
             <Field>
@@ -136,28 +144,24 @@ function LoginForm() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
               />
             </Field>
           </>
         ) : (
-          <Field>
-            <FieldLabel htmlFor="code">Código 2FA</FieldLabel>
-            <Input
+          <div className="space-y-3">
+            <OtpField
               id="code"
-              inputMode="numeric"
-              autoComplete="one-time-code"
-              placeholder="000000"
-              required
-              maxLength={8}
+              label="Código 2FA"
+              description="Abra o autenticador e digite o código de 6 dígitos."
               value={code}
-              onChange={(e) => setCode(e.target.value)}
+              onChange={setCode}
+              maxLength={6}
+              autoFocus
             />
-            <FieldDescription>
-              Abra o autenticador e digite o código de 6 dígitos.
-            </FieldDescription>
             <button
               type="button"
-              className="mt-2 text-xs font-medium text-[#111111] underline"
+              className="text-xs font-semibold text-[var(--brand-orange)] underline-offset-2 hover:underline"
               onClick={() => {
                 setSessionToken(null);
                 setCode("");
@@ -165,7 +169,7 @@ function LoginForm() {
             >
               Voltar ao login
             </button>
-          </Field>
+          </div>
         )}
 
         <Button type="submit" className="w-full" disabled={loading}>
@@ -180,10 +184,10 @@ function LoginForm() {
 
       {!sessionToken && (
         <>
-          <div className="my-6 flex items-center gap-3 text-xs text-taupe">
-            <span className="h-px flex-1 bg-border" />
+          <div className="my-6 flex items-center gap-3 text-xs text-[var(--brand-taupe)]">
+            <span className="h-px flex-1 bg-[var(--brand-border)]" />
             ou
-            <span className="h-px flex-1 bg-border" />
+            <span className="h-px flex-1 bg-[var(--brand-border)]" />
           </div>
 
           <Button variant="outline" className="w-full gap-2" asChild>
@@ -195,17 +199,25 @@ function LoginForm() {
         </>
       )}
 
-      <p className="mt-6 text-center text-sm text-taupe">
+      <p className="mt-6 text-center text-sm text-[var(--brand-taupe)]">
         Não tem conta?{" "}
-        <Link href="/cadastro" className="font-semibold text-[#111111]">
+        <Link
+          href="/cadastro"
+          className="font-semibold text-[var(--brand-orange)]"
+        >
           Cadastre-se
         </Link>
       </p>
 
-      <p className="mt-4 rounded-[12px] bg-beige px-3 py-2 text-center text-xs text-taupe">
+      <p className="mt-4 rounded-xl bg-[var(--brand-surface)] px-3 py-2 text-center text-xs text-[var(--brand-taupe)]">
         Demo:{" "}
-        <span className="font-medium text-charcoal">admin@ishopine.com</span> /{" "}
-        <span className="font-medium text-charcoal">IShopine@2026</span>
+        <span className="font-medium text-[var(--brand-charcoal)]">
+          admin@ishopine.com
+        </span>{" "}
+        /{" "}
+        <span className="font-medium text-[var(--brand-charcoal)]">
+          IShopine@2026
+        </span>
       </p>
     </div>
   );
@@ -215,7 +227,7 @@ export default function LoginPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-[50vh] items-center justify-center text-sm text-taupe">
+        <div className="flex min-h-[50vh] items-center justify-center text-sm text-[var(--brand-taupe)]">
           Carregando...
         </div>
       }

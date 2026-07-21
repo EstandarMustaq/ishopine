@@ -4,8 +4,7 @@ import { useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { OtpField } from "@/components/forms/otp-field";
 import { api } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
 import type { TwoFactorSetupResult, User } from "@/lib/types";
@@ -159,18 +158,13 @@ function SegurancaContent() {
               <span className="font-mono text-charcoal">{setup.secret}</span>
             </p>
             <form onSubmit={enable2fa} className="space-y-3">
-              <div>
-                <Label htmlFor="enable-code">Código do autenticador</Label>
-                <Input
-                  id="enable-code"
-                  inputMode="numeric"
-                  autoComplete="one-time-code"
-                  required
-                  maxLength={8}
-                  value={code}
-                  onChange={(e) => setCode(e.target.value)}
-                />
-              </div>
+              <OtpField
+                id="enable-code"
+                label="Código do autenticador"
+                value={code}
+                onChange={setCode}
+                maxLength={6}
+              />
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? "Ativando..." : "Ativar 2FA"}
               </Button>
@@ -200,14 +194,12 @@ function SegurancaContent() {
               Para desativar o 2FA, confirme com um código atual.
             </p>
             <div>
-              <Label htmlFor="disable-code">Código</Label>
-              <Input
+              <OtpField
                 id="disable-code"
-                inputMode="numeric"
-                required
-                maxLength={8}
+                label="Código"
                 value={code}
-                onChange={(e) => setCode(e.target.value)}
+                onChange={setCode}
+                maxLength={6}
               />
             </div>
             <Button

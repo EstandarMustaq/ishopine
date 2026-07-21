@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AccountingModule } from './accounting/accounting.module';
+import { AdsModule } from './ads/ads.module';
 import { AffiliateModule } from './affiliate/affiliate.module';
 import { AppController } from './app.controller';
 import { AuthModule } from './auth/auth.module';
@@ -51,6 +52,7 @@ import { WishlistModule } from './wishlist/wishlist.module';
     InventoryModule,
     AccountingModule,
     AffiliateModule,
+    AdsModule,
     UploadsModule,
     DashboardModule,
     WishlistModule,

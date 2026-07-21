@@ -4,9 +4,9 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { toast } from "sonner";
+import { BrandLogo } from "@/components/brand/logo";
+import { OtpField } from "@/components/forms/otp-field";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { api } from "@/lib/api";
 import { postLoginPath, useAuthStore } from "@/lib/auth-store";
 import type { AuthResponse } from "@/lib/types";
@@ -24,6 +24,10 @@ function TwoFactorForm() {
     if (!sessionToken) {
       toast.error("Sessão 2FA inválida. Faça login novamente.");
       router.replace("/entrar");
+      return;
+    }
+    if (code.length < 6) {
+      toast.error("Informe o código de 6 dígitos");
       return;
     }
     setLoading(true);
@@ -47,32 +51,31 @@ function TwoFactorForm() {
 
   return (
     <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-4 py-12">
-      <h1 className="text-3xl font-bold text-[#111111]">iShopine</h1>
-      <p className="mt-2 text-sm text-taupe">
+      <BrandLogo variant="wordmark" href={null} className="justify-start" />
+      <p className="mt-3 text-sm text-[var(--brand-taupe)]">
         Confirme o código do autenticador para continuar
       </p>
 
-      <form onSubmit={onSubmit} className="mt-8 space-y-4">
-        <div>
-          <Label htmlFor="code">Código 2FA</Label>
-          <Input
-            id="code"
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            placeholder="000000"
-            required
-            maxLength={8}
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-          />
-        </div>
+      <form onSubmit={onSubmit} className="mt-8 space-y-5">
+        <OtpField
+          id="code"
+          label="Código 2FA"
+          description="Abra o Google Authenticator ou Authy."
+          value={code}
+          onChange={setCode}
+          maxLength={6}
+          autoFocus
+        />
         <Button type="submit" className="w-full" disabled={loading}>
           {loading ? "Verificando..." : "Confirmar"}
         </Button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-taupe">
-        <Link href="/entrar" className="font-semibold text-[#111111]">
+      <p className="mt-6 text-center text-sm text-[var(--brand-taupe)]">
+        <Link
+          href="/entrar"
+          className="font-semibold text-[var(--brand-orange)]"
+        >
           Voltar ao login
         </Link>
       </p>
@@ -84,7 +87,7 @@ export default function AuthTwoFactorPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-screen items-center justify-center text-sm text-taupe">
+        <div className="flex min-h-screen items-center justify-center text-sm text-[var(--brand-taupe)]">
           Carregando...
         </div>
       }

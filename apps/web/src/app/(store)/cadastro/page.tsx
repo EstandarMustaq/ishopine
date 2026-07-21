@@ -4,9 +4,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
+import { BrandLogo } from "@/components/brand/logo";
 import { Button } from "@/components/ui/button";
+import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { api, DEV_CODE_STORAGE_KEY, getGoogleAuthUrl } from "@/lib/api";
 import type { RegisterResult } from "@/lib/types";
 
@@ -54,41 +55,44 @@ export default function RegisterPage() {
 
   return (
     <div className="mx-auto flex min-h-[70vh] max-w-md flex-col justify-center px-4 py-12">
-      <h1 className="text-3xl font-bold text-[#111111]">iShopine</h1>
-      <p className="mt-2 text-sm text-taupe">
-        Crie sua conta para comprar e vender
+      <BrandLogo variant="wordmark" href={null} className="justify-start" />
+      <p className="mt-3 text-sm text-[var(--brand-taupe)]">
+        Crie a sua conta para comprar e vender
       </p>
 
-      <form onSubmit={onSubmit} className="mt-8 space-y-4">
-        <div>
-          <Label htmlFor="name">Nome</Label>
+      <form onSubmit={onSubmit} className="mt-8 space-y-5">
+        <Field>
+          <FieldLabel htmlFor="name">Nome completo</FieldLabel>
           <Input
             id="name"
             required
             value={form.name}
             onChange={(e) => setForm((s) => ({ ...s, name: e.target.value }))}
+            placeholder="O seu nome"
           />
-        </div>
-        <div>
-          <Label htmlFor="email">E-mail</Label>
+        </Field>
+        <Field>
+          <FieldLabel htmlFor="email">E-mail</FieldLabel>
           <Input
             id="email"
             type="email"
             required
             value={form.email}
             onChange={(e) => setForm((s) => ({ ...s, email: e.target.value }))}
+            placeholder="voce@email.com"
           />
-        </div>
-        <div>
-          <Label htmlFor="phone">Telefone (opcional)</Label>
+        </Field>
+        <Field>
+          <FieldLabel htmlFor="phone">Telefone (opcional)</FieldLabel>
           <Input
             id="phone"
             value={form.phone}
             onChange={(e) => setForm((s) => ({ ...s, phone: e.target.value }))}
+            placeholder="84xxxxxxx"
           />
-        </div>
-        <div>
-          <Label htmlFor="password">Senha</Label>
+        </Field>
+        <Field>
+          <FieldLabel htmlFor="password">Senha</FieldLabel>
           <Input
             id="password"
             type="password"
@@ -98,26 +102,30 @@ export default function RegisterPage() {
             onChange={(e) =>
               setForm((s) => ({ ...s, password: e.target.value }))
             }
+            placeholder="Mínimo 6 caracteres"
           />
-        </div>
+        </Field>
         <Button type="submit" className="w-full" disabled={loading}>
           {loading ? "Criando..." : "Criar conta"}
         </Button>
       </form>
 
-      <div className="my-6 flex items-center gap-3 text-xs text-taupe">
-        <span className="h-px flex-1 bg-border" />
+      <div className="my-6 flex items-center gap-3 text-xs text-[var(--brand-taupe)]">
+        <span className="h-px flex-1 bg-[var(--brand-border)]" />
         ou
-        <span className="h-px flex-1 bg-border" />
+        <span className="h-px flex-1 bg-[var(--brand-border)]" />
       </div>
 
       <Button variant="outline" className="w-full" asChild>
         <a href={getGoogleAuthUrl()}>Continuar com Google</a>
       </Button>
 
-      <p className="mt-6 text-center text-sm text-taupe">
+      <p className="mt-6 text-center text-sm text-[var(--brand-taupe)]">
         Já tem conta?{" "}
-        <Link href="/entrar" className="font-semibold text-[#111111]">
+        <Link
+          href="/entrar"
+          className="font-semibold text-[var(--brand-orange)]"
+        >
           Entrar
         </Link>
       </p>

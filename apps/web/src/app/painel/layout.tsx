@@ -69,7 +69,8 @@ export default function PainelLayout({
                   )}
                 </button>
                 <span className="text-[15px] font-semibold tracking-tight text-zinc-900">
-                  iShopine
+                  <span className="text-[var(--brand-orange)]">i</span>
+                  Shopine
                 </span>
               </div>
               <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">

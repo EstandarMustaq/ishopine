@@ -1,23 +1,27 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans } from "next/font/google";
+import { Outfit } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
 
-const jakarta = Plus_Jakarta_Sans({
+const outfit = Outfit({
   subsets: ["latin"],
-  variable: "--font-jakarta",
+  variable: "--font-outfit",
   display: "swap",
 });
 
 export const metadata: Metadata = {
   title: {
-    default: "iShopine — mercado de Moçambique",
+    default: "iShopine — marketplace livre de Moçambique",
     template: "%s · iShopine",
   },
   description:
-    "iShopine — mercado livre de Moçambique. Compre e venda em meticais com M-Pesa, e-Mola ou cartão.",
+    "iShopine — o marketplace livre de Moçambique. Compre e venda em meticais com M-Pesa, e-Mola ou cartão.",
   metadataBase: new URL("https://ishopine.com"),
+  icons: {
+    icon: [{ url: "/brand/ishopine-icon.svg", type: "image/svg+xml" }],
+    apple: [{ url: "/brand/ishopine-icon.svg" }],
+  },
 };
 
 export default function RootLayout({
@@ -27,7 +31,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-MZ">
-      <body className={`${jakarta.variable} font-sans antialiased`}>
+      <body className={`${outfit.variable} font-sans antialiased`}>
         <TooltipProvider delayDuration={200}>
           {children}
           <Toaster theme="light" position="top-center" richColors />

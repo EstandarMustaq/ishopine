@@ -10,16 +10,16 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "rounded-xl bg-[#111111] px-3.5 py-2 text-white shadow-soft hover:bg-black active:bg-zinc-900",
+          "rounded-full bg-[var(--brand-orange)] px-3.5 py-2 text-white shadow-soft hover:bg-[var(--brand-orange-hover)] active:bg-[var(--brand-orange-hover)]",
         outline:
-          "rounded-xl border-zinc-200/80 bg-white/60 text-zinc-900 shadow-sm backdrop-blur-sm hover:bg-zinc-50 hover:text-foreground aria-expanded:bg-zinc-50",
+          "rounded-full border-[var(--brand-border)] bg-white text-[var(--brand-charcoal)] shadow-sm hover:bg-[var(--brand-surface)] hover:text-foreground aria-expanded:bg-[var(--brand-surface)]",
         secondary:
-          "rounded-xl bg-zinc-100 text-zinc-900 hover:bg-zinc-200/80 aria-expanded:bg-zinc-100",
+          "rounded-full bg-[var(--brand-orange-soft)] text-[var(--brand-orange)] hover:bg-[#ffe4cc] aria-expanded:bg-[var(--brand-orange-soft)]",
         ghost:
-          "rounded-xl text-zinc-700 hover:bg-zinc-100/80 hover:text-zinc-900 aria-expanded:bg-zinc-100",
+          "rounded-full text-[var(--brand-charcoal)] hover:bg-[var(--brand-surface)] hover:text-[var(--brand-ink)] aria-expanded:bg-[var(--brand-surface)]",
         destructive:
-          "rounded-xl bg-destructive/10 text-destructive hover:bg-destructive/15 focus-visible:border-destructive/40 focus-visible:ring-destructive/20",
-        link: "rounded-xl text-zinc-900 underline-offset-4 hover:underline",
+          "rounded-full bg-destructive/10 text-destructive hover:bg-destructive/15 focus-visible:border-destructive/40 focus-visible:ring-destructive/20",
+        link: "rounded-full text-[var(--brand-orange)] underline-offset-4 hover:underline",
       },
       size: {
         default: "h-9 gap-1.5 min-h-9",

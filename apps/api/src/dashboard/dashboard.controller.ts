@@ -17,6 +17,13 @@ export class DashboardController {
     return this.dashboard.overview();
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard, TwoFactorGuard)
+  @Roles(PlatformRole.PLATFORM_ADMIN, PlatformRole.PLATFORM_OPERATOR)
+  @Get('dashboard/charts')
+  charts() {
+    return this.dashboard.charts();
+  }
+
   @Get(['store/settings', 'platform/settings'])
   settings() {
     return this.dashboard.platformSettings();

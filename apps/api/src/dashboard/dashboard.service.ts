@@ -130,6 +130,58 @@ export class DashboardService {
     };
   }
 
+  async charts() {
+    const days = 30;
+    const since = new Date();
+    since.setHours(0, 0, 0, 0);
+    since.setDate(since.getDate() - (days - 1));
+
+    const [orders, byStatus] = await Promise.all([
+      this.prisma.order.findMany({
+        where: { createdAt: { gte: since } },
+        select: {
+          createdAt: true,
+          totalCents: true,
+          paymentStatus: true,
+        },
+        orderBy: { createdAt: 'asc' },
+      }),
+      this.prisma.order.groupBy({
+        by: ['status'],
+        _count: { _all: true },
+      }),
+    ]);
+
+    const bucket = new Map<
+      string,
+      { date: string; orders: number; gmvCents: number }
+    >();
+    for (let i = 0; i < days; i++) {
+      const d = new Date(since);
+      d.setDate(since.getDate() + i);
+      const key = d.toISOString().slice(0, 10);
+      bucket.set(key, { date: key, orders: 0, gmvCents: 0 });
+    }
+
+    for (const order of orders) {
+      const key = order.createdAt.toISOString().slice(0, 10);
+      const row = bucket.get(key);
+      if (!row) continue;
+      row.orders += 1;
+      if (order.paymentStatus === PaymentStatus.PAID) {
+        row.gmvCents += order.totalCents;
+      }
+    }
+
+    return {
+      series: Array.from(bucket.values()),
+      ordersByStatus: byStatus.map((row) => ({
+        status: row.status,
+        count: row._count._all,
+      })),
+    };
+  }
+
   async platformSettings() {
     const org = await this.organization();
     if (!org.settings) {

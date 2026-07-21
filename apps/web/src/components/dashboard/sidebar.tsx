@@ -11,6 +11,7 @@ import {
   Gift,
   LayoutDashboard,
   LogOut,
+  Megaphone,
   Package,
   Receipt,
   Settings,
@@ -42,6 +43,12 @@ const links: Array<{
   { href: "/painel/produtos", label: "Produtos", icon: Package },
   { href: "/painel/estoque", label: "Estoque", icon: Boxes },
   { href: "/painel/billing", label: "Pagamentos", icon: CreditCard },
+  {
+    href: "/painel/anuncios",
+    label: "Anúncios",
+    icon: Megaphone,
+    adminOnly: true,
+  },
   {
     href: "/painel/contabilidade",
     label: "Contabilidade",
@@ -109,20 +116,31 @@ export function DashboardSidebar({
       <div
         className={cn(
           "shrink-0 border-b border-sidebar-border px-3 py-4",
-          collapsed && "px-2 text-center",
+          collapsed && "px-2",
         )}
       >
         <Link
           href="/"
           className={cn(
-            "block text-[15px] font-semibold tracking-tight text-zinc-900",
-            collapsed && "text-[11px]",
+            "flex items-center gap-2",
+            collapsed && "justify-center",
           )}
         >
-          {collapsed ? "iS" : "iShopine"}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/brand/ishopine-mark.svg"
+            alt=""
+            className={cn(collapsed ? "size-7" : "size-8")}
+          />
+          {!collapsed && (
+            <span className="text-[15px] font-bold tracking-tight">
+              <span className="text-[var(--brand-orange)]">i</span>
+              <span className="text-[var(--brand-charcoal)]">Shopine</span>
+            </span>
+          )}
         </Link>
         {!collapsed && (
-          <p className="mt-0.5 text-[11px] text-zinc-500">Painel do mercado</p>
+          <p className="mt-1.5 text-[11px] text-zinc-500">Painel do mercado</p>
         )}
       </div>
 
@@ -142,8 +160,8 @@ export function DashboardSidebar({
                   "flex items-center gap-2 rounded-lg px-2.5 py-2 text-[13px] font-medium transition-colors duration-200",
                   collapsed && "justify-center px-2",
                   active
-                    ? "bg-zinc-900 text-white shadow-soft"
-                    : "text-zinc-600 hover:bg-white/80 hover:text-zinc-900",
+                    ? "bg-[var(--brand-orange)] text-white shadow-soft"
+                    : "text-zinc-600 hover:bg-[var(--brand-orange-soft)] hover:text-[var(--brand-charcoal)]",
                 )}
               >
                 <Icon className="size-3.5 shrink-0 opacity-80" />
