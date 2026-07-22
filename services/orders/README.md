@@ -1,5 +1,8 @@
-# orders
+# orders (strangler)
 
-Fase 0 skeleton — lógica ainda no monólito `apps/api` (strangler).
+Fase 3: serviço de borda para `/api/orders/*` e `/api/cart/*`.
 
-Contrato e extracção deste serviço serão feitos quando o domínio estiver estável.
+Neste passo ainda **proxy** para o monólito (`UPSTREAM_API_URL`).
+O gateway encaminha estas rotas para `ORDERS_URL` quando definido.
+
+Próximo: mover handlers Nest do monólito para aqui.

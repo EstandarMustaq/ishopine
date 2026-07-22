@@ -1,20 +1,15 @@
 # Services — extracção gradual (strangler)
 
-Serviços fundamentais (esqueleto nesta Fase 0):
-
 | Serviço | Estado | Notas |
 |---|---|---|
-| identity | skeleton | Auth/IAM — ainda no monólito `apps/api/src/auth` |
-| accounts | **domínio activo no monólito** | `apps/api/src/accounts` — Account/Tenant |
-| marketplace | skeleton | Superfície de mercado (home/coleções) |
-| catalog | skeleton | Produtos + categorias |
-| orders | skeleton | Pedidos / carrinho |
-| payments | skeleton | PaySuite rails |
-| wallet | skeleton | Ledger independente (ainda sem implementação) |
-| billing | skeleton | Consumo + premium (ainda sem implementação) |
+| identity | skeleton | Auth/IAM — monólito |
+| accounts | domínio no monólito | Account/Tenant |
+| marketplace | skeleton | Home/coleções |
+| catalog | domínio no monólito | Híbrido Fase 2 |
+| **orders** | **strangler proxy :4101** | `/api/orders`, `/api/cart` |
+| **payments** | **strangler proxy :4102** | `/api/billing/paysuite` |
+| **commerce-orchestrator** | **compose :4100** | Saga checkout |
+| wallet | skeleton | Fase 4 |
+| billing | skeleton | Consumo/premium — Fase 4 |
 
-Módulos a nascer sob procura: `pricing`, `media`, `feature-flags`,
-`subscriptions`, `discovery/search`, `commerce-orchestrator`.
-
-Cada pasta `services/<name>` começa com contrato + health.
-A lógica continua no monólito até o domínio ser estrangulado.
+Gateway: ver `apps/gateway/README.md` (`STRANGLER_ROUTING=1`).

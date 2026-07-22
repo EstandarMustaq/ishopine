@@ -1,5 +1,5 @@
 {
-  "name": "@ishopine/gateway",
+  "name": "@ishopine/commerce-orchestrator",
   "version": "0.0.1",
   "private": true,
   "scripts": {
@@ -9,11 +9,9 @@
     "lint": "echo ok"
   },
   "dependencies": {
-    "@ishopine/shared": "workspace:*",
-    "http-proxy": "^1.18.1"
+    "@ishopine/shared": "workspace:*"
   },
   "devDependencies": {
-    "@types/http-proxy": "^1.17.16",
     "@types/node": "^22.10.0",
     "tsx": "^4.19.2",
     "typescript": "^5.9.3"

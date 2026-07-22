@@ -76,10 +76,10 @@ importers:
         version: 19.2.3(@types/react@19.2.17)
       eslint:
         specifier: ^9
-        version: 9.39.5(jiti@2.7.0)
+        version: 9.39.5(jiti@1.21.7)
       eslint-config-next:
         specifier: 15.1.0
-        version: 15.1.0(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3)
+        version: 15.1.0(eslint@9.39.5(jiti@1.21.7))(typescript@5.9.3)
       postcss:
         specifier: ^8
         version: 8.5.20
@@ -352,6 +352,9 @@ importers:
 
   apps/gateway:
     dependencies:
+      '@ishopine/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       http-proxy:
         specifier: ^1.18.1
         version: 1.18.1
@@ -519,10 +522,10 @@ importers:
         version: 19.2.3(@types/react@19.2.17)
       eslint:
         specifier: ^9
-        version: 9.39.5(jiti@1.21.7)
+        version: 9.39.5(jiti@2.7.0)
       eslint-config-next:
         specifier: 15.1.0
-        version: 15.1.0(eslint@9.39.5(jiti@1.21.7))(typescript@5.9.3)
+        version: 15.1.0(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3)
       postcss:
         specifier: ^8
         version: 8.5.20
@@ -545,13 +548,63 @@ importers:
 
   services/catalog: {}
 
+  services/commerce-orchestrator:
+    dependencies:
+      '@ishopine/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
+    devDependencies:
+      '@types/node':
+        specifier: ^22.10.0
+        version: 22.20.1
+      tsx:
+        specifier: ^4.19.2
+        version: 4.23.1
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
   services/identity: {}
 
   services/marketplace: {}
 
-  services/orders: {}
+  services/orders:
+    dependencies:
+      http-proxy:
+        specifier: ^1.18.1
+        version: 1.18.1
+    devDependencies:
+      '@types/http-proxy':
+        specifier: ^1.17.16
+        version: 1.17.17
+      '@types/node':
+        specifier: ^22.10.0
+        version: 22.20.1
+      tsx:
+        specifier: ^4.19.2
+        version: 4.23.1
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
 
-  services/payments: {}
+  services/payments:
+    dependencies:
+      http-proxy:
+        specifier: ^1.18.1
+        version: 1.18.1
+    devDependencies:
+      '@types/http-proxy':
+        specifier: ^1.17.16
+        version: 1.17.17
+      '@types/node':
+        specifier: ^22.10.0
+        version: 22.20.1
+      tsx:
+        specifier: ^4.19.2
+        version: 4.23.1
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
 
   services/wallet: {}
 

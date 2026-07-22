@@ -1,22 +1,34 @@
 # API Gateway (strangler)
 
-Ponto de entrada único da plataforma. Nesta Fase 0 o gateway faz proxy
-para o monólito `apps/api`. À medida que os serviços forem extraídos,
-as rotas passam a ser encaminhadas por domínio.
+Ponto de entrada único. Fase 3: routing por prefixo quando
+`STRANGLER_ROUTING=1` e as URLs dos serviços estão definidas.
 
-## Rotas planeadas
+## Rotas
 
-| Prefixo | Destino actual | Destino futuro |
-|---|---|---|
-| `/api/auth/*` | monolith | `identity` |
-| `/api/accounts/*` | monolith | `accounts` |
-| `/api/products/*`, `/api/categories/*` | monolith | `catalog` |
-| `/api/orders/*`, `/api/cart/*` | monolith | `orders` + orchestrator |
-| `/api/billing/paysuite/*` | monolith | `payments` |
-| `/api/wallet/*` | — | `wallet` |
-| `/api/billing/*` (consumo) | — | `billing` |
+| Prefixo | Env | Default port | Serviço |
+|---|---|---|---|
+| `/api/commerce/*` | `ORCHESTRATOR_URL` | 4100 | commerce-orchestrator |
+| `/api/orders/*`, `/api/cart/*` | `ORDERS_URL` | 4101 | orders |
+| `/api/billing/paysuite/*` | `PAYMENTS_URL` | 4102 | payments |
+| resto | `UPSTREAM_API_URL` | 4000 | monólito |
 
-## Arranque (Fase 0)
+Sem `STRANGLER_ROUTING=1`, **tudo** vai para o monólito (comportamento Fase 0–2).
 
-O gateway Nest mínimo vive em `apps/gateway` e encaminha tudo para
-`UPSTREAM_API_URL` (default `http://localhost:4000`).
+## Arranque local (strangler ligado)
+
+```bash
+# terminais
+pnpm dev:api
+pnpm --filter @ishopine/commerce-orchestrator dev
+pnpm --filter @ishopine/orders dev
+pnpm --filter @ishopine/payments dev
+
+STRANGLER_ROUTING=1 \
+  ORCHESTRATOR_URL=http://127.0.0.1:4100 \
+  ORDERS_URL=http://127.0.0.1:4101 \
+  PAYMENTS_URL=http://127.0.0.1:4102 \
+  UPSTREAM_API_URL=http://127.0.0.1:4000 \
+  pnpm dev:gateway
+```
+
+Clientes apontam `NEXT_PUBLIC_API_URL` para o gateway (`:8080`).

@@ -40,6 +40,6 @@ PaySuite PAID → settlePaidOrders
 
 ## Próximo (Fase 3)
 
-- Extrair Orders / Checkout / Payments + Commerce Orchestrator
-- Cookie SSO em domínio partilhado
-- Payout de recompensas afiliado (APPROVED → PAID)
+Ver [`docs/PHASE3.md`](./PHASE3.md).
+
+Histórico: catálogo híbrido + afiliados E2E.
