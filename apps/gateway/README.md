@@ -13,7 +13,7 @@ Ponto de entrada único. Fases 3–6: routing por prefixo quando
 | `/api/orders/*`, `/api/cart/*` | `ORDERS_URL` | 4101 | orders |
 | `/api/billing/paysuite/*` | `PAYMENTS_URL` | 4102 | payments |
 | `/api/wallet/*` | `WALLET_URL` | 4103 | wallet |
-| `/api/pricing/*`, `/api/subscriptions/*`, `/api/billing/*` | `BILLING_URL` | 4104 | billing |
+| `/api/pricing/*`, `/api/subscriptions/*`, `/api/billing/*` | `BILLING_URL` | 4104 | billing (owned; paysuite → payments) |
 | `/api/media/*`, `/api/uploads/*` | `MEDIA_URL` | 4105 | media (owned default) |
 | `/api/developers/*`, `/api/v1/*`, `/api/feature-flags/*` | `DEVELOPERS_URL` | 4106 | developers |
 | resto (incl. `/api/logistics`) | `UPSTREAM_API_URL` | 4000 | monólito |
