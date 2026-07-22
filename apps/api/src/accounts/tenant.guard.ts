@@ -1,0 +1,62 @@
+import {
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+  Injectable,
+  SetMetadata,
+} from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
+import { TenantType } from '@prisma/client';
+import { AccountsService } from './accounts.service';
+import { TENANT_HEADER } from './tenant.constants';
+
+export const TENANT_TYPES_KEY = 'tenant_types';
+export const RequireTenantTypes = (...types: TenantType[]) =>
+  SetMetadata(TENANT_TYPES_KEY, types);
+
+@Injectable()
+export class TenantGuard implements CanActivate {
+  constructor(
+    private readonly accounts: AccountsService,
+    private readonly reflector: Reflector,
+  ) {}
+
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    const request = context.switchToHttp().getRequest<{
+      user?: { id: string };
+      headers: Record<string, string | string[] | undefined>;
+      tenant?: Awaited<ReturnType<AccountsService['resolveTenantAccess']>>;
+    }>();
+
+    const allowed = this.reflector.getAllAndOverride<TenantType[] | undefined>(
+      TENANT_TYPES_KEY,
+      [context.getHandler(), context.getClass()],
+    );
+
+    const raw = request.headers[TENANT_HEADER];
+    const tenantId = Array.isArray(raw) ? raw[0] : raw;
+    if (!tenantId) {
+      throw new ForbiddenException(
+        `Cabeçalho ${TENANT_HEADER} é obrigatório neste recurso`,
+      );
+    }
+    if (!request.user?.id) {
+      throw new ForbiddenException('Não autenticado');
+    }
+
+    const account = await this.accounts.ensureAccountForUser(request.user.id);
+    const tenant = await this.accounts.resolveTenantAccess(
+      account.id,
+      tenantId,
+    );
+
+    if (allowed?.length && !allowed.includes(tenant.tenantType)) {
+      throw new ForbiddenException(
+        `Este recurso só aceita tenant: ${allowed.join(', ')}`,
+      );
+    }
+
+    request.tenant = tenant;
+    return true;
+  }
+}

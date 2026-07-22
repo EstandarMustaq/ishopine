@@ -2,10 +2,13 @@ import {
   AccountingEntryStatus,
   AccountingEntryType,
   PlatformRole,
+  PlatformStaffRole,
   PrismaClient,
   ProductStatus,
   ShopRole,
   ShopStatus,
+  TenantMemberRole,
+  TenantType,
 } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 
@@ -46,6 +49,10 @@ async function main() {
   await prisma.mediaAsset.deleteMany();
   await prisma.accountingAccount.deleteMany();
   await prisma.shopMember.deleteMany();
+  await prisma.tenantMembership.deleteMany();
+  await prisma.platformStaff.deleteMany();
+  await prisma.tenant.deleteMany();
+  await prisma.account.deleteMany();
   await prisma.shop.deleteMany();
   await prisma.auditLog.deleteMany();
   await prisma.authSession.deleteMany();
@@ -215,6 +222,90 @@ async function main() {
       },
     },
   });
+
+  // Account ≠ Tenant foundation (CaaS Phase 0)
+  async function provisionAccount(
+    user: { id: string; email: string; name: string; phone: string | null },
+    opts?: {
+      particular?: boolean;
+      store?: { shopId: string; name: string; slug: string };
+      staffRole?: PlatformStaffRole;
+    },
+  ) {
+    const account = await prisma.account.create({
+      data: {
+        userId: user.id,
+        email: user.email,
+        name: user.name,
+        phone: user.phone,
+      },
+    });
+
+    if (opts?.staffRole) {
+      await prisma.platformStaff.create({
+        data: { accountId: account.id, role: opts.staffRole },
+      });
+    }
+
+    if (opts?.particular) {
+      const particular = await prisma.tenant.create({
+        data: {
+          type: TenantType.PARTICULAR,
+          name: `${user.name} (Particular)`,
+          slug: `p-${user.email.split('@')[0]}`,
+          ownerAccountId: account.id,
+          particularAccountId: account.id,
+        },
+      });
+      await prisma.tenantMembership.create({
+        data: {
+          tenantId: particular.id,
+          accountId: account.id,
+          role: TenantMemberRole.OWNER,
+        },
+      });
+    }
+
+    if (opts?.store) {
+      const store = await prisma.tenant.create({
+        data: {
+          type: TenantType.STORE,
+          name: opts.store.name,
+          slug: `s-${opts.store.slug}`,
+          ownerAccountId: account.id,
+          shopId: opts.store.shopId,
+        },
+      });
+      await prisma.tenantMembership.create({
+        data: {
+          tenantId: store.id,
+          accountId: account.id,
+          role: TenantMemberRole.OWNER,
+        },
+      });
+    }
+
+    return account;
+  }
+
+  await provisionAccount(admin, { staffRole: PlatformStaffRole.OPS });
+  await provisionAccount(operator, { staffRole: PlatformStaffRole.MODERATOR });
+  await provisionAccount(seller1, {
+    particular: true,
+    store: {
+      shopId: shopAtlas.id,
+      name: shopAtlas.name,
+      slug: shopAtlas.slug,
+    },
+  });
+  await provisionAccount(seller2, {
+    store: {
+      shopId: shopHorizonte.id,
+      name: shopHorizonte.name,
+      slug: shopHorizonte.slug,
+    },
+  });
+  await provisionAccount(buyer);
 
   const accounts = await Promise.all(
     [
@@ -555,13 +646,17 @@ async function main() {
 
   console.log('Seed iShopine concluído');
   console.log('Org: iShopine (slug=ishopine) · Moçambique · MZN · PaySuite');
-  console.log('Admin: admin@ishopine.com / IShopine@2026 (2FA desativado no seed)');
-  console.log('Operador: operador@ishopine.com / IShopine@2026');
-  console.log('Vendedor 1: vendedor1@ishopine.com / IShopine@2026 (loja Casa Atlas)');
+  console.log('CaaS: Account ≠ Tenant (vendedor1 tem PARTICULAR + STORE)');
+  console.log('Admin: admin@ishopine.com / IShopine@2026 (backoffice staff OPS)');
+  console.log('Operador: operador@ishopine.com / IShopine@2026 (MODERATOR)');
   console.log(
-    'Vendedor 2: vendedor2@ishopine.com / IShopine@2026 (loja Studio Horizonte)',
+    'Vendedor 1: vendedor1@ishopine.com / IShopine@2026 (tenant PARTICULAR + STORE Casa Atlas)',
   );
-  console.log('Comprador: comprador@ishopine.com / IShopine@2026');
+  console.log(
+    'Vendedor 2: vendedor2@ishopine.com / IShopine@2026 (tenant STORE Studio Horizonte)',
+  );
+  console.log('Comprador: comprador@ishopine.com / IShopine@2026 (Account sem tenant seller)');
+  console.log('Accounts API: GET /api/accounts/me · header x-tenant-id');
   console.log(
     'Para ativar 2FA: POST /api/auth/2fa/setup → POST /api/auth/2fa/enable',
   );
