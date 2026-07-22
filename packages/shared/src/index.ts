@@ -133,7 +133,43 @@ export type OutboxEventType =
   | "commerce.checkout.completed"
   | "commerce.checkout.failed"
   | "affiliate.reward.approved"
-  | "affiliate.reward.paid";
+  | "affiliate.reward.paid"
+  | "wallet.credited"
+  | "subscription.changed"
+  | "platform.invoice.generated";
+
+export type WalletOwnerType = "ACCOUNT" | "TENANT" | "PLATFORM";
+export type LedgerEntryType =
+  | "CREDIT"
+  | "DEBIT"
+  | "HOLD"
+  | "RELEASE"
+  | "ADJUSTMENT";
+export type PricingPlanCode = "FREE" | "STARTER" | "BUSINESS" | "ENTERPRISE";
+export type SubscriptionStatus =
+  | "TRIALING"
+  | "ACTIVE"
+  | "PAST_DUE"
+  | "CANCELLED";
+export type UsageMetric = "ORDERS" | "PRODUCTS" | "CHECKOUTS" | "API_CALLS";
+
+export type WalletSummary = {
+  id: string;
+  key: string;
+  ownerType: WalletOwnerType;
+  currency: string;
+  availableCents: number;
+  heldCents: number;
+};
+
+export type PricingPlanSummary = {
+  code: PricingPlanCode;
+  name: string;
+  monthlyPriceCents: number;
+  includedOrders: number | null;
+  overageOrderCents: number;
+  commissionBps: number | null;
+};
 
 export const IDEMPOTENCY_SCOPES = {
   ordersCheckout: "orders:checkout",
@@ -143,7 +179,7 @@ export const IDEMPOTENCY_SCOPES = {
 
 /**
  * Gateway strangler route table.
- * `null` destination = fall through to monolith upstream.
+ * More specific prefixes must appear before broader ones.
  */
 export type GatewayRoute = {
   prefix: string;
@@ -180,5 +216,29 @@ export const GATEWAY_ROUTES: GatewayRoute[] = [
     service: "payments",
     envKey: "PAYMENTS_URL",
     defaultPort: 4102,
+  },
+  {
+    prefix: "/api/wallet",
+    service: "wallet",
+    envKey: "WALLET_URL",
+    defaultPort: 4103,
+  },
+  {
+    prefix: "/api/pricing",
+    service: "billing",
+    envKey: "BILLING_URL",
+    defaultPort: 4104,
+  },
+  {
+    prefix: "/api/subscriptions",
+    service: "billing",
+    envKey: "BILLING_URL",
+    defaultPort: 4104,
+  },
+  {
+    prefix: "/api/billing",
+    service: "billing",
+    envKey: "BILLING_URL",
+    defaultPort: 4104,
   },
 ];

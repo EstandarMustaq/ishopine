@@ -1,5 +1,5 @@
-# wallet
+# wallet (strangler)
 
-Fase 0 skeleton — lógica ainda no monólito `apps/api` (strangler).
+Fase 4: ledger / carteiras (`/api/wallet/*`).
 
-Contrato e extracção deste serviço serão feitos quando o domínio estiver estável.
+Proxy para o monólito até extracção completa. Porta default **4103**.

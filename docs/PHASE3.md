@@ -43,6 +43,6 @@ STRANGLER_ROUTING=1 \
 
 ## Próximo (Fase 4)
 
-- Wallet + Billing (consumo/premium) + Pricing
-- Mover lógica Nest de orders/billing para os serviços (deixar de ser só proxy)
-- Cookie SSO domínio partilhado
+Ver [`docs/PHASE4.md`](./PHASE4.md).
+
+Histórico: orchestrator + orders/payments strangler.

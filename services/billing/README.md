@@ -1,5 +1,9 @@
-# billing
+# billing — platform billing (Fase 4)
 
-Fase 0 skeleton — lógica ainda no monólito `apps/api` (strangler).
+Pricing plans, subscriptions, usage & platform invoices.
 
-Contrato e extracção deste serviço serão feitos quando o domínio estiver estável.
+**Nota:** PaySuite (checkout de pedidos) continua em `services/payments`
+(`/api/billing/paysuite`). O gateway faz match de `paysuite` **antes** de
+`/api/billing`.
+
+Porta default **4104**.
