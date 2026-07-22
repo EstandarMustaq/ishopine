@@ -101,7 +101,8 @@ customer               # pode viver em marketplace no início
 | **5** | Store depth, Media, Feature Flags, Developer Platform |
 | **6** | Cookie SSO, media owned extraction, logistics stub |
 | **7** | Logistics carriers/shipments, wallet owned reads, media CDN stub |
-| **8+** | Live carriers, full Nest extract, advanced CDN |
+| **8** | Production hardening: adapters reais, Sharp, authz, PaySuite |
+| **9+** | Live carrier APIs, full Nest extract, advanced CDN |
 
 ## Fora de âmbito (MVP)
 

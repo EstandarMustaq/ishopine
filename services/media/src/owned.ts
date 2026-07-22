@@ -1,6 +1,6 @@
 /**
- * Phase 6: media service owns upload + list when MEDIA_OWNED≠0.
- * Auth via JWT (Bearer or ishopine_session cookie); metadata in shared Prisma DB.
+ * Phase 6–8: media service owns upload + list when MEDIA_OWNED≠0.
+ * Local uploads generate real Sharp thumb/card variants.
  */
 import http from "node:http";
 import { createWriteStream } from "node:fs";
@@ -10,7 +10,12 @@ import { randomUUID } from "node:crypto";
 import { PrismaClient } from "@prisma/client";
 import Busboy from "busboy";
 import jwt from "jsonwebtoken";
-import { AUTH_COOKIE_NAME } from "@ishopine/shared";
+import sharp from "sharp";
+import {
+  AUTH_COOKIE_NAME,
+  buildMediaUrl,
+  localVariantUrl,
+} from "@ishopine/shared";
 
 const prisma = new PrismaClient();
 const uploadDir = process.env.UPLOAD_DIR || "uploads";
@@ -59,6 +64,51 @@ function pathOnly(url?: string) {
   return (url || "/").split("?")[0];
 }
 
+function withVariants<T extends { url: string }>(asset: T) {
+  return {
+    ...asset,
+    variants: {
+      original: asset.url,
+      thumb: buildMediaUrl(asset.url, {
+        width: 200,
+        height: 200,
+        crop: "fill",
+        quality: "auto",
+        format: "auto",
+      }),
+      card: buildMediaUrl(asset.url, {
+        width: 640,
+        crop: "fit",
+        quality: "auto",
+        format: "auto",
+      }),
+    },
+  };
+}
+
+async function writeLocalVariants(absoluteOriginal: string, publicUrl: string) {
+  const thumbAbs = join(
+    process.cwd(),
+    localVariantUrl(publicUrl, "thumb").replace(/^\//, ""),
+  );
+  const cardAbs = join(
+    process.cwd(),
+    localVariantUrl(publicUrl, "card").replace(/^\//, ""),
+  );
+  await Promise.all([
+    sharp(absoluteOriginal)
+      .rotate()
+      .resize(200, 200, { fit: "cover" })
+      .webp({ quality: 80 })
+      .toFile(thumbAbs),
+    sharp(absoluteOriginal)
+      .rotate()
+      .resize(640, undefined, { fit: "inside", withoutEnlargement: true })
+      .webp({ quality: 82 })
+      .toFile(cardAbs),
+  ]);
+}
+
 export async function handleOwnedMedia(
   req: http.IncomingMessage,
   res: http.ServerResponse,
@@ -85,7 +135,7 @@ export async function handleOwnedMedia(
       orderBy: { createdAt: "desc" },
       take: 100,
     });
-    json(res, 200, assets);
+    json(res, 200, assets.map((a) => withVariants(a)));
     return true;
   }
 
@@ -114,6 +164,7 @@ export async function handleOwnedMedia(
         mimeType: string;
         sizeBytes: number;
         alt: string;
+        absolute: string;
       }>((resolve, reject) => {
         const bb = Busboy({
           headers: req.headers,
@@ -143,6 +194,7 @@ export async function handleOwnedMedia(
                 mimeType: info.mimeType,
                 sizeBytes: size,
                 alt: info.filename,
+                absolute,
               });
             });
             out.on("error", reject);
@@ -157,6 +209,14 @@ export async function handleOwnedMedia(
         req.pipe(bb);
       });
 
+      if (asset.mimeType.startsWith("image/")) {
+        try {
+          await writeLocalVariants(asset.absolute, asset.url);
+        } catch (error) {
+          console.error("[media] sharp variants failed", error);
+        }
+      }
+
       const created = await prisma.mediaAsset.create({
         data: {
           url: asset.url,
@@ -170,7 +230,7 @@ export async function handleOwnedMedia(
           shopId: shopId || null,
         },
       });
-      json(res, 201, created);
+      json(res, 201, withVariants(created));
     } catch (error) {
       json(res, 400, {
         message:

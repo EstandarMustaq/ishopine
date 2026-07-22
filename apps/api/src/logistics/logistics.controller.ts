@@ -2,11 +2,15 @@ import {
   Body,
   Controller,
   Get,
+  Headers,
   Param,
   Post,
   Query,
+  Req,
+  Res,
   UseGuards,
 } from '@nestjs/common';
+import type { Request, Response } from 'express';
 import { TenantType } from '@prisma/client';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import {
@@ -32,6 +36,37 @@ export class LogisticsController {
   @Post('quote')
   quote(@Body() body: ShippingQuoteDto) {
     return this.logistics.quote(body);
+  }
+
+  /**
+   * Carrier status webhooks (HMAC: x-carrier-signature = sha256=<hex>).
+   * Secret: CARRIER_WEBHOOK_SECRET.
+   */
+  @Post('webhooks/:carrier')
+  async carrierWebhook(
+    @Param('carrier') carrier: string,
+    @Body()
+    body: {
+      trackingCode?: string;
+      shipmentId?: string;
+      status?: string;
+      note?: string;
+    },
+    @Req() req: Request & { rawBody?: Buffer | string },
+    @Headers('x-carrier-signature') signature?: string,
+  ) {
+    const raw =
+      typeof req.rawBody === 'string'
+        ? req.rawBody
+        : Buffer.isBuffer(req.rawBody)
+          ? req.rawBody.toString('utf8')
+          : JSON.stringify(body);
+    return this.logistics.handleCarrierWebhook(
+      carrier,
+      body,
+      raw,
+      signature,
+    );
   }
 
   @UseGuards(JwtAuthGuard, TenantGuard)
@@ -77,16 +112,12 @@ export class LogisticsController {
     return this.logistics.markDelivered(id);
   }
 
-  /** Stub label download (JSON placeholder). */
+  /** Printable HTML label (real, not stub). */
   @Get('shipments/:id/label')
-  async labelStub(@Param('id') id: string) {
-    const shipment = await this.logistics.getShipment(id);
-    return {
-      format: 'stub',
-      shipmentId: id,
-      trackingCode: shipment?.trackingCode,
-      carrierCode: shipment?.carrierCode,
-      message: 'Etiqueta simulada — integração real na Fase 8+',
-    };
+  async labelHtml(@Param('id') id: string, @Res() res: Response) {
+    const html = await this.logistics.renderLabelHtml(id);
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Cache-Control', 'private, no-store');
+    res.send(html);
   }
 }

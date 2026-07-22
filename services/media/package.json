@@ -13,7 +13,8 @@
     "@prisma/client": "^6.19.0",
     "busboy": "^1.6.0",
     "http-proxy": "^1.18.1",
-    "jsonwebtoken": "^9.0.2"
+    "jsonwebtoken": "^9.0.2",
+    "sharp": "^0.34.2"
   },
   "devDependencies": {
     "@types/busboy": "^1.5.4",

@@ -77,8 +77,9 @@ export class BillingService {
   }
 
   private allowSimulate(): boolean {
-    if (this.config.get<string>('PAYSUITE_SIMULATE') === 'true') return true;
+    // Production never simulates — flag must not override.
     if (this.config.get<string>('NODE_ENV') === 'production') return false;
+    if (this.config.get<string>('PAYSUITE_SIMULATE') === 'true') return true;
     return !this.client;
   }
 
