@@ -5,7 +5,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { PlatformRole, ShopRole, ShopStatus, ShopType } from '@prisma/client';
+import { PlatformRole, Prisma, ShopRole, ShopStatus, ShopType } from '@prisma/client';
+import { AccountsService } from '../accounts/accounts.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { isValidMzLocation } from '../common/mozambique';
 
@@ -30,6 +31,7 @@ export class ShopsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
+    private readonly accounts: AccountsService,
   ) {}
 
   private async organizationId() {
@@ -140,6 +142,21 @@ export class ShopsService {
 
       return created;
     });
+
+    try {
+      const account = await this.accounts.ensureAccountForUser(userId);
+      const linked = await this.prisma.tenant.findUnique({
+        where: { shopId: shop.id },
+      });
+      if (!linked) {
+        await this.accounts.createStoreTenant(account.id, {
+          name: shop.name,
+          shopId: shop.id,
+        });
+      }
+    } catch (error) {
+      console.error('[shops] auto STORE tenant failed', shop.id, error);
+    }
 
     return shop;
   }
@@ -277,6 +294,8 @@ export class ShopsService {
       description: string;
       logoUrl: string;
       bannerUrl: string;
+      policiesText: string;
+      hoursJson: Prisma.InputJsonValue;
       shopType: ShopType;
       province: string;
       district: string;
@@ -301,9 +320,27 @@ export class ShopsService {
         longitude: data.longitude ?? current.longitude,
       });
     }
+
     return this.prisma.shop.update({
       where: { id },
-      data,
+      data: {
+        ...(data.name !== undefined ? { name: data.name } : {}),
+        ...(data.description !== undefined
+          ? { description: data.description }
+          : {}),
+        ...(data.logoUrl !== undefined ? { logoUrl: data.logoUrl } : {}),
+        ...(data.bannerUrl !== undefined ? { bannerUrl: data.bannerUrl } : {}),
+        ...(data.policiesText !== undefined
+          ? { policiesText: data.policiesText }
+          : {}),
+        ...(data.hoursJson !== undefined ? { hoursJson: data.hoursJson } : {}),
+        ...(data.shopType !== undefined ? { shopType: data.shopType } : {}),
+        ...(data.province !== undefined ? { province: data.province } : {}),
+        ...(data.district !== undefined ? { district: data.district } : {}),
+        ...(data.latitude !== undefined ? { latitude: data.latitude } : {}),
+        ...(data.longitude !== undefined ? { longitude: data.longitude } : {}),
+        ...(data.status !== undefined ? { status: data.status } : {}),
+      },
     });
   }
 

@@ -99,6 +99,7 @@ customer               # pode viver em marketplace no início
 | **3** | Orders/Checkout/Payments extraídos + Orchestrator |
 | **4** | Wallet + Billing + Pricing (+ premium) |
 | **5** | Store depth, Media, Feature Flags, Developer Platform |
+| **6+** | Cookie SSO, extracção real (deixar de ser proxy), Logistics |
 
 ## Fora de âmbito (MVP)
 

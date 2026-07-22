@@ -16,6 +16,7 @@ import {
   ShoppingBag,
   Store,
   Wallet,
+  Code2,
 } from "lucide-react";
 import { useAuthStore } from "@/lib/auth-store";
 import { useTenantStore } from "@/lib/tenant-store";
@@ -35,6 +36,7 @@ const storeLinks = [
   { href: "/estoque", label: "Estoque", icon: Boxes },
   { href: "/billing", label: "Pagamentos", icon: CreditCard },
   { href: "/carteira", label: "Carteira", icon: Wallet },
+  { href: "/desenvolvedores", label: "API", icon: Code2 },
   { href: "/disputas", label: "Disputas", icon: AlertTriangle },
   { href: "/loja", label: "Loja", icon: Store, storeOnly: true },
   { href: "/recompensas", label: "Recompensas", icon: Gift },

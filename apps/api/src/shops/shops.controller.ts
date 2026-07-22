@@ -75,6 +75,8 @@ export class ShopsController {
       description: string;
       logoUrl: string;
       bannerUrl: string;
+      policiesText: string;
+      hoursJson: Record<string, string>;
       shopType: ShopType;
       province: string;
       district: string;

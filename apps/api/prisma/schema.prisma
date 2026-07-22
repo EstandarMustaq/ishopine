@@ -315,6 +315,7 @@ model User {
   billingPayments   BillingPayment[]
   affiliateLinks    AffiliateLink[]
   affiliateRewards  AffiliateReward[]   @relation("AffiliateEarner")
+  mediaUploads      MediaAsset[]        @relation("MediaUploader")
 
   @@unique([organizationId, email])
   @@index([email])
@@ -341,6 +342,9 @@ model Account {
   wallets        Wallet[]
   subscriptions  Subscription[]
   invoices       PlatformInvoice[]
+  mediaAssets    MediaAsset[]
+  apiKeys        MerchantApiKey[]
+  webhookEndpoints MerchantWebhookEndpoint[]
 
   @@index([email])
   @@index([isActive])
@@ -368,6 +372,10 @@ model Tenant {
   subscriptions Subscription[]
   usageRecords UsageRecord[]
   invoices     PlatformInvoice[]
+  mediaAssets  MediaAsset[]
+  flagOverrides FeatureFlagOverride[]
+  apiKeys      MerchantApiKey[]
+  webhookEndpoints MerchantWebhookEndpoint[]
 
   @@index([ownerAccountId])
   @@index([type, isActive])
@@ -466,6 +474,10 @@ model Shop {
   description    String?
   logoUrl        String?
   bannerUrl      String?
+  /// Free-text policies (returns, shipping notes) — store depth Phase 5.
+  policiesText   String?
+  /// Weekly hours JSON, e.g. { mon: "09-18", … }.
+  hoursJson      Json?
   status         ShopStatus @default(PENDING)
   shopType       ShopType   @default(OTHER)
   province       String     @default("Maputo Cidade")
@@ -491,6 +503,7 @@ model Shop {
   affiliateLinks AffiliateLink[]
   ads            Ad[]
   tenant         Tenant?
+  mediaAssets    MediaAsset[]
 
   @@unique([organizationId, slug])
   @@index([status])
@@ -911,18 +924,30 @@ model AccountingEntry {
 }
 
 model MediaAsset {
-  id        String   @id @default(cuid())
-  url       String
-  publicId  String?
-  provider  String   @default("local")
-  mimeType  String?
-  sizeBytes Int?
-  folder    String?
-  alt       String?
-  createdAt DateTime @default(now())
+  id           String   @id @default(cuid())
+  url          String
+  publicId     String?
+  provider     String   @default("local")
+  mimeType     String?
+  sizeBytes    Int?
+  folder       String?
+  alt          String?
+  accountId    String?
+  tenantId     String?
+  shopId       String?
+  uploadedById String?
+  createdAt    DateTime @default(now())
+
+  account    Account? @relation(fields: [accountId], references: [id], onDelete: SetNull)
+  tenant     Tenant?  @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  shop       Shop?    @relation(fields: [shopId], references: [id], onDelete: SetNull)
+  uploadedBy User?    @relation("MediaUploader", fields: [uploadedById], references: [id], onDelete: SetNull)
 
   @@index([provider])
   @@index([folder])
+  @@index([accountId])
+  @@index([tenantId])
+  @@index([shopId])
 }
 
 model WishlistItem {
@@ -1351,4 +1376,97 @@ model PlatformInvoice {
   @@index([tenantId, periodKey])
   @@index([accountId, periodKey])
   @@index([status])
+}
+
+/* ── Phase 5: Feature Flags + Developer Platform ── */
+
+model FeatureFlag {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  description String?
+  enabled     Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  overrides FeatureFlagOverride[]
+
+  @@index([enabled])
+}
+
+/// scopeKey: `global` | `tenant:<id>` | `plan:<PricingPlanCode>`
+model FeatureFlagOverride {
+  id        String   @id @default(cuid())
+  flagId    String
+  scopeKey  String
+  tenantId  String?
+  enabled   Boolean
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  flag   FeatureFlag @relation(fields: [flagId], references: [id], onDelete: Cascade)
+  tenant Tenant?     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([flagId, scopeKey])
+  @@index([tenantId])
+  @@index([scopeKey])
+}
+
+model MerchantApiKey {
+  id         String    @id @default(cuid())
+  tenantId   String
+  accountId  String
+  name       String
+  keyPrefix  String
+  keyHash    String
+  lastUsedAt DateTime?
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([accountId])
+  @@index([keyPrefix])
+  @@index([keyHash])
+}
+
+model MerchantWebhookEndpoint {
+  id        String   @id @default(cuid())
+  tenantId  String
+  accountId String
+  url       String
+  secret    String
+  /// Event types this endpoint subscribes to (empty = all platform events for tenant).
+  events    String[] @default([])
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant     Tenant                    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  account    Account                   @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  deliveries MerchantWebhookDelivery[]
+
+  @@index([tenantId, isActive])
+  @@index([accountId])
+}
+
+model MerchantWebhookDelivery {
+  id          String   @id @default(cuid())
+  endpointId  String
+  eventType   String
+  payload     Json
+  status      String   @default("PENDING")
+  attempts    Int      @default(0)
+  responseCode Int?
+  lastError   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  endpoint MerchantWebhookEndpoint @relation(fields: [endpointId], references: [id], onDelete: Cascade)
+
+  @@index([endpointId, createdAt])
+  @@index([status])
+  @@index([eventType])
 }

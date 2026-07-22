@@ -46,8 +46,8 @@ STRANGLER_ROUTING=1 \
   …
 ```
 
-## Próximo (Fase 5)
+## Próximo (Fase 5+)
 
-- Store depth, Media, Feature Flags, Developer Platform
-- Cookie SSO domínio partilhado
-- Extrair lógica Nest wallet/billing para os serviços (deixar de ser proxy)
+Ver [`docs/PHASE5.md`](./PHASE5.md).
+
+Histórico: wallet + pricing/subscriptions + billing strangler.
