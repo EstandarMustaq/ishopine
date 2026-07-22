@@ -39,6 +39,6 @@ Origens diferentes (portas) não partilham `localStorage`. Fluxo Fase 1:
 
 ## Próximo (Fase 2+)
 
-- Cookie SSO em domínio partilhado (`.ishopine.co.mz`)
-- Filtrar pedidos/produtos pelo `request.tenant` no serviço (não só guard)
-- Extrair primeiros microserviços via gateway strangler
+Ver [`docs/PHASE2.md`](./PHASE2.md) (em curso / entregue).
+
+Histórico Fase 1: apps separadas, switcher, TenantGuard.

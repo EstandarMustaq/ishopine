@@ -89,6 +89,12 @@ enum ProductStatus {
   OUT_OF_STOCK
 }
 
+/// Hybrid catalog: platform-wide vs store-owned category trees.
+enum CategoryScope {
+  GLOBAL
+  STORE
+}
+
 enum OrderStatus {
   PENDING
   CONFIRMED
@@ -470,6 +476,7 @@ model Shop {
   owner         User           @relation("ShopOwner", fields: [ownerId], references: [id])
   members       ShopMember[]
   products      Product[]
+  categories    Category[]
   orders        Order[]        @relation("SellerOrders")
   conversations Conversation[]
   followers     ShopFollow[]
@@ -594,23 +601,30 @@ model Address {
 }
 
 model Category {
-  id          String   @id @default(cuid())
+  id          String         @id @default(cuid())
   name        String
-  slug        String   @unique
+  slug        String
   description String?
   imageUrl    String?
   parentId    String?
-  sortOrder   Int      @default(0)
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  sortOrder   Int            @default(0)
+  isActive    Boolean        @default(true)
+  /// GLOBAL = marketplace taxonomy; STORE = seller-owned tree (requires shopId).
+  scope       CategoryScope  @default(GLOBAL)
+  shopId      String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
 
   parent   Category?  @relation("CategoryTree", fields: [parentId], references: [id])
   children Category[] @relation("CategoryTree")
   products Product[]
+  shop     Shop?      @relation(fields: [shopId], references: [id], onDelete: Cascade)
 
+  @@unique([shopId, slug])
   @@index([parentId])
   @@index([slug])
+  @@index([scope, shopId])
+  @@index([shopId])
 }
 
 model Product {
@@ -714,6 +728,8 @@ model Order {
   platformFeeCents Int          @default(0)
   totalCents      Int
   notes           String?
+  /// Affiliate referral code captured at checkout (`?ref=`).
+  affiliateCode   String?
   shippedAt       DateTime?
   deliveredAt     DateTime?
   cancelledAt     DateTime?
@@ -736,6 +752,7 @@ model Order {
   @@index([status])
   @@index([orderNumber])
   @@index([createdAt])
+  @@index([affiliateCode])
 }
 
 model OrderItem {

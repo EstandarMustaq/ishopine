@@ -5,13 +5,16 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import {
+  CategoryScope,
   PlatformRole,
   Prisma,
   ProductStatus,
   ShopRole,
   ShopStatus,
+  TenantType,
 } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import type { RequestTenant } from '../accounts/current-tenant.decorator';
 
 function slugify(value: string) {
   return value
@@ -26,11 +29,50 @@ function slugify(value: string) {
 export class CatalogService {
   constructor(private readonly prisma: PrismaService) {}
 
-  listCategories() {
+  /**
+   * Hybrid catalog listing:
+   * - default: GLOBAL categories
+   * - with shopId: GLOBAL + that shop's STORE categories
+   * - scope=store + shopId: only store categories
+   */
+  listCategories(query?: {
+    shopId?: string;
+    shop?: string;
+    scope?: string;
+  }) {
+    const scopeFilter = query?.scope?.toLowerCase();
+
     return this.prisma.category.findMany({
-      where: { isActive: true },
-      orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+      where: {
+        isActive: true,
+        ...(scopeFilter === 'store'
+          ? {
+              scope: CategoryScope.STORE,
+              ...(query?.shopId
+                ? { shopId: query.shopId }
+                : query?.shop
+                  ? { shop: { slug: query.shop } }
+                  : {}),
+            }
+          : scopeFilter === 'global'
+            ? { scope: CategoryScope.GLOBAL }
+            : query?.shopId || query?.shop
+              ? {
+                  OR: [
+                    { scope: CategoryScope.GLOBAL },
+                    {
+                      scope: CategoryScope.STORE,
+                      ...(query.shopId
+                        ? { shopId: query.shopId }
+                        : { shop: { slug: query.shop } }),
+                    },
+                  ],
+                }
+              : { scope: CategoryScope.GLOBAL }),
+      },
+      orderBy: [{ scope: 'asc' }, { sortOrder: 'asc' }, { name: 'asc' }],
       include: {
+        shop: { select: { id: true, name: true, slug: true } },
         _count: { select: { products: true } },
       },
     });
@@ -42,8 +84,43 @@ export class CatalogService {
     imageUrl?: string;
     parentId?: string;
     sortOrder?: number;
+    scope?: CategoryScope;
+    shopId?: string;
   }) {
+    const scope = data.scope ?? CategoryScope.GLOBAL;
+    if (scope === CategoryScope.STORE && !data.shopId) {
+      throw new BadRequestException('Categorias STORE exigem shopId');
+    }
+    if (scope === CategoryScope.GLOBAL && data.shopId) {
+      throw new BadRequestException('Categorias GLOBAL não podem ter shopId');
+    }
+
     const slug = slugify(data.name);
+    if (scope === CategoryScope.GLOBAL) {
+      const clash = await this.prisma.category.findFirst({
+        where: { scope: CategoryScope.GLOBAL, slug },
+      });
+      if (clash) {
+        throw new BadRequestException('Já existe uma categoria global com este nome');
+      }
+    }
+
+    if (data.parentId) {
+      const parent = await this.prisma.category.findUnique({
+        where: { id: data.parentId },
+      });
+      if (!parent) throw new NotFoundException('Categoria pai não encontrada');
+      if (parent.scope !== scope) {
+        throw new BadRequestException('Pai deve ter o mesmo scope');
+      }
+      if (
+        scope === CategoryScope.STORE &&
+        parent.shopId !== data.shopId
+      ) {
+        throw new BadRequestException('Pai deve pertencer à mesma loja');
+      }
+    }
+
     return this.prisma.category.create({
       data: {
         name: data.name,
@@ -52,7 +129,28 @@ export class CatalogService {
         imageUrl: data.imageUrl,
         parentId: data.parentId,
         sortOrder: data.sortOrder ?? 0,
+        scope,
+        shopId: scope === CategoryScope.STORE ? data.shopId : null,
       },
+    });
+  }
+
+  async createStoreCategory(
+    userId: string,
+    tenant: RequestTenant | null | undefined,
+    data: {
+      name: string;
+      description?: string;
+      imageUrl?: string;
+      parentId?: string;
+      sortOrder?: number;
+    },
+  ) {
+    const shopId = await this.resolveTenantShopId(userId, tenant);
+    return this.createCategory({
+      ...data,
+      scope: CategoryScope.STORE,
+      shopId,
     });
   }
 
@@ -180,6 +278,26 @@ export class CatalogService {
     };
   }
 
+  /** Seller-scoped product list — always filtered by active tenant shop. */
+  async listSellerProducts(
+    userId: string,
+    tenant: RequestTenant | null | undefined,
+    query: {
+      q?: string;
+      status?: ProductStatus;
+      page?: string;
+      limit?: string;
+    },
+  ) {
+    const shopId = await this.resolveTenantShopId(userId, tenant);
+    return this.listProducts({
+      ...query,
+      shopId,
+      platformRole: PlatformRole.PLATFORM_ADMIN, // allow non-ACTIVE drafts for seller
+      status: query.status,
+    });
+  }
+
   async getProduct(slugOrId: string) {
     const product = await this.prisma.product.findFirst({
       where: {
@@ -240,13 +358,79 @@ export class CatalogService {
       return shop;
     }
 
-    throw new ForbiddenException('Sem permissão para gerenciar produtos desta loja');
+    throw new ForbiddenException(
+      'Sem permissão para gerenciar produtos desta loja',
+    );
+  }
+
+  /**
+   * Resolve the shop for the active tenant context.
+   * STORE → tenant.shopId; PARTICULAR → first owned shop (or explicit shopId).
+   */
+  async resolveTenantShopId(
+    userId: string,
+    tenant: RequestTenant | null | undefined,
+    explicitShopId?: string,
+  ): Promise<string> {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    const isStaff =
+      user?.platformRole === PlatformRole.PLATFORM_ADMIN ||
+      user?.platformRole === PlatformRole.PLATFORM_OPERATOR;
+
+    if (tenant?.tenantType === TenantType.STORE) {
+      if (!tenant.shopId) {
+        throw new BadRequestException(
+          'Tenant STORE sem loja ligada — associe um shop ao tenant',
+        );
+      }
+      if (explicitShopId && explicitShopId !== tenant.shopId && !isStaff) {
+        throw new ForbiddenException(
+          'shopId não corresponde ao tenant activo',
+        );
+      }
+      await this.assertCanManageShop(tenant.shopId, userId);
+      return tenant.shopId;
+    }
+
+    if (explicitShopId) {
+      await this.assertCanManageShop(explicitShopId, userId);
+      return explicitShopId;
+    }
+
+    const owned = await this.prisma.shop.findFirst({
+      where: { ownerId: userId },
+      orderBy: { createdAt: 'asc' },
+    });
+    if (!owned) {
+      throw new BadRequestException(
+        'Crie uma loja antes de gerir produtos neste tenant',
+      );
+    }
+    return owned.id;
+  }
+
+  async assertCategoryForShop(categoryId: string | undefined, shopId: string) {
+    if (!categoryId) return;
+    const category = await this.prisma.category.findUnique({
+      where: { id: categoryId },
+    });
+    if (!category || !category.isActive) {
+      throw new NotFoundException('Categoria não encontrada');
+    }
+    if (
+      category.scope === CategoryScope.STORE &&
+      category.shopId !== shopId
+    ) {
+      throw new BadRequestException(
+        'Categoria de loja não pertence a este shop',
+      );
+    }
   }
 
   async createProduct(
     userId: string,
     data: {
-      shopId: string;
+      shopId?: string;
       name: string;
       description: string;
       shortDescription?: string;
@@ -271,14 +455,20 @@ export class CatalogService {
         isPrimary?: boolean;
       }>;
     },
+    tenant?: RequestTenant | null,
   ) {
-    await this.assertCanManageShop(data.shopId, userId);
+    const shopId = await this.resolveTenantShopId(
+      userId,
+      tenant,
+      data.shopId,
+    );
+    await this.assertCategoryForShop(data.categoryId, shopId);
 
     const baseSlug = slugify(data.name);
     let slug = baseSlug;
     const existingSlug = await this.prisma.product.findUnique({
       where: {
-        shopId_slug: { shopId: data.shopId, slug },
+        shopId_slug: { shopId, slug },
       },
     });
     if (existingSlug) {
@@ -293,7 +483,7 @@ export class CatalogService {
 
     return this.prisma.product.create({
       data: {
-        shopId: data.shopId,
+        shopId,
         name: data.name,
         slug,
         sku,
@@ -353,9 +543,20 @@ export class CatalogService {
       condition: string;
       featured: boolean;
     }>,
+    tenant?: RequestTenant | null,
   ) {
     const product = await this.getProduct(id);
-    await this.assertCanManageShop(product.shopId, userId);
+    const shopId = await this.resolveTenantShopId(
+      userId,
+      tenant,
+      product.shopId,
+    );
+    if (product.shopId !== shopId) {
+      throw new ForbiddenException('Produto fora do tenant activo');
+    }
+    if (data.categoryId) {
+      await this.assertCategoryForShop(data.categoryId, shopId);
+    }
 
     return this.prisma.product.update({
       where: { id: product.id },
@@ -380,9 +581,17 @@ export class CatalogService {
       alt?: string;
       isPrimary?: boolean;
     },
+    tenant?: RequestTenant | null,
   ) {
     const product = await this.getProduct(productId);
-    await this.assertCanManageShop(product.shopId, userId);
+    const shopId = await this.resolveTenantShopId(
+      userId,
+      tenant,
+      product.shopId,
+    );
+    if (product.shopId !== shopId) {
+      throw new ForbiddenException('Produto fora do tenant activo');
+    }
 
     if (image.isPrimary) {
       await this.prisma.productImage.updateMany({
@@ -402,9 +611,20 @@ export class CatalogService {
     });
   }
 
-  async deleteProduct(id: string, userId: string) {
+  async deleteProduct(
+    id: string,
+    userId: string,
+    tenant?: RequestTenant | null,
+  ) {
     const product = await this.getProduct(id);
-    await this.assertCanManageShop(product.shopId, userId);
+    const shopId = await this.resolveTenantShopId(
+      userId,
+      tenant,
+      product.shopId,
+    );
+    if (product.shopId !== shopId) {
+      throw new ForbiddenException('Produto fora do tenant activo');
+    }
 
     if (product.stock > 0) {
       throw new BadRequestException(

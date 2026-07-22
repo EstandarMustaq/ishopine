@@ -78,8 +78,12 @@ export class AffiliateService {
 
   async summary(userId: string) {
     await this.assertEligible(userId);
-    const [links, pending, earned] = await Promise.all([
+    const [links, linkRows, pending, earned] = await Promise.all([
       this.prisma.affiliateLink.count({ where: { userId, isActive: true } }),
+      this.prisma.affiliateLink.findMany({
+        where: { userId },
+        select: { clicks: true },
+      }),
       this.prisma.affiliateReward.aggregate({
         where: { earnerId: userId, status: AffiliateRewardStatus.PENDING },
         _sum: { amountCents: true },
@@ -92,31 +96,69 @@ export class AffiliateService {
         _sum: { amountCents: true },
       }),
     ]);
+    const clicks = linkRows.reduce((n, l) => n + l.clicks, 0);
+    const pendingCents = pending._sum.amountCents ?? 0;
+    const earnedCents = earned._sum.amountCents ?? 0;
     return {
       eligible: true,
       activeLinks: links,
-      pendingCents: pending._sum.amountCents ?? 0,
-      earnedCents: earned._sum.amountCents ?? 0,
+      linksCount: links,
+      clicks,
+      pendingCents,
+      earnedCents,
+      commissionsCents: pendingCents + earnedCents,
+      paidCents: earnedCents,
     };
   }
 
   async trackClick(code: string) {
-    const link = await this.prisma.affiliateLink.findUnique({ where: { code } });
+    const link = await this.prisma.affiliateLink.findUnique({
+      where: { code },
+      include: {
+        product: { select: { id: true, slug: true, name: true } },
+        shop: { select: { id: true, slug: true, name: true } },
+      },
+    });
     if (!link?.isActive) throw new NotFoundException('Link inválido');
     await this.prisma.affiliateLink.update({
       where: { id: link.id },
       data: { clicks: { increment: 1 } },
     });
+
+    let href = '/produtos';
+    if (link.product?.slug) {
+      href = `/produtos/${link.product.slug}`;
+    } else if (link.shop?.slug) {
+      href = `/lojas/${link.shop.slug}`;
+    }
+
     return {
       code: link.code,
       productId: link.productId,
       shopId: link.shopId,
-      href: link.productId
-        ? `/produtos`
-        : link.shopId
-          ? `/lojas`
-          : '/',
+      product: link.product,
+      shop: link.shop,
+      href,
     };
+  }
+
+  async listRewards(userId: string) {
+    await this.assertEligible(userId);
+    return this.prisma.affiliateReward.findMany({
+      where: { earnerId: userId },
+      include: {
+        link: {
+          select: {
+            code: true,
+            label: true,
+            product: { select: { name: true, slug: true } },
+            shop: { select: { name: true, slug: true } },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 100,
+    });
   }
 
   async registerConversion(input: {
@@ -129,6 +171,14 @@ export class AffiliateService {
       where: { code: input.code },
     });
     if (!link?.isActive) return null;
+
+    if (input.orderId) {
+      const existing = await this.prisma.affiliateReward.findFirst({
+        where: { orderId: input.orderId, linkId: link.id },
+      });
+      if (existing) return existing;
+    }
+
     const amountCents = Math.max(
       0,
       Math.round((input.amountCents * link.rewardBps) / 10_000),

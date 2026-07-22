@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { api } from "@/lib/api";
+import { getStoredAffiliateCode } from "@/components/affiliate/affiliate-ref-capture";
 import { useAuthStore } from "@/lib/auth-store";
 import { formatMZN } from "@/lib/format";
 import {
@@ -247,6 +248,7 @@ export default function CheckoutPage() {
           addressId,
           paymentMethod: orderPaymentMethod,
           couponCode: coupon?.valid ? coupon.code : undefined,
+          affiliateCode: getStoredAffiliateCode() || undefined,
         }),
       });
 

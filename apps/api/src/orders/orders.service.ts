@@ -17,12 +17,14 @@ import {
   ShopStatus,
 } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { AffiliateService } from '../affiliate/affiliate.service';
 
 @Injectable()
 export class OrdersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
+    private readonly affiliates: AffiliateService,
   ) {}
 
   private async nextOrderNumber(tx: {
@@ -39,6 +41,7 @@ export class OrdersService {
       paymentMethod?: PaymentMethod;
       notes?: string;
       couponCode?: string;
+      affiliateCode?: string;
     },
   ) {
     const buyer = await this.prisma.user.findUnique({ where: { id: buyerId } });
@@ -179,6 +182,7 @@ export class OrdersService {
             totalCents,
             notes: data.notes,
             couponCode: appliedCode,
+            affiliateCode: data.affiliateCode?.trim() || undefined,
             events: {
               create: {
                 status: OrderStatus.PENDING,
@@ -259,14 +263,18 @@ export class OrdersService {
     });
   }
 
-  async listForSeller(userId: string) {
+  async listForSeller(userId: string, tenantShopId?: string | null) {
     return this.prisma.order.findMany({
       where: {
         sellerShop: {
-          OR: [
-            { ownerId: userId },
-            { members: { some: { userId, isActive: true } } },
-          ],
+          ...(tenantShopId
+            ? { id: tenantShopId }
+            : {
+                OR: [
+                  { ownerId: userId },
+                  { members: { some: { userId, isActive: true } } },
+                ],
+              }),
         },
       },
       include: {
@@ -361,6 +369,13 @@ export class OrdersService {
       if (!order) continue;
       if (order.paymentStatus === PaymentStatus.PAID) continue;
       await this.updateStatus(id, OrderStatus.CONFIRMED, order.buyerId);
+      if (order.affiliateCode) {
+        await this.affiliates.registerConversion({
+          code: order.affiliateCode,
+          orderId: order.id,
+          amountCents: order.subtotalCents,
+        });
+      }
     }
   }
 

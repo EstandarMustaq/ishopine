@@ -25,6 +25,10 @@ import {
   RequireTenantTypes,
   TenantGuard,
 } from '../accounts/tenant.guard';
+import {
+  CurrentTenant,
+  type RequestTenant,
+} from '../accounts/current-tenant.decorator';
 
 @UseGuards(JwtAuthGuard)
 @Controller('orders')
@@ -40,6 +44,7 @@ export class OrdersController {
       paymentMethod?: PaymentMethod;
       notes?: string;
       couponCode?: string;
+      affiliateCode?: string;
     },
   ) {
     return this.orders.checkout(user.id, body);
@@ -53,8 +58,11 @@ export class OrdersController {
   @UseGuards(TwoFactorGuard, TenantGuard)
   @RequireTenantTypes(TenantType.PARTICULAR, TenantType.STORE)
   @Get('selling')
-  sellerOrders(@CurrentUser() user: AuthUser) {
-    return this.orders.listForSeller(user.id);
+  sellerOrders(
+    @CurrentUser() user: AuthUser,
+    @CurrentTenant() tenant: RequestTenant | null,
+  ) {
+    return this.orders.listForSeller(user.id, tenant?.shopId);
   }
 
   @UseGuards(RolesGuard, TwoFactorGuard)
