@@ -103,7 +103,8 @@ customer               # pode viver em marketplace no início
 | **7** | Logistics carriers/shipments, wallet owned reads, media CDN stub |
 | **8** | Production hardening: adapters reais, Sharp, authz, PaySuite |
 | **9** | Orders cart/status owned + media Cloudinary/CDN base URL |
-| **10+** | Checkout extract, live carrier partners, multi-region CDN |
+| **10** | Checkout owned + wallet settle idempotente |
+| **11+** | PaySuite extract, live carrier partners, multi-region CDN |
 
 ## Fora de âmbito (MVP)
 

@@ -1,6 +1,6 @@
 /**
- * Phase 8–9: orders service owns cart + order reads + status writes
- * when ORDERS_OWNED≠0. Checkout stays on Nest upstream.
+ * Phase 8–10: orders service owns cart, reads, status, and checkout
+ * when ORDERS_OWNED≠0. PaySuite stays Nest / payments proxy.
  */
 import { startStranglerProxy } from "@ishopine/shared";
 import { handleOwnedOrders } from "./owned";

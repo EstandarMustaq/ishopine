@@ -9,7 +9,9 @@ Porta **4101**. Rotas: `/api/orders/*`, `/api/cart/*`.
 | GET/POST/PATCH/DELETE | `/api/cart*` | **owned** |
 | GET | `/api/orders/mine`, `/selling`, `/:id` | **owned** |
 | PATCH | `/api/orders/:id/status` | **owned** |
-| POST | `/api/orders/checkout` | Nest upstream |
+| POST | `/api/orders/checkout` | **owned** (+ `Idempotency-Key`) |
+
+Checkout pede cotação a `UPSTREAM_API_URL/api/logistics/quote` (Nest).
 
 ## Proxy
 

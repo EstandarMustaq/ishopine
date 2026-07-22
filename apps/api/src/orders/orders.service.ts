@@ -451,7 +451,7 @@ export class OrdersService {
         order.totalCents - order.platformFeeCents,
       );
       try {
-        await this.wallets.settleOrderPayout({
+        await this.settleOrderWalletPayout({
           orderId: order.id,
           orderNumber: order.orderNumber,
           sellerShopId: order.sellerShopId,
@@ -479,6 +479,48 @@ export class OrdersService {
         }
       }
     }
+  }
+
+  /**
+   * Prefer wallet strangler settle when WALLET_URL + secret are set
+   * (WALLET_SETTLE_REMOTE≠0). Falls back to in-process WalletService.
+   */
+  private async settleOrderWalletPayout(input: {
+    orderId: string;
+    orderNumber: string;
+    sellerShopId: string;
+    sellerNetCents: number;
+    platformFeeCents: number;
+  }) {
+    const walletUrl = this.config.get<string>('WALLET_URL');
+    const secret =
+      this.config.get<string>('INTERNAL_SERVICE_SECRET') ||
+      this.config.get<string>('CRON_SECRET');
+    const remote =
+      this.config.get<string>('WALLET_SETTLE_REMOTE') !== '0' &&
+      Boolean(walletUrl) &&
+      Boolean(secret);
+
+    if (!remote || !walletUrl || !secret) {
+      return this.wallets.settleOrderPayout(input);
+    }
+
+    const base = walletUrl.replace(/\/$/, '');
+    const res = await fetch(`${base}/api/wallet/internal/settle-order`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${secret}`,
+      },
+      body: JSON.stringify(input),
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(
+        `Wallet settle remoto falhou (${res.status}): ${text.slice(0, 300)}`,
+      );
+    }
+    return res.json();
   }
 
   async updateStatus(id: string, status: OrderStatus, operatorId: string) {

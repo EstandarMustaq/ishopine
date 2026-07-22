@@ -1,6 +1,6 @@
 /**
- * Phase 8–9: orders strangler owns cart + order reads + status writes.
- * Checkout stays on Nest (orchestrator / inventory / payments coupling).
+ * Phase 8–10: orders strangler owns cart, order reads, status, and checkout.
+ * PaySuite / commerce saga stay Nest + orchestrator.
  */
 import http from "node:http";
 import {
@@ -17,6 +17,13 @@ import {
 } from "@prisma/client";
 import jwt from "jsonwebtoken";
 import { AUTH_COOKIE_NAME } from "@ishopine/shared";
+import { runCheckout, type CheckoutInput } from "./checkout";
+import {
+  beginIdempotency,
+  completeIdempotency,
+  failIdempotency,
+  hashCheckoutBody,
+} from "./idempotency";
 
 const prisma = new PrismaClient();
 const jwtSecret = process.env.JWT_SECRET || "";
@@ -657,6 +664,50 @@ export async function handleOwnedOrders(
         user.id,
       );
       json(res, 200, updated);
+      return true;
+    }
+
+    /* Checkout write */
+    if (path === "/api/orders/checkout" && method === "POST") {
+      const jwtUser = verifyJwt(req);
+      if (!jwtUser) {
+        json(res, 401, { message: "Não autenticado" });
+        return true;
+      }
+      const body = (await readJsonBody(req)) as CheckoutInput;
+      const idemKeyHeader = req.headers["idempotency-key"];
+      const idemKey =
+        typeof idemKeyHeader === "string" ? idemKeyHeader : undefined;
+      const begin = await beginIdempotency(
+        prisma,
+        idemKey,
+        hashCheckoutBody(body),
+      );
+      if (begin.kind === "replay") {
+        res.writeHead(begin.responseCode, {
+          "Content-Type": "application/json",
+          "X-Idempotent-Replayed": "1",
+        });
+        res.end(JSON.stringify(begin.responseBody));
+        return true;
+      }
+      if (begin.kind === "in_flight") {
+        json(res, 409, { message: "Checkout já em progresso (idempotency)" });
+        return true;
+      }
+      const startedKey = begin.kind === "started" ? begin.key : null;
+      try {
+        const result = await runCheckout(jwtUser.sub, body);
+        if (startedKey) {
+          await completeIdempotency(prisma, startedKey, 201, result);
+        }
+        json(res, 201, result);
+      } catch (error) {
+        if (startedKey) {
+          await failIdempotency(prisma, startedKey).catch(() => undefined);
+        }
+        throw error;
+      }
       return true;
     }
 
