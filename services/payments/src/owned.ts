@@ -11,6 +11,7 @@ import {
   PaymentMethod,
   PaymentProvider,
   PaymentStatus,
+  PlatformRole,
   Prisma,
   PrismaClient,
 } from "@prisma/client";
@@ -51,7 +52,7 @@ const METHODS = new Set<PaysuitePaymentMethod>([
   "credit_card",
 ]);
 
-type JwtPayload = { sub: string };
+type JwtPayload = { sub: string; tfa?: boolean };
 
 let client: PaysuiteClient | null = null;
 const token = process.env.PAYSUITE_TOKEN?.trim();
@@ -64,11 +65,142 @@ if (token) {
   });
 }
 
+const orgSlug = process.env.PLATFORM_ORG_SLUG || "ishopine";
+
+type DbUser = {
+  id: string;
+  platformRole: PlatformRole;
+  totpEnabled: boolean;
+  canSell: boolean;
+};
+
+async function loadUser(userId: string): Promise<DbUser | null> {
+  return prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      platformRole: true,
+      totpEnabled: true,
+      canSell: true,
+    },
+  });
+}
+
+/** Nest TwoFactorGuard parity for platform admin mutations. */
+async function assertStaff2fa(user: DbUser, jwtUser: JwtPayload) {
+  if (user.totpEnabled) {
+    if (!jwtUser.tfa) {
+      throw httpError(
+        403,
+        "Autenticação de dois fatores necessária. Complete o login 2FA.",
+      );
+    }
+    return;
+  }
+  const settings = await prisma.platformSettings.findFirst({
+    where: { organization: { slug: orgSlug } },
+  });
+  if ((settings?.requireSeller2fa ?? true) && isProd) {
+    throw httpError(
+      403,
+      "Configure a autenticação de dois fatores antes de acessar o painel.",
+    );
+  }
+}
+
+async function assertPlatformStaff(jwtUser: JwtPayload) {
+  const user = await loadUser(jwtUser.sub);
+  if (!user) throw httpError(401, "Não autenticado");
+  if (
+    user.platformRole !== PlatformRole.PLATFORM_ADMIN &&
+    user.platformRole !== PlatformRole.PLATFORM_OPERATOR
+  ) {
+    throw httpError(403, "Acesso não autorizado para este perfil");
+  }
+  await assertStaff2fa(user, jwtUser);
+  return user;
+}
+
+async function createSellerPayout(
+  _actor: DbUser,
+  input: {
+    reference: string;
+    amountCents: number;
+    method: "mpesa" | "emola";
+    phone: string;
+    holder: string;
+    description?: string;
+  },
+) {
+  if (input.amountCents <= 0) {
+    throw httpError(400, "Valor de payout inválido");
+  }
+  if (!client) {
+    throw httpError(
+      503,
+      "PaySuite não configurado. Defina PAYSUITE_TOKEN.",
+    );
+  }
+  const phone = normalizeMsisdn(input.phone) || input.phone;
+  try {
+    return await client.createPayout({
+      amount: (input.amountCents / 100).toFixed(2),
+      reference: input.reference.slice(0, 50),
+      method: input.method,
+      description: input.description,
+      beneficiary: {
+        phone: phone.replace(/^258/, ""),
+        holder: input.holder,
+      },
+    });
+  } catch (error) {
+    throw httpError(400, mapPaysuiteError(error));
+  }
+}
+
+async function createRefund(
+  _actor: DbUser,
+  input: { paymentId: string; amountCents: number; reason?: string },
+) {
+  const payment = await prisma.billingPayment.findUnique({
+    where: { id: input.paymentId },
+  });
+  if (!payment?.paysuitePaymentId) {
+    throw httpError(404, "Pagamento PaySuite não encontrado");
+  }
+  if (payment.status !== BillingPaymentStatus.PAID) {
+    throw httpError(400, "Só é possível reembolsar pagamentos pagos");
+  }
+  if (!client) {
+    throw httpError(503, "PaySuite não configurado");
+  }
+  if (input.amountCents <= 0) {
+    throw httpError(400, "Valor de reembolso inválido");
+  }
+  try {
+    const refund = await client.createRefund({
+      payment_id: payment.paysuitePaymentId,
+      amount: (input.amountCents / 100).toFixed(2),
+      reason: input.reason,
+    });
+    if (input.amountCents >= payment.amountCents) {
+      await prisma.billingPayment.update({
+        where: { id: payment.id },
+        data: { status: BillingPaymentStatus.REFUNDED },
+      });
+    }
+    return refund;
+  } catch (error) {
+    throw httpError(400, mapPaysuiteError(error));
+  }
+}
+
 function allowSimulate(): boolean {
   if (isProd) return false;
   if (process.env.PAYSUITE_SIMULATE === "true") return true;
   return !client;
 }
+
 
 function webUrl() {
   return process.env.WEB_URL || "http://localhost:3000";
@@ -773,7 +905,70 @@ export async function handleOwnedPayments(
       return true;
     }
 
-    // payouts/refunds → Nest upstream for now
+    if (path === "/api/billing/paysuite/payouts" && method === "POST") {
+      const jwtUser = verifyUser(req);
+      if (!jwtUser) {
+        json(res, 401, { message: "Não autenticado" });
+        return true;
+      }
+      const actor = await assertPlatformStaff(jwtUser);
+      const body = (await readJsonBody(req)) as {
+        reference?: string;
+        amountCents?: number;
+        method?: string;
+        phone?: string;
+        holder?: string;
+        description?: string;
+      };
+      if (!body.reference?.trim()) {
+        throw httpError(400, "reference obrigatório");
+      }
+      if (typeof body.amountCents !== "number") {
+        throw httpError(400, "amountCents obrigatório");
+      }
+      if (body.method !== "mpesa" && body.method !== "emola") {
+        throw httpError(400, "method deve ser mpesa ou emola");
+      }
+      if (!body.phone || !body.holder) {
+        throw httpError(400, "phone e holder obrigatórios");
+      }
+      const payout = await createSellerPayout(actor, {
+        reference: body.reference,
+        amountCents: body.amountCents,
+        method: body.method,
+        phone: body.phone,
+        holder: body.holder,
+        description: body.description,
+      });
+      json(res, 201, payout);
+      return true;
+    }
+
+    if (path === "/api/billing/paysuite/refunds" && method === "POST") {
+      const jwtUser = verifyUser(req);
+      if (!jwtUser) {
+        json(res, 401, { message: "Não autenticado" });
+        return true;
+      }
+      const actor = await assertPlatformStaff(jwtUser);
+      const body = (await readJsonBody(req)) as {
+        paymentId?: string;
+        amountCents?: number;
+        reason?: string;
+      };
+      if (!body.paymentId) throw httpError(400, "paymentId obrigatório");
+      if (typeof body.amountCents !== "number") {
+        throw httpError(400, "amountCents obrigatório");
+      }
+      const refund = await createRefund(actor, {
+        paymentId: body.paymentId,
+        amountCents: body.amountCents,
+        reason: body.reason,
+      });
+      json(res, 201, refund);
+      return true;
+    }
+
     return false;
   } catch (error) {
     const status =

@@ -4,8 +4,9 @@
  * Public URLs via MEDIA_PUBLIC_BASE_URL / buildMediaUrl.
  */
 import http from "node:http";
+import { createReadStream, existsSync, statSync } from "node:fs";
 import { mkdir, unlink, writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { extname, join, resolve, sep } from "node:path";
 import { randomUUID } from "node:crypto";
 import { PrismaClient } from "@prisma/client";
 import Busboy from "busboy";
@@ -248,6 +249,52 @@ export async function handleOwnedMedia(
   res: http.ServerResponse,
 ): Promise<boolean> {
   const path = pathOnly(req.url);
+
+  // Phase 12: serve immutable local uploads with long cache (CDN-ready).
+  if (req.method === "GET" && path.startsWith("/uploads/")) {
+    const relative = decodeURIComponent(path.replace(/^\/uploads\//, ""));
+    if (
+      !relative ||
+      relative.includes("..") ||
+      relative.startsWith("/") ||
+      relative.includes("\0")
+    ) {
+      json(res, 400, { message: "Path inválido" });
+      return true;
+    }
+    const root = resolve(process.cwd(), uploadDir);
+    const absolute = resolve(root, relative);
+    if (!absolute.startsWith(root + sep) && absolute !== root) {
+      json(res, 400, { message: "Path inválido" });
+      return true;
+    }
+    if (!existsSync(absolute) || !statSync(absolute).isFile()) {
+      res.writeHead(404, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ message: "Ficheiro não encontrado" }));
+      return true;
+    }
+    const ext = extname(absolute).toLowerCase();
+    const types: Record<string, string> = {
+      ".webp": "image/webp",
+      ".jpg": "image/jpeg",
+      ".jpeg": "image/jpeg",
+      ".png": "image/png",
+      ".gif": "image/gif",
+      ".avif": "image/avif",
+      ".svg": "image/svg+xml",
+    };
+    const cache =
+      types[ext] != null
+        ? "public, max-age=31536000, immutable"
+        : "public, max-age=86400";
+    res.writeHead(200, {
+      "Content-Type": types[ext] || "application/octet-stream",
+      "Cache-Control": cache,
+      "X-Content-Type-Options": "nosniff",
+    });
+    createReadStream(absolute).pipe(res);
+    return true;
+  }
 
   if (req.method === "GET" && (path === "/api/media" || path === "/api/uploads")) {
     const user = verifyUser(req);

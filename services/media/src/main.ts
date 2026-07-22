@@ -1,3 +1,6 @@
+/**
+ * Phase 6–12: media owns upload/list/delete + static /uploads when MEDIA_OWNED≠0.
+ */
 import { startStranglerProxy } from "@ishopine/shared";
 import { handleOwnedMedia } from "./owned";
 
@@ -7,7 +10,7 @@ startStranglerProxy({
   service: "media",
   port: Number(process.env.PORT || 4105),
   upstream: process.env.UPSTREAM_API_URL || "http://127.0.0.1:4000",
-  owns: ["/api/media", "/api/uploads"],
+  owns: ["/api/media", "/api/uploads", "/uploads"],
   mode: owned ? "owned" : "proxy",
   handleOwned: owned ? handleOwnedMedia : undefined,
 });

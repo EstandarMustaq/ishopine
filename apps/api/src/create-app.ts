@@ -77,6 +77,17 @@ export async function createApp(): Promise<NestExpressApplication> {
 
   app.useStaticAssets(join(process.cwd(), 'uploads'), {
     prefix: '/uploads/',
+    setHeaders: (res, filePath) => {
+      // UUID filenames are content-addressed — safe for long immutable cache.
+      if (/\.(webp|jpe?g|png|gif|avif|svg)$/i.test(filePath)) {
+        res.setHeader(
+          'Cache-Control',
+          'public, max-age=31536000, immutable',
+        );
+      } else {
+        res.setHeader('Cache-Control', 'public, max-age=86400');
+      }
+    },
   });
 
   app.use((req: Request, res: Response, next: NextFunction) => {

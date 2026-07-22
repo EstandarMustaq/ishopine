@@ -343,6 +343,12 @@ export const GATEWAY_ROUTES: GatewayRoute[] = [
     defaultPort: 4107,
   },
   {
+    prefix: "/uploads",
+    service: "media",
+    envKey: "MEDIA_URL",
+    defaultPort: 4105,
+  },
+  {
     prefix: "/api/commerce",
     service: "commerce-orchestrator",
     envKey: "ORCHESTRATOR_URL",
