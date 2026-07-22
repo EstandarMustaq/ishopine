@@ -1,16 +1,40 @@
 /**
- * Phase 8: orders service owns GET reads when ORDERS_OWNED≠0.
- * Mutations (checkout, status) stay on Nest upstream.
+ * Phase 8–9: orders strangler owns cart + order reads + status writes.
+ * Checkout stays on Nest (orchestrator / inventory / payments coupling).
  */
 import http from "node:http";
-import { PrismaClient, PlatformRole } from "@prisma/client";
+import {
+  AccountingEntryStatus,
+  AccountingEntryType,
+  CarrierCode,
+  InventoryMovementType,
+  OrderStatus,
+  PaymentStatus,
+  PlatformRole,
+  PrismaClient,
+  ProductStatus,
+  ShipmentStatus,
+} from "@prisma/client";
 import jwt from "jsonwebtoken";
 import { AUTH_COOKIE_NAME } from "@ishopine/shared";
 
 const prisma = new PrismaClient();
 const jwtSecret = process.env.JWT_SECRET || "";
+const orgSlug = process.env.PLATFORM_ORG_SLUG || "ishopine";
+const isProd = process.env.NODE_ENV === "production";
 
-type JwtPayload = { sub: string; platformRole?: PlatformRole };
+type JwtPayload = {
+  sub: string;
+  platformRole?: PlatformRole;
+  tfa?: boolean;
+};
+
+type DbUser = {
+  id: string;
+  platformRole: PlatformRole;
+  totpEnabled: boolean;
+  canSell: boolean;
+};
 
 function parseCookie(header: string | undefined, name: string): string | null {
   if (!header) return null;
@@ -30,7 +54,7 @@ function extractToken(req: http.IncomingMessage): string | null {
   return parseCookie(req.headers.cookie, AUTH_COOKIE_NAME);
 }
 
-function verifyUser(req: http.IncomingMessage): JwtPayload | null {
+function verifyJwt(req: http.IncomingMessage): JwtPayload | null {
   const token = extractToken(req);
   if (!token || !jwtSecret) return null;
   try {
@@ -49,12 +73,35 @@ function pathOnly(url?: string) {
   return (url || "/").split("?")[0];
 }
 
-async function loadUserRole(userId: string): Promise<PlatformRole> {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { platformRole: true },
+function readJsonBody(req: http.IncomingMessage): Promise<unknown> {
+  return new Promise((resolve, reject) => {
+    const chunks: Buffer[] = [];
+    req.on("data", (c: Buffer) => chunks.push(c));
+    req.on("end", () => {
+      if (chunks.length === 0) {
+        resolve({});
+        return;
+      }
+      try {
+        resolve(JSON.parse(Buffer.concat(chunks).toString("utf8")));
+      } catch (error) {
+        reject(error);
+      }
+    });
+    req.on("error", reject);
   });
-  return user?.platformRole ?? PlatformRole.BUYER;
+}
+
+async function loadUser(userId: string): Promise<DbUser | null> {
+  return prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      platformRole: true,
+      totpEnabled: true,
+      canSell: true,
+    },
+  });
 }
 
 async function resolveTenantShopId(userId: string, tenantId: string | null) {
@@ -71,128 +118,678 @@ async function resolveTenantShopId(userId: string, tenantId: string | null) {
   return membership.tenant.shopId;
 }
 
-export async function handleOwnedOrders(
-  req: http.IncomingMessage,
-  res: http.ServerResponse,
-): Promise<boolean> {
-  if (req.method !== "GET") return false;
-  const path = pathOnly(req.url);
-
-  const isMine = path === "/api/orders/mine";
-  const isSelling = path === "/api/orders/selling";
-  const orderMatch = path.match(/^\/api\/orders\/([^/]+)$/);
-  const orderId =
-    orderMatch &&
-    orderMatch[1] !== "mine" &&
-    orderMatch[1] !== "selling" &&
-    orderMatch[1] !== "checkout"
-      ? orderMatch[1]
-      : null;
-
-  if (!isMine && !isSelling && !orderId) return false;
-
-  const jwtUser = verifyUser(req);
-  if (!jwtUser) {
-    json(res, 401, { message: "Não autenticado" });
-    return true;
+/** Mirror Nest TwoFactorGuard for seller/staff mutations. */
+async function assertSeller2fa(user: DbUser, jwtUser: JwtPayload) {
+  if (user.totpEnabled) {
+    if (!jwtUser.tfa) {
+      const err = new Error(
+        "Autenticação de dois fatores necessária. Complete o login 2FA.",
+      );
+      (err as Error & { status: number }).status = 403;
+      throw err;
+    }
+    return;
   }
 
-  if (isMine) {
-    const orders = await prisma.order.findMany({
-      where: { buyerId: jwtUser.sub },
-      include: {
-        items: true,
-        payments: true,
-        address: true,
-        sellerShop: {
-          select: { id: true, name: true, slug: true },
-        },
-      },
-      orderBy: { createdAt: "desc" },
+  const elevated =
+    user.platformRole === PlatformRole.PLATFORM_ADMIN ||
+    user.platformRole === PlatformRole.PLATFORM_OPERATOR ||
+    user.canSell;
+
+  let isSellerMember = user.canSell;
+  if (!isSellerMember) {
+    const membership = await prisma.shopMember.findFirst({
+      where: { userId: user.id, isActive: true },
+      select: { id: true },
     });
-    json(res, 200, orders);
-    return true;
+    isSellerMember = Boolean(membership);
   }
 
-  if (isSelling) {
-    const tenantHeader = req.headers["x-tenant-id"];
-    const tenantId =
-      typeof tenantHeader === "string" && tenantHeader ? tenantHeader : null;
-    const tenantShopId = await resolveTenantShopId(jwtUser.sub, tenantId);
-    const orders = await prisma.order.findMany({
-      where: {
-        sellerShop: {
-          ...(tenantShopId
-            ? { id: tenantShopId }
-            : {
-                OR: [
-                  { ownerId: jwtUser.sub },
-                  {
-                    members: {
-                      some: { userId: jwtUser.sub, isActive: true },
-                    },
-                  },
-                ],
-              }),
+  if (!elevated && !isSellerMember) return;
+
+  const settings = await prisma.platformSettings.findFirst({
+    where: { organization: { slug: orgSlug } },
+  });
+  if ((settings?.requireSeller2fa ?? true) && isProd) {
+    const err = new Error(
+      "Configure a autenticação de dois fatores antes de acessar o painel.",
+    );
+    (err as Error & { status: number }).status = 403;
+    throw err;
+  }
+}
+
+function httpError(status: number, message: string) {
+  const err = new Error(message);
+  (err as Error & { status: number }).status = status;
+  return err;
+}
+
+/* ── Cart (Nest CartService parity) ── */
+
+async function ensureCart(userId: string) {
+  return prisma.cart.upsert({
+    where: { userId },
+    create: { userId },
+    update: {},
+  });
+}
+
+async function getCart(userId: string) {
+  const cart = await ensureCart(userId);
+  const full = await prisma.cart.findUnique({
+    where: { id: cart.id },
+    include: {
+      items: {
+        include: {
+          product: {
+            include: {
+              shop: {
+                select: { id: true, name: true, slug: true, status: true },
+              },
+              images: {
+                orderBy: [{ isPrimary: "desc" }, { sortOrder: "asc" }],
+                take: 1,
+              },
+            },
+          },
         },
       },
+    },
+  });
+  const items = full?.items ?? [];
+  const subtotalCents = items.reduce(
+    (sum, item) => sum + item.quantity * item.product.priceCents,
+    0,
+  );
+  return { ...full, subtotalCents, itemCount: items.length };
+}
+
+async function addCartItem(userId: string, productId: string, quantity = 1) {
+  if (quantity < 1) throw httpError(400, "Quantidade inválida");
+  const product = await prisma.product.findUnique({ where: { id: productId } });
+  if (!product || product.status !== ProductStatus.ACTIVE) {
+    throw httpError(404, "Produto indisponível");
+  }
+  if (product.stock - product.reservedStock < quantity) {
+    throw httpError(400, "Estoque insuficiente");
+  }
+  const cart = await ensureCart(userId);
+  const existing = await prisma.cartItem.findUnique({
+    where: { cartId_productId: { cartId: cart.id, productId } },
+  });
+  const nextQty = (existing?.quantity ?? 0) + quantity;
+  if (product.stock - product.reservedStock < nextQty) {
+    throw httpError(400, "Estoque insuficiente");
+  }
+  await prisma.cartItem.upsert({
+    where: { cartId_productId: { cartId: cart.id, productId } },
+    create: { cartId: cart.id, productId, quantity },
+    update: { quantity: nextQty },
+  });
+  return getCart(userId);
+}
+
+async function updateCartItem(
+  userId: string,
+  productId: string,
+  quantity: number,
+) {
+  const cart = await ensureCart(userId);
+  if (quantity <= 0) {
+    await prisma.cartItem.deleteMany({
+      where: { cartId: cart.id, productId },
+    });
+    return getCart(userId);
+  }
+  const product = await prisma.product.findUnique({ where: { id: productId } });
+  if (!product) throw httpError(404, "Produto não encontrado");
+  if (product.stock - product.reservedStock < quantity) {
+    throw httpError(400, "Estoque insuficiente");
+  }
+  await prisma.cartItem.update({
+    where: { cartId_productId: { cartId: cart.id, productId } },
+    data: { quantity },
+  });
+  return getCart(userId);
+}
+
+async function removeCartItem(userId: string, productId: string) {
+  const cart = await ensureCart(userId);
+  await prisma.cartItem.deleteMany({
+    where: { cartId: cart.id, productId },
+  });
+  return getCart(userId);
+}
+
+async function clearCart(userId: string) {
+  const cart = await ensureCart(userId);
+  await prisma.cartItem.deleteMany({ where: { cartId: cart.id } });
+  return getCart(userId);
+}
+
+/* ── Shipment side-effects (Nest LogisticsService parity, same DB) ── */
+
+function resolveTrackingCode(
+  carrierCode: CarrierCode,
+  orderNumber: string,
+  sellerTracking?: string,
+) {
+  if (carrierCode === CarrierCode.MANUAL) {
+    const code = sellerTracking?.trim();
+    if (!code) {
+      throw httpError(
+        400,
+        "Envio MANUAL exige trackingCode fornecido pelo vendedor",
+      );
+    }
+    return code;
+  }
+  if (carrierCode === CarrierCode.STORE_PICKUP) {
+    return `ISH-PICKUP-${orderNumber}`;
+  }
+  if (carrierCode === CarrierCode.FREE_THRESHOLD) {
+    return `ISH-FREE-${orderNumber}`;
+  }
+  return `ISH-${orderNumber}`;
+}
+
+async function createLabelForOrder(orderId: string) {
+  const shipment = await prisma.shipment.findFirst({
+    where: { orderId, status: { not: ShipmentStatus.CANCELLED } },
+    orderBy: { createdAt: "desc" },
+    include: { order: { select: { orderNumber: true } } },
+  });
+  if (!shipment) return null;
+  const code = resolveTrackingCode(
+    shipment.carrierCode,
+    shipment.order.orderNumber,
+  );
+  const updated = await prisma.shipment.update({
+    where: { id: shipment.id },
+    data: {
+      status: ShipmentStatus.LABEL_CREATED,
+      trackingCode: code,
+      labelUrl: `/api/logistics/shipments/${shipment.id}/label`,
+      shippedAt: new Date(),
+      events: {
+        create: {
+          status: ShipmentStatus.LABEL_CREATED,
+          note: `Etiqueta gerada · ${code}`,
+        },
+      },
+    },
+  });
+  await prisma.outboxMessage.create({
+    data: {
+      aggregateType: "shipment",
+      aggregateId: updated.id,
+      eventType: "shipping.label.created",
+      payload: {
+        shipmentId: updated.id,
+        orderId,
+        carrierCode: updated.carrierCode,
+        trackingCode: updated.trackingCode,
+      },
+    },
+  });
+  return updated;
+}
+
+async function markShipmentDelivered(orderId: string) {
+  const shipment = await prisma.shipment.findFirst({
+    where: { orderId, status: { not: ShipmentStatus.CANCELLED } },
+    orderBy: { createdAt: "desc" },
+  });
+  if (!shipment) return null;
+  return prisma.shipment.update({
+    where: { id: shipment.id },
+    data: {
+      status: ShipmentStatus.DELIVERED,
+      deliveredAt: new Date(),
+      events: {
+        create: { status: ShipmentStatus.DELIVERED, note: "Entregue" },
+      },
+    },
+  });
+}
+
+/* ── Order status (Nest OrdersService.updateStatus parity) ── */
+
+async function updateOrderStatus(
+  id: string,
+  status: OrderStatus,
+  operatorId: string,
+) {
+  const order = await prisma.order.findUnique({
+    where: { id },
+    include: { items: true, payments: true },
+  });
+  if (!order) throw httpError(404, "Pedido não encontrado");
+
+  const updated = await prisma.$transaction(async (tx) => {
+    const data: {
+      status: OrderStatus;
+      shippedAt?: Date;
+      deliveredAt?: Date;
+      cancelledAt?: Date;
+      paymentStatus?: PaymentStatus;
+    } = { status };
+
+    if (status === OrderStatus.SHIPPED) data.shippedAt = new Date();
+    if (status === OrderStatus.DELIVERED) data.deliveredAt = new Date();
+
+    if (status === OrderStatus.CANCELLED || status === OrderStatus.REFUNDED) {
+      data.cancelledAt = new Date();
+      for (const item of order.items) {
+        await tx.product.update({
+          where: { id: item.productId },
+          data: { reservedStock: { decrement: item.quantity } },
+        });
+        await tx.inventoryMovement.create({
+          data: {
+            productId: item.productId,
+            type: InventoryMovementType.RELEASE,
+            quantity: item.quantity,
+            reason: `Liberação por cancelamento do pedido ${order.orderNumber}`,
+            reference: order.id,
+            operatorId,
+          },
+        });
+      }
+    }
+
+    const shouldFulfill =
+      (status === OrderStatus.CONFIRMED ||
+        status === OrderStatus.PROCESSING) &&
+      order.paymentStatus !== PaymentStatus.PAID;
+
+    if (shouldFulfill) {
+      data.paymentStatus = PaymentStatus.PAID;
+      await tx.payment.updateMany({
+        where: { orderId: order.id },
+        data: { status: PaymentStatus.PAID, paidAt: new Date() },
+      });
+      for (const item of order.items) {
+        await tx.product.update({
+          where: { id: item.productId },
+          data: {
+            stock: { decrement: item.quantity },
+            reservedStock: { decrement: item.quantity },
+          },
+        });
+        await tx.inventoryMovement.create({
+          data: {
+            productId: item.productId,
+            type: InventoryMovementType.OUT,
+            quantity: item.quantity,
+            reason: `Saída por pedido ${order.orderNumber}`,
+            reference: order.id,
+            operatorId,
+          },
+        });
+      }
+      const cashAccount = await tx.accountingAccount.findUnique({
+        where: { code: "1.1.01" },
+      });
+      const revenueAccount = await tx.accountingAccount.findUnique({
+        where: { code: "3.1.01" },
+      });
+      if (cashAccount && revenueAccount) {
+        const existing = await tx.accountingEntry.findFirst({
+          where: { orderId: order.id, type: AccountingEntryType.REVENUE },
+        });
+        if (!existing) {
+          const entryCount = await tx.accountingEntry.count();
+          await tx.accountingEntry.create({
+            data: {
+              entryNumber: `LC${String(entryCount + 1).padStart(6, "0")}`,
+              description: `Receita do pedido ${order.orderNumber}`,
+              type: AccountingEntryType.REVENUE,
+              status: AccountingEntryStatus.POSTED,
+              amountCents: order.totalCents,
+              debitAccountId: cashAccount.id,
+              creditAccountId: revenueAccount.id,
+              orderId: order.id,
+              createdById: operatorId,
+              reviewedById: operatorId,
+              postedAt: new Date(),
+            },
+          });
+        }
+      }
+    }
+
+    return tx.order.update({
+      where: { id },
+      data,
       include: {
         items: true,
         payments: true,
         buyer: { select: { id: true, name: true, email: true } },
         sellerShop: { select: { id: true, name: true, slug: true } },
       },
-      orderBy: { createdAt: "desc" },
     });
-    json(res, 200, orders);
-    return true;
+  });
+
+  if (status === OrderStatus.SHIPPED) {
+    try {
+      await createLabelForOrder(id);
+    } catch (error) {
+      console.error("[orders] shipment label failed", id, error);
+    }
+  }
+  if (status === OrderStatus.DELIVERED) {
+    try {
+      await markShipmentDelivered(id);
+    } catch (error) {
+      console.error("[orders] shipment deliver failed", id, error);
+    }
   }
 
-  if (orderId) {
-    const platformRole =
-      jwtUser.platformRole ?? (await loadUserRole(jwtUser.sub));
-    const order = await prisma.order.findUnique({
-      where: { id: orderId },
-      include: {
-        buyer: {
-          select: { id: true, name: true, email: true, phone: true },
-        },
-        sellerShop: {
-          select: {
-            id: true,
-            name: true,
-            slug: true,
-            ownerId: true,
-            members: {
-              where: { userId: jwtUser.sub, isActive: true },
-              select: { role: true },
-            },
+  return updated;
+}
+
+async function assertCanUpdateStatus(
+  jwtUser: JwtPayload,
+  orderId: string,
+  tenantId: string | null,
+) {
+  const user = await loadUser(jwtUser.sub);
+  if (!user) throw httpError(401, "Não autenticado");
+
+  const isPlatform =
+    user.platformRole === PlatformRole.PLATFORM_ADMIN ||
+    user.platformRole === PlatformRole.PLATFORM_OPERATOR;
+
+  const allowedRole =
+    isPlatform || user.platformRole === PlatformRole.SELLER;
+  if (!allowedRole) {
+    throw httpError(403, "Acesso não autorizado para este perfil");
+  }
+
+  await assertSeller2fa(user, jwtUser);
+
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    include: {
+      sellerShop: {
+        select: {
+          id: true,
+          ownerId: true,
+          members: {
+            where: { userId: user.id, isActive: true },
+            select: { id: true },
           },
         },
-        items: { include: { product: { include: { images: true } } } },
-        payments: true,
-        address: true,
-        accountingEntries: true,
       },
-    });
-    if (!order) {
-      json(res, 404, { message: "Pedido não encontrado" });
-      return true;
-    }
-    const isPlatform =
-      platformRole === PlatformRole.PLATFORM_ADMIN ||
-      platformRole === PlatformRole.PLATFORM_OPERATOR;
-    const isBuyer = order.buyerId === jwtUser.sub;
+    },
+  });
+  if (!order) throw httpError(404, "Pedido não encontrado");
+
+  if (!isPlatform) {
     const isSeller =
-      order.sellerShop.ownerId === jwtUser.sub ||
+      order.sellerShop.ownerId === user.id ||
       order.sellerShop.members.length > 0;
-    if (!isPlatform && !isBuyer && !isSeller) {
-      json(res, 403, { message: "Sem acesso a este pedido" });
-      return true;
+    if (!isSeller) throw httpError(403, "Sem acesso a este pedido");
+
+    if (tenantId) {
+      const shopId = await resolveTenantShopId(user.id, tenantId);
+      if (!shopId) throw httpError(403, "Sem acesso a este tenant");
+      if (shopId !== order.sellerShopId) {
+        throw httpError(403, "Pedido não pertence ao tenant activo");
+      }
     }
-    json(res, 200, order);
-    return true;
   }
 
-  return false;
+  return user;
+}
+
+function statusFromBody(body: unknown): OrderStatus {
+  const status =
+    body && typeof body === "object" && "status" in body
+      ? String((body as { status: unknown }).status)
+      : "";
+  if (!Object.values(OrderStatus).includes(status as OrderStatus)) {
+    throw httpError(400, `Status inválido: ${status || "(vazio)"}`);
+  }
+  return status as OrderStatus;
+}
+
+/* ── Router ── */
+
+export async function handleOwnedOrders(
+  req: http.IncomingMessage,
+  res: http.ServerResponse,
+): Promise<boolean> {
+  const path = pathOnly(req.url);
+  const method = req.method || "GET";
+
+  try {
+    /* Cart */
+    if (path === "/api/cart" && method === "GET") {
+      const jwtUser = verifyJwt(req);
+      if (!jwtUser) {
+        json(res, 401, { message: "Não autenticado" });
+        return true;
+      }
+      json(res, 200, await getCart(jwtUser.sub));
+      return true;
+    }
+    if (path === "/api/cart/items" && method === "POST") {
+      const jwtUser = verifyJwt(req);
+      if (!jwtUser) {
+        json(res, 401, { message: "Não autenticado" });
+        return true;
+      }
+      const body = (await readJsonBody(req)) as {
+        productId?: string;
+        quantity?: number;
+      };
+      if (!body.productId) throw httpError(400, "productId obrigatório");
+      json(
+        res,
+        200,
+        await addCartItem(jwtUser.sub, body.productId, body.quantity ?? 1),
+      );
+      return true;
+    }
+    const cartItemMatch = path.match(/^\/api\/cart\/items\/([^/]+)$/);
+    if (cartItemMatch && method === "PATCH") {
+      const jwtUser = verifyJwt(req);
+      if (!jwtUser) {
+        json(res, 401, { message: "Não autenticado" });
+        return true;
+      }
+      const body = (await readJsonBody(req)) as { quantity?: number };
+      if (typeof body.quantity !== "number") {
+        throw httpError(400, "quantity obrigatório");
+      }
+      json(
+        res,
+        200,
+        await updateCartItem(jwtUser.sub, cartItemMatch[1], body.quantity),
+      );
+      return true;
+    }
+    if (cartItemMatch && method === "DELETE") {
+      const jwtUser = verifyJwt(req);
+      if (!jwtUser) {
+        json(res, 401, { message: "Não autenticado" });
+        return true;
+      }
+      json(res, 200, await removeCartItem(jwtUser.sub, cartItemMatch[1]));
+      return true;
+    }
+    if (path === "/api/cart" && method === "DELETE") {
+      const jwtUser = verifyJwt(req);
+      if (!jwtUser) {
+        json(res, 401, { message: "Não autenticado" });
+        return true;
+      }
+      json(res, 200, await clearCart(jwtUser.sub));
+      return true;
+    }
+
+    /* Order status write */
+    const statusMatch = path.match(/^\/api\/orders\/([^/]+)\/status$/);
+    if (statusMatch && method === "PATCH") {
+      const jwtUser = verifyJwt(req);
+      if (!jwtUser) {
+        json(res, 401, { message: "Não autenticado" });
+        return true;
+      }
+      const tenantHeader = req.headers["x-tenant-id"];
+      const tenantId =
+        typeof tenantHeader === "string" && tenantHeader
+          ? tenantHeader
+          : null;
+      const user = await assertCanUpdateStatus(
+        jwtUser,
+        statusMatch[1],
+        tenantId,
+      );
+      const body = await readJsonBody(req);
+      const status = statusFromBody(body);
+      const updated = await updateOrderStatus(
+        statusMatch[1],
+        status,
+        user.id,
+      );
+      json(res, 200, updated);
+      return true;
+    }
+
+    /* Order reads (Phase 8) */
+    if (method !== "GET") return false;
+
+    const isMine = path === "/api/orders/mine";
+    const isSelling = path === "/api/orders/selling";
+    const orderMatch = path.match(/^\/api\/orders\/([^/]+)$/);
+    const orderId =
+      orderMatch &&
+      orderMatch[1] !== "mine" &&
+      orderMatch[1] !== "selling" &&
+      orderMatch[1] !== "checkout"
+        ? orderMatch[1]
+        : null;
+
+    if (!isMine && !isSelling && !orderId) return false;
+
+    const jwtUser = verifyJwt(req);
+    if (!jwtUser) {
+      json(res, 401, { message: "Não autenticado" });
+      return true;
+    }
+
+    if (isMine) {
+      const orders = await prisma.order.findMany({
+        where: { buyerId: jwtUser.sub },
+        include: {
+          items: true,
+          payments: true,
+          address: true,
+          sellerShop: {
+            select: { id: true, name: true, slug: true },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+      });
+      json(res, 200, orders);
+      return true;
+    }
+
+    if (isSelling) {
+      const tenantHeader = req.headers["x-tenant-id"];
+      const tenantId =
+        typeof tenantHeader === "string" && tenantHeader
+          ? tenantHeader
+          : null;
+      const tenantShopId = await resolveTenantShopId(jwtUser.sub, tenantId);
+      const orders = await prisma.order.findMany({
+        where: {
+          sellerShop: {
+            ...(tenantShopId
+              ? { id: tenantShopId }
+              : {
+                  OR: [
+                    { ownerId: jwtUser.sub },
+                    {
+                      members: {
+                        some: { userId: jwtUser.sub, isActive: true },
+                      },
+                    },
+                  ],
+                }),
+          },
+        },
+        include: {
+          items: true,
+          payments: true,
+          buyer: { select: { id: true, name: true, email: true } },
+          sellerShop: { select: { id: true, name: true, slug: true } },
+        },
+        orderBy: { createdAt: "desc" },
+      });
+      json(res, 200, orders);
+      return true;
+    }
+
+    if (orderId) {
+      const user = await loadUser(jwtUser.sub);
+      const platformRole = user?.platformRole ?? PlatformRole.BUYER;
+      const order = await prisma.order.findUnique({
+        where: { id: orderId },
+        include: {
+          buyer: {
+            select: { id: true, name: true, email: true, phone: true },
+          },
+          sellerShop: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              ownerId: true,
+              members: {
+                where: { userId: jwtUser.sub, isActive: true },
+                select: { role: true },
+              },
+            },
+          },
+          items: { include: { product: { include: { images: true } } } },
+          payments: true,
+          address: true,
+          accountingEntries: true,
+        },
+      });
+      if (!order) {
+        json(res, 404, { message: "Pedido não encontrado" });
+        return true;
+      }
+      const isPlatform =
+        platformRole === PlatformRole.PLATFORM_ADMIN ||
+        platformRole === PlatformRole.PLATFORM_OPERATOR;
+      const isBuyer = order.buyerId === jwtUser.sub;
+      const isSeller =
+        order.sellerShop.ownerId === jwtUser.sub ||
+        order.sellerShop.members.length > 0;
+      if (!isPlatform && !isBuyer && !isSeller) {
+        json(res, 403, { message: "Sem acesso a este pedido" });
+        return true;
+      }
+      json(res, 200, order);
+      return true;
+    }
+
+    return false;
+  } catch (error) {
+    const status =
+      error && typeof error === "object" && "status" in error
+        ? Number((error as { status: number }).status)
+        : 400;
+    json(res, status || 400, {
+      message: error instanceof Error ? error.message : "Erro",
+    });
+    return true;
+  }
 }

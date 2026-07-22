@@ -217,6 +217,21 @@ export function localVariantUrl(
   return `${replaced}${query}`;
 }
 
+/**
+ * Absolutize relative media paths behind CDN / public API base.
+ * Env: MEDIA_PUBLIC_BASE_URL (e.g. https://cdn.ishopine.com or https://api.ishopine.com).
+ */
+export function publicMediaUrl(
+  url: string,
+  baseUrl: string | undefined = process.env.MEDIA_PUBLIC_BASE_URL,
+): string {
+  if (!url || !baseUrl) return url;
+  if (/^https?:\/\//i.test(url)) return url;
+  const base = baseUrl.replace(/\/$/, "");
+  if (url.startsWith("/")) return `${base}${url}`;
+  return `${base}/${url}`;
+}
+
 export function buildMediaUrl(
   url: string,
   opts: MediaTransformOptions = {},
@@ -226,17 +241,17 @@ export function buildMediaUrl(
   if (url.startsWith("/") || url.startsWith("http://localhost")) {
     const w = opts.width ?? 0;
     const h = opts.height ?? 0;
+    let local = url;
     if (w > 0 && w <= 200 && h > 0 && h <= 200) {
-      return localVariantUrl(url, "thumb");
+      local = localVariantUrl(url, "thumb");
+    } else if (w > 0 && w <= 640) {
+      local = localVariantUrl(url, "card");
     }
-    if (w > 0 && w <= 640) {
-      return localVariantUrl(url, "card");
-    }
-    return url;
+    return publicMediaUrl(local);
   }
   // Cloudinary delivery URL: insert transform segment after /upload/
   if (!url.includes("res.cloudinary.com") || !url.includes("/upload/")) {
-    return url;
+    return publicMediaUrl(url);
   }
   const parts: string[] = [];
   if (opts.width) parts.push(`w_${opts.width}`);
