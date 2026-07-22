@@ -39,5 +39,5 @@ INTERNAL_SERVICE_SECRET=...
 ## Fora de âmbito
 - Clientes HTTP Correios/DHL
 - Multi-região CDN / PoPs
-- Subscription extract
+- Subscription extract (Fase 15)
 - Outbox `affiliate.reward.*` (dispatcher Nest permanece; eventos ainda não emitidos)

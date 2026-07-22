@@ -115,6 +115,18 @@ export class SubscriptionsService {
     quantity?: number;
     reference?: string;
   }) {
+    // Idempotent settle: one usage row per order reference + metric.
+    if (input.reference) {
+      const existing = await this.prisma.usageRecord.findFirst({
+        where: {
+          tenantId: input.tenantId,
+          metric: input.metric,
+          reference: input.reference,
+        },
+      });
+      if (existing) return existing;
+    }
+
     return this.prisma.usageRecord.create({
       data: {
         tenantId: input.tenantId,

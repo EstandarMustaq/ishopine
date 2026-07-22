@@ -473,7 +473,7 @@ export class OrdersService {
       });
       if (tenant) {
         try {
-          await this.subscriptions.recordUsage({
+          await this.recordOrderUsage({
             tenantId: tenant.id,
             metric: UsageMetric.ORDERS,
             quantity: 1,
@@ -484,6 +484,47 @@ export class OrdersService {
         }
       }
     }
+  }
+
+  /**
+   * Prefer billing strangler usage when BILLING_URL + secret are set
+   * (BILLING_USAGE_REMOTE≠0). Falls back to in-process SubscriptionsService.
+   */
+  private async recordOrderUsage(input: {
+    tenantId: string;
+    metric: UsageMetric;
+    quantity?: number;
+    reference?: string;
+  }) {
+    const billingUrl = this.config.get<string>('BILLING_URL');
+    const secret =
+      this.config.get<string>('INTERNAL_SERVICE_SECRET') ||
+      this.config.get<string>('CRON_SECRET');
+    const remote =
+      this.config.get<string>('BILLING_USAGE_REMOTE') !== '0' &&
+      Boolean(billingUrl) &&
+      Boolean(secret);
+
+    if (!remote || !billingUrl || !secret) {
+      return this.subscriptions.recordUsage(input);
+    }
+
+    const base = billingUrl.replace(/\/$/, '');
+    const res = await fetch(`${base}/api/billing/internal/record-usage`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${secret}`,
+      },
+      body: JSON.stringify(input),
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(
+        `Billing usage remoto falhou (${res.status}): ${text.slice(0, 300)}`,
+      );
+    }
+    return res.json();
   }
 
   /**
