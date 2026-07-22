@@ -18,7 +18,7 @@ Ponto de entrada único. Fases 3–6: routing por prefixo quando
 | `/api/wallet/*` | `WALLET_URL` | 4103 | wallet |
 | `/api/pricing/*`, `/api/subscriptions/*`, `/api/billing/*` | `BILLING_URL` | 4104 | billing (owned; paysuite → payments) |
 | `/api/media/*`, `/api/uploads/*` | `MEDIA_URL` | 4105 | media (owned default) |
-| `/api/developers/*`, `/api/v1/*`, `/api/feature-flags/*` | `DEVELOPERS_URL` | 4106 | developers |
+| `/api/developers/*`, `/api/v1/*`, `/api/feature-flags/*` | `DEVELOPERS_URL` | 4106 | developers (owned) |
 | resto (incl. `/api/logistics`) | `UPSTREAM_API_URL` | 4000 | monólito |
 
 Wallet reads podem ser owned (`WALLET_OWNED=1` no serviço :4103).

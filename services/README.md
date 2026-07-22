@@ -12,7 +12,7 @@
 | **wallet** | **owned :4103** | Reads + internal settle (`WALLET_OWNED`) |
 | **billing** | **owned :4104** | Pricing + subscriptions + usage (`BILLING_OWNED`); PaySuite → payments |
 | **media** | **owned :4105** | Upload/list/delete + **static /uploads** cache |
-| developers | strangler proxy :4106 | API keys / v1 / flags |
+| **developers** | **owned :4106** | API keys + v1 + feature-flags (`DEVELOPERS_OWNED`); fan-out Nest |
 | **affiliates** | **owned :4108** | Links/clicks/rewards + internal conversion (`AFFILIATES_OWNED`) |
 | logistics | módulo Nest | Carriers + zonas + webhooks |
 
