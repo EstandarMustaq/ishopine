@@ -1478,7 +1478,6 @@ enum CarrierCode {
   FLAT_RATE
   FREE_THRESHOLD
   STORE_PICKUP
-  CORREIOS_MZ
   MANUAL
 }
 
@@ -1531,4 +1530,29 @@ model ShipmentEvent {
   shipment Shipment @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
 
   @@index([shipmentId, createdAt])
+}
+
+/// Tarifas por zona geográfica (província/cidade de Moçambique).
+/// Usadas pelos adapters FLAT_RATE / FREE_THRESHOLD / MANUAL para cotação real.
+model ShippingRateZone {
+  id             String      @id @default(cuid())
+  carrierCode    CarrierCode
+  /// Província (ex: "Maputo", "Gaza"). Null = fallback nacional.
+  province       String?
+  /// Cidade/distrito opcional para override fino.
+  city           String?
+  /// Preço em centavos MZN para a zona.
+  priceCents     Int
+  etaMinDays     Int         @default(2)
+  etaMaxDays     Int         @default(7)
+  /// Peso máximo em gramas aceite nesta zona (null = sem limite).
+  maxWeightGrams Int?
+  active         Boolean     @default(true)
+  sortOrder      Int         @default(0)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  @@unique([carrierCode, province, city])
+  @@index([carrierCode, active, sortOrder])
+  @@index([province, city])
 }

@@ -8,7 +8,8 @@ import { v2 as cloudinary } from 'cloudinary';
 import { createHash, randomUUID } from 'crypto';
 import { mkdir, unlink, writeFile } from 'fs/promises';
 import { join } from 'path';
-import { buildMediaUrl } from '@ishopine/shared';
+import sharp from 'sharp';
+import { buildMediaUrl, localVariantUrl } from '@ishopine/shared';
 import { PrismaService } from '../prisma/prisma.service';
 
 export type UploadScope = {
@@ -59,6 +60,33 @@ export class UploadsService {
         }),
       },
     };
+  }
+
+  /** Generate thumb (200×200 cover) + card (640w) WebP beside the original. */
+  private async writeLocalVariants(
+    absoluteOriginal: string,
+    publicUrl: string,
+  ) {
+    const thumbAbs = join(
+      process.cwd(),
+      localVariantUrl(publicUrl, 'thumb').replace(/^\//, ''),
+    );
+    const cardAbs = join(
+      process.cwd(),
+      localVariantUrl(publicUrl, 'card').replace(/^\//, ''),
+    );
+    await Promise.all([
+      sharp(absoluteOriginal)
+        .rotate()
+        .resize(200, 200, { fit: 'cover' })
+        .webp({ quality: 80 })
+        .toFile(thumbAbs),
+      sharp(absoluteOriginal)
+        .rotate()
+        .resize(640, undefined, { fit: 'inside', withoutEnlargement: true })
+        .webp({ quality: 82 })
+        .toFile(cardAbs),
+    ]);
   }
 
   async upload(
@@ -115,6 +143,14 @@ export class UploadsService {
     await writeFile(absolute, file.buffer);
 
     const url = `/uploads/${folder}/${filename}`;
+    if (file.mimetype.startsWith('image/')) {
+      try {
+        await this.writeLocalVariants(absolute, url);
+      } catch (error) {
+        console.error('[uploads] sharp variants failed', error);
+      }
+    }
+
     const created = await this.prisma.mediaAsset.create({
       data: {
         url,
@@ -164,6 +200,17 @@ export class UploadsService {
         await unlink(absolute);
       } catch {
         // file may already be gone
+      }
+      for (const variant of ['thumb', 'card'] as const) {
+        const v = join(
+          process.cwd(),
+          localVariantUrl(asset.url, variant).replace(/^\//, ''),
+        );
+        try {
+          await unlink(v);
+        } catch {
+          // ignore
+        }
       }
     }
     if (asset.provider === 'cloudinary' && asset.publicId) {

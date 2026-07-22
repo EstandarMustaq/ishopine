@@ -1,6 +1,7 @@
 import {
   AccountingEntryStatus,
   AccountingEntryType,
+  CarrierCode,
   PlatformRole,
   PlatformStaffRole,
   PrismaClient,
@@ -28,6 +29,9 @@ async function main() {
   await prisma.coupon.deleteMany();
   await prisma.dispute.deleteMany();
   await prisma.orderEvent.deleteMany();
+  await prisma.shipmentEvent.deleteMany();
+  await prisma.shipment.deleteMany();
+  await prisma.shippingRateZone.deleteMany();
   await prisma.accountingEntry.deleteMany();
   await prisma.payment.deleteMany();
   await prisma.billingWebhookEvent.deleteMany();
@@ -644,6 +648,36 @@ async function main() {
     },
   });
 
+  // Phase 8: real MZ shipping rate zones (centavos MZN).
+  const mzZones: Array<{
+    carrierCode: CarrierCode;
+    province: string | null;
+    city: string | null;
+    priceCents: number;
+    etaMinDays: number;
+    etaMaxDays: number;
+    sortOrder: number;
+  }> = [
+    { carrierCode: CarrierCode.FLAT_RATE, province: null, city: null, priceCents: 15000, etaMinDays: 3, etaMaxDays: 10, sortOrder: 100 },
+    { carrierCode: CarrierCode.FLAT_RATE, province: 'Maputo', city: null, priceCents: 8000, etaMinDays: 1, etaMaxDays: 3, sortOrder: 10 },
+    { carrierCode: CarrierCode.FLAT_RATE, province: 'Maputo', city: 'Maputo', priceCents: 6000, etaMinDays: 1, etaMaxDays: 2, sortOrder: 5 },
+    { carrierCode: CarrierCode.FLAT_RATE, province: 'Gaza', city: null, priceCents: 12000, etaMinDays: 2, etaMaxDays: 5, sortOrder: 20 },
+    { carrierCode: CarrierCode.FLAT_RATE, province: 'Inhambane', city: null, priceCents: 14000, etaMinDays: 3, etaMaxDays: 6, sortOrder: 30 },
+    { carrierCode: CarrierCode.FLAT_RATE, province: 'Sofala', city: null, priceCents: 16000, etaMinDays: 3, etaMaxDays: 7, sortOrder: 40 },
+    { carrierCode: CarrierCode.FLAT_RATE, province: 'Manica', city: null, priceCents: 17000, etaMinDays: 4, etaMaxDays: 8, sortOrder: 50 },
+    { carrierCode: CarrierCode.FLAT_RATE, province: 'Tete', city: null, priceCents: 19000, etaMinDays: 4, etaMaxDays: 9, sortOrder: 60 },
+    { carrierCode: CarrierCode.FLAT_RATE, province: 'Zambézia', city: null, priceCents: 18000, etaMinDays: 4, etaMaxDays: 9, sortOrder: 70 },
+    { carrierCode: CarrierCode.FLAT_RATE, province: 'Nampula', city: null, priceCents: 20000, etaMinDays: 5, etaMaxDays: 10, sortOrder: 80 },
+    { carrierCode: CarrierCode.FLAT_RATE, province: 'Cabo Delgado', city: null, priceCents: 22000, etaMinDays: 5, etaMaxDays: 12, sortOrder: 90 },
+    { carrierCode: CarrierCode.FLAT_RATE, province: 'Niassa', city: null, priceCents: 23000, etaMinDays: 5, etaMaxDays: 12, sortOrder: 95 },
+    { carrierCode: CarrierCode.FREE_THRESHOLD, province: null, city: null, priceCents: 0, etaMinDays: 2, etaMaxDays: 7, sortOrder: 100 },
+    { carrierCode: CarrierCode.FREE_THRESHOLD, province: 'Maputo', city: null, priceCents: 0, etaMinDays: 1, etaMaxDays: 3, sortOrder: 10 },
+    { carrierCode: CarrierCode.MANUAL, province: null, city: null, priceCents: 15000, etaMinDays: 3, etaMaxDays: 14, sortOrder: 100 },
+    { carrierCode: CarrierCode.MANUAL, province: 'Maputo', city: null, priceCents: 10000, etaMinDays: 2, etaMaxDays: 7, sortOrder: 10 },
+  ];
+
+  await prisma.shippingRateZone.createMany({ data: mzZones });
+
   console.log('Seed iShopine concluído');
   console.log('Org: iShopine (slug=ishopine) · Moçambique · MZN · PaySuite');
   console.log('CaaS: Account ≠ Tenant (vendedor1 tem PARTICULAR + STORE)');
@@ -657,6 +691,7 @@ async function main() {
   );
   console.log('Comprador: comprador@ishopine.com / IShopine@2026 (Account sem tenant seller)');
   console.log('Accounts API: GET /api/accounts/me · header x-tenant-id');
+  console.log('Shipping zones: 11 províncias MZ + fallback nacional');
   console.log(
     'Para ativar 2FA: POST /api/auth/2fa/setup → POST /api/auth/2fa/enable',
   );

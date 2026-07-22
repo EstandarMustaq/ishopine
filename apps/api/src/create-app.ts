@@ -70,6 +70,7 @@ export async function createApp(): Promise<NestExpressApplication> {
       'Idempotency-Key',
       'X-Request-Id',
       'x-tenant-id',
+      'x-carrier-signature',
     ],
     exposedHeaders: ['X-Request-Id', 'X-Idempotent-Replayed'],
   });

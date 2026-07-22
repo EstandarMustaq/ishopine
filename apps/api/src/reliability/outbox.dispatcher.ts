@@ -95,7 +95,8 @@ export class OutboxDispatcher {
         return;
       }
       case 'shipping.quote.requested':
-      case 'shipping.label.created': {
+      case 'shipping.label.created':
+      case 'shipping.status.updated': {
         await this.projections.projectOpsPulse();
         await this.developers.deliverEvent(eventType, payload);
         return;

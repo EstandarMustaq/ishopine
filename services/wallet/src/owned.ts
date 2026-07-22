@@ -1,5 +1,6 @@
 /**
- * Phase 7: wallet service owns read paths when WALLET_OWNED≠0.
+ * Phase 7–8: wallet service owns read paths when WALLET_OWNED≠0.
+ * Tenant wallet requires active membership (no IDOR via x-tenant-id).
  */
 import http from "node:http";
 import { PrismaClient } from "@prisma/client";
@@ -81,6 +82,20 @@ async function ensureTenantWallet(tenantId: string) {
   });
 }
 
+/** Mirror Nest AccountsService.resolveTenantAccess. */
+async function assertTenantMembership(accountId: string, tenantId: string) {
+  const membership = await prisma.tenantMembership.findUnique({
+    where: {
+      tenantId_accountId: { tenantId, accountId },
+    },
+    include: { tenant: true },
+  });
+  if (!membership?.isActive || !membership.tenant.isActive) {
+    return null;
+  }
+  return membership;
+}
+
 export async function handleOwnedWallet(
   req: http.IncomingMessage,
   res: http.ServerResponse,
@@ -123,6 +138,16 @@ export async function handleOwnedWallet(
       typeof tenantHeader === "string" && tenantHeader ? tenantHeader : null;
     if (!tenantId) {
       json(res, 200, { wallet: null, ledger: [] });
+      return true;
+    }
+    const accountId = await accountIdForUser(user.sub);
+    if (!accountId) {
+      json(res, 404, { message: "Conta não encontrada" });
+      return true;
+    }
+    const membership = await assertTenantMembership(accountId, tenantId);
+    if (!membership) {
+      json(res, 403, { message: "Sem acesso a este tenant" });
       return true;
     }
     const wallet = await ensureTenantWallet(tenantId);

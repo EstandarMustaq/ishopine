@@ -140,7 +140,8 @@ export type OutboxEventType =
   | "platform.invoice.generated"
   | "merchant.webhook.delivered"
   | "shipping.quote.requested"
-  | "shipping.label.created";
+  | "shipping.label.created"
+  | "shipping.status.updated";
 
 /** Phase 6 SSO cookie (HttpOnly). Shared parent domain via COOKIE_DOMAIN. */
 export const AUTH_COOKIE_NAME = "ishopine_session";
@@ -158,7 +159,6 @@ export type CarrierCode =
   | "FLAT_RATE"
   | "FREE_THRESHOLD"
   | "STORE_PICKUP"
-  | "CORREIOS_MZ"
   | "MANUAL";
 
 export type ShipmentStatus =
@@ -189,7 +189,7 @@ export type ShipmentSummary = {
   amountCents: number;
 };
 
-/** Cloudinary-style delivery transforms (Phase 7 CDN stub). */
+/** Delivery transforms — Cloudinary URL or local Sharp variants (Phase 8). */
 export type MediaTransformOptions = {
   width?: number;
   height?: number;
@@ -198,13 +198,40 @@ export type MediaTransformOptions = {
   format?: "auto" | "webp" | "jpg" | "png";
 };
 
+/**
+ * Map local original URLs to pre-generated Sharp variants:
+ * `photo.jpg` → `photo_thumb.webp` / `photo_card.webp`.
+ */
+export function localVariantUrl(
+  url: string,
+  variant: "thumb" | "card",
+): string {
+  if (!url) return url;
+  const qIndex = url.indexOf("?");
+  const path = qIndex >= 0 ? url.slice(0, qIndex) : url;
+  const query = qIndex >= 0 ? url.slice(qIndex) : "";
+  const replaced = path.replace(
+    /(\.[a-zA-Z0-9]+)$/,
+    `_${variant}.webp`,
+  );
+  return `${replaced}${query}`;
+}
+
 export function buildMediaUrl(
   url: string,
   opts: MediaTransformOptions = {},
 ): string {
   if (!url) return url;
-  // Local paths: return as-is (no CDN).
+  // Local / localhost: use Sharp-generated variants by size convention.
   if (url.startsWith("/") || url.startsWith("http://localhost")) {
+    const w = opts.width ?? 0;
+    const h = opts.height ?? 0;
+    if (w > 0 && w <= 200 && h > 0 && h <= 200) {
+      return localVariantUrl(url, "thumb");
+    }
+    if (w > 0 && w <= 640) {
+      return localVariantUrl(url, "card");
+    }
     return url;
   }
   // Cloudinary delivery URL: insert transform segment after /upload/
