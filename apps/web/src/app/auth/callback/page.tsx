@@ -6,7 +6,11 @@ import { Suspense, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
-import { postLoginPath, useAuthStore } from "@/lib/auth-store";
+import {
+  navigatePostLogin,
+  resolvePostLogin,
+  useAuthStore,
+} from "@/lib/auth-store";
 import type { User } from "@/lib/types";
 
 function AuthCallbackInner() {
@@ -32,7 +36,10 @@ function AuthCallbackInner() {
         if (cancelled) return;
         setAuth(accessToken!, user);
         toast.success(`Olá, ${user.name.split(" ")[0]}!`);
-        router.replace(postLoginPath(user));
+        navigatePostLogin(
+          resolvePostLogin(user, accessToken!, searchParams.get("next")),
+          (path) => router.replace(path),
+        );
       } catch (err) {
         if (cancelled) return;
         setError(

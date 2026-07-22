@@ -5,9 +5,12 @@
   "scripts": {
     "dev": "pnpm -r --parallel run dev",
     "dev:web": "pnpm --filter @ishopine/web dev",
+    "dev:seller": "pnpm --filter @ishopine/seller dev",
+    "dev:backoffice": "pnpm --filter @ishopine/backoffice dev",
+    "dev:affiliate": "pnpm --filter @ishopine/affiliate dev",
     "dev:api": "pnpm --filter @ishopine/api start:dev",
     "dev:gateway": "pnpm --filter @ishopine/gateway dev",
-    "build": "pnpm --filter @ishopine/shared build && pnpm --filter @ishopine/api build && pnpm --filter @ishopine/web build && pnpm --filter @ishopine/gateway build",
+    "build": "pnpm --filter @ishopine/shared build && pnpm --filter @ishopine/api build && pnpm --filter @ishopine/web build && pnpm --filter @ishopine/seller build && pnpm --filter @ishopine/backoffice build && pnpm --filter @ishopine/affiliate build && pnpm --filter @ishopine/gateway build",
     "build:shared": "pnpm --filter @ishopine/shared build",
     "db:generate": "pnpm --filter @ishopine/api prisma:generate",
     "db:migrate": "pnpm --filter @ishopine/api prisma:migrate",

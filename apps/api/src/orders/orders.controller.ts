@@ -8,7 +8,12 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { OrderStatus, PaymentMethod, PlatformRole } from '@prisma/client';
+import {
+  OrderStatus,
+  PaymentMethod,
+  PlatformRole,
+  TenantType,
+} from '@prisma/client';
 import { OrdersService } from './orders.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -16,6 +21,10 @@ import { TwoFactorGuard } from '../common/guards/two-factor.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { AuthUser } from '../common/decorators/current-user.decorator';
+import {
+  RequireTenantTypes,
+  TenantGuard,
+} from '../accounts/tenant.guard';
 
 @UseGuards(JwtAuthGuard)
 @Controller('orders')
@@ -41,7 +50,8 @@ export class OrdersController {
     return this.orders.listForUser(user.id);
   }
 
-  @UseGuards(TwoFactorGuard)
+  @UseGuards(TwoFactorGuard, TenantGuard)
+  @RequireTenantTypes(TenantType.PARTICULAR, TenantType.STORE)
   @Get('selling')
   sellerOrders(@CurrentUser() user: AuthUser) {
     return this.orders.listForSeller(user.id);
@@ -64,12 +74,13 @@ export class OrdersController {
     });
   }
 
-  @UseGuards(RolesGuard, TwoFactorGuard)
+  @UseGuards(RolesGuard, TwoFactorGuard, TenantGuard)
   @Roles(
     PlatformRole.PLATFORM_ADMIN,
     PlatformRole.PLATFORM_OPERATOR,
     PlatformRole.SELLER,
   )
+  @RequireTenantTypes(TenantType.PARTICULAR, TenantType.STORE)
   @Patch(':id/status')
   updateStatus(
     @Param('id') id: string,

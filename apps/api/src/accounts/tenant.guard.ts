@@ -6,7 +6,7 @@ import {
   SetMetadata,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { TenantType } from '@prisma/client';
+import { PlatformRole, TenantType } from '@prisma/client';
 import { AccountsService } from './accounts.service';
 import { TENANT_HEADER } from './tenant.constants';
 
@@ -23,9 +23,9 @@ export class TenantGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<{
-      user?: { id: string };
+      user?: { id: string; platformRole?: PlatformRole };
       headers: Record<string, string | string[] | undefined>;
-      tenant?: Awaited<ReturnType<AccountsService['resolveTenantAccess']>>;
+      tenant?: Awaited<ReturnType<AccountsService['resolveTenantAccess']>> | null;
     }>();
 
     const allowed = this.reflector.getAllAndOverride<TenantType[] | undefined>(
@@ -33,15 +33,26 @@ export class TenantGuard implements CanActivate {
       [context.getHandler(), context.getClass()],
     );
 
+    if (!request.user?.id) {
+      throw new ForbiddenException('Não autenticado');
+    }
+
     const raw = request.headers[TENANT_HEADER];
     const tenantId = Array.isArray(raw) ? raw[0] : raw;
+
+    // Platform staff may call seller APIs without a tenant (ops tooling).
+    const isStaff =
+      request.user.platformRole === PlatformRole.PLATFORM_ADMIN ||
+      request.user.platformRole === PlatformRole.PLATFORM_OPERATOR;
+
     if (!tenantId) {
+      if (isStaff) {
+        request.tenant = null;
+        return true;
+      }
       throw new ForbiddenException(
         `Cabeçalho ${TENANT_HEADER} é obrigatório neste recurso`,
       );
-    }
-    if (!request.user?.id) {
-      throw new ForbiddenException('Não autenticado');
     }
 
     const account = await this.accounts.ensureAccountForUser(request.user.id);

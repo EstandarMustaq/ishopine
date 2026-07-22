@@ -11,7 +11,11 @@ import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { api, DEV_CODE_STORAGE_KEY, getGoogleAuthUrl } from "@/lib/api";
-import { postLoginPath, useAuthStore } from "@/lib/auth-store";
+import {
+  navigatePostLogin,
+  resolvePostLogin,
+  useAuthStore,
+} from "@/lib/auth-store";
 import type { AuthResponse, LoginResult } from "@/lib/types";
 
 function GoogleIcon({ className }: { className?: string }) {
@@ -52,7 +56,11 @@ function LoginForm() {
   async function finishLogin(data: AuthResponse) {
     setAuth(data.accessToken, data.user);
     toast.success(`Olá, ${data.user.name.split(" ")[0]}!`);
-    router.push(postLoginPath(data.user));
+    const next = searchParams.get("next");
+    navigatePostLogin(
+      resolvePostLogin(data.user, data.accessToken, next),
+      (path) => router.push(path),
+    );
   }
 
   async function onSubmit(e: React.FormEvent) {

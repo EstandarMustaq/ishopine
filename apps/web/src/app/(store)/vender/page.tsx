@@ -1,22 +1,23 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { appHandoffUrl, getAppUrls } from "@/lib/app-urls";
 import { useAuthStore } from "@/lib/auth-store";
 
 export default function VenderPage() {
-  const router = useRouter();
   const accessToken = useAuthStore((s) => s.accessToken);
   const canAccessPainel = useAuthStore((s) => s.canAccessPainel);
   const user = useAuthStore((s) => s.user);
 
   useEffect(() => {
     if (accessToken && (canAccessPainel() || user?.canSell)) {
-      router.replace("/painel/loja");
+      window.location.href = appHandoffUrl("seller", accessToken, "/loja");
     }
-  }, [accessToken, canAccessPainel, user, router]);
+  }, [accessToken, canAccessPainel, user]);
+
+  const sellerUrl = getAppUrls().seller;
 
   return (
     <div className="mx-auto flex min-h-[70vh] max-w-lg flex-col justify-center px-4 py-16 text-center">
@@ -30,7 +31,9 @@ export default function VenderPage() {
       <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
         {accessToken ? (
           <Button asChild size="lg">
-            <Link href="/painel/loja">Ir para minha loja</Link>
+            <a href={appHandoffUrl("seller", accessToken, "/loja")}>
+              Ir para minha loja
+            </a>
           </Button>
         ) : (
           <>
@@ -38,8 +41,11 @@ export default function VenderPage() {
               <Link href="/cadastro">Criar conta e vender</Link>
             </Button>
             <Button asChild variant="outline" size="lg">
-              <Link href="/entrar">Já tenho conta</Link>
+              <Link href={`/entrar?next=seller`}>Já tenho conta</Link>
             </Button>
+            <p className="w-full text-xs text-taupe">
+              Painel do vendedor: {sellerUrl}
+            </p>
           </>
         )}
       </div>

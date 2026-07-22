@@ -10,7 +10,11 @@ import { Button } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { api, DEV_CODE_STORAGE_KEY } from "@/lib/api";
-import { postLoginPath, useAuthStore } from "@/lib/auth-store";
+import {
+  navigatePostLogin,
+  resolvePostLogin,
+  useAuthStore,
+} from "@/lib/auth-store";
 import type { AuthResponse } from "@/lib/types";
 
 function VerifyEmailForm() {
@@ -46,7 +50,14 @@ function VerifyEmailForm() {
       sessionStorage.removeItem(DEV_CODE_STORAGE_KEY);
       setAuth(data.accessToken, data.user);
       toast.success("E-mail verificado!");
-      router.push(postLoginPath(data.user));
+      navigatePostLogin(
+        resolvePostLogin(
+          data.user,
+          data.accessToken,
+          searchParams.get("next"),
+        ),
+        (path) => router.push(path),
+      );
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Código inválido",

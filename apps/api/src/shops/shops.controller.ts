@@ -9,11 +9,15 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ShopStatus, ShopType } from '@prisma/client';
+import { ShopStatus, ShopType, TenantType } from '@prisma/client';
 import { ShopsService } from './shops.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { AuthUser } from '../common/decorators/current-user.decorator';
+import {
+  RequireTenantTypes,
+  TenantGuard,
+} from '../accounts/tenant.guard';
 
 @Controller('shops')
 export class ShopsController {
@@ -27,7 +31,8 @@ export class ShopsController {
     return this.shops.listPublic(query);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, TenantGuard)
+  @RequireTenantTypes(TenantType.PARTICULAR, TenantType.STORE)
   @Get('mine')
   myShops(@CurrentUser() user: AuthUser) {
     return this.shops.myShops(user.id);
@@ -58,7 +63,8 @@ export class ShopsController {
     return this.shops.createShop(user.id, body);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, TenantGuard)
+  @RequireTenantTypes(TenantType.STORE)
   @Patch(':id')
   update(
     @Param('id') id: string,

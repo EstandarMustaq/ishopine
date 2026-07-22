@@ -21,8 +21,6 @@ Alterações estratégicas incorporadas:
 5. **Shared:** `packages/shared` contratos tenant
 6. **Seed:** vendedor1 com PARTICULAR + STORE; admin/operador como PlatformStaff
 
-## Próximo (Fase 1)
+## Próximo
 
-- Apps: `seller.ishopine` com switcher de tenant
-- `marketplace` / `affiliate` / `backoffice` separados
-- Propagar `TenantGuard` nos endpoints de seller
+Ver [`docs/PHASE1.md`](./PHASE1.md) (entregue).
