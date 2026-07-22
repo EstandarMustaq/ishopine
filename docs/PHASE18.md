@@ -37,3 +37,4 @@ DATABASE_URL=...
 - Multi-região CDN / PoPs
 - Extrair reviews para path dedicado (colisão com catalog `/api/products`)
 - Notifications / disputes / messages
+- Developers / API keys / feature-flags → **Fase 19** ([PHASE19.md](./PHASE19.md))
