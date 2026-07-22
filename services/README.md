@@ -4,7 +4,7 @@
 |---|---|---|
 | **identity** | **owned :4107** | Auth local + 2FA + session (`IDENTITY_OWNED`); Google → Nest |
 | **accounts** | **owned :4109** | Account + tenants PARTICULAR/STORE (`ACCOUNTS_OWNED`) |
-| marketplace | skeleton | Home/coleções |
+| **marketplace** | **owned :4111** | Shops + ads + wishlist (`MARKETPLACE_OWNED`) |
 | **catalog** | **owned :4110** | Categorias + produtos híbridos (`CATALOG_OWNED`) |
 | **orders** | **owned :4101** | Cart + GET + status + checkout (`ORDERS_OWNED`) |
 | **payments** | **owned :4102** | PaySuite checkout/status/webhook/**payouts/refunds** |

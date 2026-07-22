@@ -1,5 +1,21 @@
-# marketplace
+# Marketplace (owned — Fase 18)
 
-Fase 0 skeleton — lógica ainda no monólito `apps/api` (strangler).
+Porta **4111**. Com `MARKETPLACE_OWNED≠0` (default) trata superfícies de
+mercado: lojas, anúncios (home/coleções) e wishlist.
 
-Contrato e extracção deste serviço serão feitos quando o domínio estiver estável.
+## Rotas owned
+
+| Prefixo | Notas |
+|---|---|
+| `/api/shops` | list público, slug, mine, create/update, follow |
+| `/api/ads` | público + admin CRUD |
+| `/api/wishlist` | JWT |
+
+Reviews de produto (`/api/products/:id/reviews`) ficam no Nest via fallthrough
+do catalog (prefixo `/api/products`).
+
+```bash
+MARKETPLACE_OWNED=1
+MARKETPLACE_URL=http://127.0.0.1:4111
+pnpm --filter @ishopine/marketplace dev
+```

@@ -32,5 +32,5 @@ DATABASE_URL=...
 ## Fora de âmbito
 - Clientes HTTP Correios/DHL
 - Multi-região CDN / PoPs
-- Marketplace home/coleções extract
+- Marketplace home/coleções extract (Fase 18)
 - Remotizar TenantGuard Nest (continua in-process noutros módulos)
