@@ -27,6 +27,7 @@ import { JwtAuthGuard } from './jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { AuthUser } from '../common/decorators/current-user.decorator';
 import type { GoogleProfileUser } from './google.strategy';
+import { clearAuthCookie, setAuthCookie } from './auth-cookie';
 
 @Controller('auth')
 export class AuthController {
@@ -43,6 +44,24 @@ export class AuthController {
     );
   }
 
+  private attachSessionCookie(
+    res: Response,
+    result: unknown,
+  ): void {
+    if (
+      result &&
+      typeof result === 'object' &&
+      'accessToken' in result &&
+      typeof (result as { accessToken: unknown }).accessToken === 'string'
+    ) {
+      setAuthCookie(
+        res,
+        this.config,
+        (result as { accessToken: string }).accessToken,
+      );
+    }
+  }
+
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @Post('register')
   register(@Body() dto: RegisterDto) {
@@ -51,8 +70,13 @@ export class AuthController {
 
   @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @Post('verify-email')
-  verifyEmail(@Body() dto: VerifyEmailDto) {
-    return this.authService.verifyEmail(dto);
+  async verifyEmail(
+    @Body() dto: VerifyEmailDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const result = await this.authService.verifyEmail(dto);
+    this.attachSessionCookie(res, result);
+    return result;
   }
 
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
@@ -63,14 +87,30 @@ export class AuthController {
 
   @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @Post('login')
-  login(@Body() dto: LoginDto) {
-    return this.authService.login(dto);
+  async login(
+    @Body() dto: LoginDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const result = await this.authService.login(dto);
+    this.attachSessionCookie(res, result);
+    return result;
   }
 
   @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @Post('verify-2fa')
-  verify2fa(@Body() dto: Verify2faDto) {
-    return this.authService.verify2fa(dto);
+  async verify2fa(
+    @Body() dto: Verify2faDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const result = await this.authService.verify2fa(dto);
+    this.attachSessionCookie(res, result);
+    return result;
+  }
+
+  @Post('logout')
+  logout(@Res({ passthrough: true }) res: Response) {
+    clearAuthCookie(res, this.config);
+    return { ok: true };
   }
 
   @Get('google')
@@ -103,6 +143,7 @@ export class AuthController {
     const profile = req.user as GoogleProfileUser;
     const result = await this.authService.loginOrRegisterGoogle(profile);
     const webUrl = this.config.get<string>('WEB_URL', 'http://localhost:3000');
+    const cookieDomain = this.config.get<string>('COOKIE_DOMAIN');
 
     if ('requiresTwoFactor' in result && result.requiresTwoFactor) {
       const url = new URL('/auth/2fa', webUrl);
@@ -111,8 +152,12 @@ export class AuthController {
     }
 
     if ('accessToken' in result) {
+      setAuthCookie(res, this.config, result.accessToken);
       const url = new URL('/auth/callback', webUrl);
-      url.searchParams.set('accessToken', result.accessToken);
+      // Shared-domain SSO: cookie is enough. Keep token for localhost handoff.
+      if (!cookieDomain) {
+        url.searchParams.set('accessToken', result.accessToken);
+      }
       return res.redirect(url.toString());
     }
 
@@ -141,5 +186,13 @@ export class AuthController {
   @Get('me')
   me(@CurrentUser() user: AuthUser) {
     return this.authService.me(user.id);
+  }
+
+  /** Cookie/Bearer session probe for cross-app SSO bootstrap. */
+  @UseGuards(JwtAuthGuard)
+  @Get('session')
+  async session(@CurrentUser() user: AuthUser) {
+    const me = await this.authService.me(user.id);
+    return { authenticated: true, user: me };
   }
 }

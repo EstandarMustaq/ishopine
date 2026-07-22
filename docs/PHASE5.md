@@ -42,6 +42,7 @@ STRANGLER_ROUTING=1 \
 ```
 
 ## Fora de âmbito (ainda)
-- Cookie SSO domínio partilhado
-- Extrair lógica Nest para fora do monólito (proxies only)
+- Extrair lógica Nest wallet/billing para os serviços (deixar de ser proxy)
 - Resize/CDN avançado
+
+Ver [`docs/PHASE6.md`](./PHASE6.md) para SSO + media owned.

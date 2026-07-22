@@ -33,7 +33,14 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       setAuth: (accessToken, user) => set({ accessToken, user }),
       setUser: (user) => set({ user }),
-      logout: () => set({ accessToken: null, user: null }),
+      logout: () => {
+        // Clear HttpOnly SSO cookie (best-effort); local state always cleared.
+        void fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/api/auth/logout`, {
+          method: "POST",
+          credentials: "include",
+        }).catch(() => {});
+        set({ accessToken: null, user: null });
+      },
       isStaff: () => {
         const role = resolveRole(get().user);
         return (

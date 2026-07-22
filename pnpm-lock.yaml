@@ -76,10 +76,10 @@ importers:
         version: 19.2.3(@types/react@19.2.17)
       eslint:
         specifier: ^9
-        version: 9.39.5(jiti@2.7.0)
+        version: 9.39.5(jiti@1.21.7)
       eslint-config-next:
         specifier: 15.1.0
-        version: 15.1.0(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3)
+        version: 15.1.0(eslint@9.39.5(jiti@1.21.7))(typescript@5.9.3)
       postcss:
         specifier: ^8
         version: 8.5.20
@@ -92,6 +92,9 @@ importers:
 
   apps/api:
     dependencies:
+      '@ishopine/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       '@nestjs/common':
         specifier: ^11.0.1
         version: 11.1.28(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -336,10 +339,10 @@ importers:
         version: 19.2.3(@types/react@19.2.17)
       eslint:
         specifier: ^9
-        version: 9.39.5(jiti@1.21.7)
+        version: 9.39.5(jiti@2.7.0)
       eslint-config-next:
         specifier: 15.1.0
-        version: 15.1.0(eslint@9.39.5(jiti@1.21.7))(typescript@5.9.3)
+        version: 15.1.0(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3)
       postcss:
         specifier: ^8
         version: 8.5.20
@@ -537,7 +540,17 @@ importers:
         version: 5.9.3
 
   packages/shared:
+    dependencies:
+      http-proxy:
+        specifier: ^1.18.1
+        version: 1.18.1
     devDependencies:
+      '@types/http-proxy':
+        specifier: ^1.17.16
+        version: 1.17.17
+      '@types/node':
+        specifier: ^22.10.0
+        version: 22.20.1
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -546,6 +559,9 @@ importers:
 
   services/billing:
     dependencies:
+      '@ishopine/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       http-proxy:
         specifier: ^1.18.1
         version: 1.18.1
@@ -583,6 +599,9 @@ importers:
 
   services/developers:
     dependencies:
+      '@ishopine/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       http-proxy:
         specifier: ^1.18.1
         version: 1.18.1
@@ -600,12 +619,11 @@ importers:
         specifier: ^5.9.3
         version: 5.9.3
 
-  services/identity: {}
-
-  services/marketplace: {}
-
-  services/media:
+  services/identity:
     dependencies:
+      '@ishopine/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       http-proxy:
         specifier: ^1.18.1
         version: 1.18.1
@@ -613,6 +631,45 @@ importers:
       '@types/http-proxy':
         specifier: ^1.17.16
         version: 1.17.17
+      '@types/node':
+        specifier: ^22.10.0
+        version: 22.20.1
+      tsx:
+        specifier: ^4.19.2
+        version: 4.23.1
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
+  services/marketplace: {}
+
+  services/media:
+    dependencies:
+      '@ishopine/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
+      '@prisma/client':
+        specifier: ^6.19.0
+        version: 6.19.0(prisma@6.19.0(typescript@5.9.3))(typescript@5.9.3)
+      busboy:
+        specifier: ^1.6.0
+        version: 1.6.0
+      http-proxy:
+        specifier: ^1.18.1
+        version: 1.18.1
+      jsonwebtoken:
+        specifier: ^9.0.2
+        version: 9.0.3
+    devDependencies:
+      '@types/busboy':
+        specifier: ^1.5.4
+        version: 1.5.4
+      '@types/http-proxy':
+        specifier: ^1.17.16
+        version: 1.17.17
+      '@types/jsonwebtoken':
+        specifier: ^9.0.9
+        version: 9.0.10
       '@types/node':
         specifier: ^22.10.0
         version: 22.20.1
@@ -625,6 +682,9 @@ importers:
 
   services/orders:
     dependencies:
+      '@ishopine/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       http-proxy:
         specifier: ^1.18.1
         version: 1.18.1
@@ -644,6 +704,9 @@ importers:
 
   services/payments:
     dependencies:
+      '@ishopine/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       http-proxy:
         specifier: ^1.18.1
         version: 1.18.1
@@ -663,6 +726,9 @@ importers:
 
   services/wallet:
     dependencies:
+      '@ishopine/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       http-proxy:
         specifier: ^1.18.1
         version: 1.18.1
@@ -2635,6 +2701,9 @@ packages:
 
   '@types/body-parser@1.19.6':
     resolution: {integrity: sha512-HLFeCYgz89uk22N5Qg3dvGvsv46B8GLvKKo1zKG4NybA8U2DiEO3w9lqGg29t/tfLRJpJ6iQxnVw4OnB7MoM9g==}
+
+  '@types/busboy@1.5.4':
+    resolution: {integrity: sha512-kG7WrUuAKK0NoyxfQHsVE6j1m01s6kMma64E+OZenQABMQyTJop1DumUWcLwAQ2JzpefU7PDYoRDKl8uZosFjw==}
 
   '@types/connect@3.4.38':
     resolution: {integrity: sha512-K6uROf1LD88uDQqJCktA4yzL1YYAK6NgfsI0v/mTgyPKWsX1CnJ0XPSDhViejru1GcRkLWb8RlzFYJRqGUbaug==}
@@ -8751,6 +8820,10 @@ snapshots:
   '@types/body-parser@1.19.6':
     dependencies:
       '@types/connect': 3.4.38
+      '@types/node': 24.13.3
+
+  '@types/busboy@1.5.4':
+    dependencies:
       '@types/node': 24.13.3
 
   '@types/connect@3.4.38':

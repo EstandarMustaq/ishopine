@@ -138,7 +138,29 @@ export type OutboxEventType =
   | "wallet.credited"
   | "subscription.changed"
   | "platform.invoice.generated"
-  | "merchant.webhook.delivered";
+  | "merchant.webhook.delivered"
+  | "shipping.quote.requested"
+  | "shipping.label.created";
+
+/** Phase 6 SSO cookie (HttpOnly). Shared parent domain via COOKIE_DOMAIN. */
+export const AUTH_COOKIE_NAME = "ishopine_session";
+
+export type ShippingQuoteRequest = {
+  tenantId?: string;
+  shopId?: string;
+  destinationProvince: string;
+  destinationDistrict: string;
+  weightKg?: number;
+  subtotalCents: number;
+};
+
+export type ShippingQuote = {
+  method: "FLAT" | "FREE" | "PICKUP" | "CUSTOM";
+  label: string;
+  amountCents: number;
+  etaDaysMin?: number;
+  etaDaysMax?: number;
+};
 
 export type WalletOwnerType = "ACCOUNT" | "TENANT" | "PLATFORM";
 export type LedgerEntryType =
@@ -211,6 +233,12 @@ export type GatewayRoute = {
 };
 
 export const GATEWAY_ROUTES: GatewayRoute[] = [
+  {
+    prefix: "/api/auth",
+    service: "identity",
+    envKey: "IDENTITY_URL",
+    defaultPort: 4107,
+  },
   {
     prefix: "/api/commerce",
     service: "commerce-orchestrator",
@@ -290,3 +318,9 @@ export const GATEWAY_ROUTES: GatewayRoute[] = [
     defaultPort: 4106,
   },
 ];
+
+export {
+  startStranglerProxy,
+  type StranglerMode,
+  type StranglerOptions,
+} from "./strangler";

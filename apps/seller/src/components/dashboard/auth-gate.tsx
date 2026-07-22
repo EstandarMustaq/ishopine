@@ -75,13 +75,24 @@ export function AuthGate({
         }
       } else {
         token = useAuthStore.getState().accessToken;
+        if (!token) {
+          // Cookie SSO: try session without Bearer (credentials include cookie).
+          try {
+            const me = await api<User>("/auth/me", { token: null });
+            if (cancelled) return;
+            setAuth("", me);
+            token = "";
+          } catch {
+            // stay unauthenticated
+          }
+        }
       }
 
-      if (token) {
+      if (token !== null && token !== undefined) {
         try {
           const account = await api<{ tenants: TenantListItem[] }>(
             "/accounts/me",
-            { token },
+            { token: token || null },
           );
           if (cancelled) return;
           const tenants = account.tenants ?? [];
@@ -109,7 +120,7 @@ export function AuthGate({
   }, [setAuth, setActiveTenant, hydrateTenant]);
 
   useEffect(() => {
-    if (!ready || bootstrapping || !accessToken) return;
+    if (!ready || bootstrapping || !user) return;
     let cancelled = false;
     api<User>("/auth/me")
       .then((me) => {
@@ -119,11 +130,11 @@ export function AuthGate({
     return () => {
       cancelled = true;
     };
-  }, [ready, bootstrapping, accessToken, setUser]);
+  }, [ready, bootstrapping, user, setUser]);
 
   useEffect(() => {
     if (!ready || bootstrapping) return;
-    if (!accessToken || !user) {
+    if (!user) {
       window.location.href = `${marketplaceUrl}/entrar?next=seller`;
       return;
     }
@@ -186,7 +197,7 @@ export function AuthGate({
     isStaff,
   ]);
 
-  if (!ready || bootstrapping || !accessToken || !user) {
+  if (!ready || bootstrapping || !user) {
     return (
       <div className="flex min-h-[40vh] items-center justify-center text-sm text-taupe">
         Carregando...
