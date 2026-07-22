@@ -106,7 +106,8 @@ customer               # pode viver em marketplace no início
 | **10** | Checkout owned + wallet settle idempotente |
 | **11** | PaySuite extract (payments owned) |
 | **12** | Payouts/refunds owned + CDN cache harden |
-| **13+** | Live carrier partners, identity extract, multi-region CDN |
+| **13** | Identity extract (auth owned + SSO cookies) |
+| **14+** | Live carrier partners, multi-region CDN, affiliate extract |
 
 ## Fora de âmbito (MVP)
 

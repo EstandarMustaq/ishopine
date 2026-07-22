@@ -2,7 +2,7 @@
 
 | Serviço | Estado | Notas |
 |---|---|---|
-| identity | strangler proxy :4107 | `/api/auth` |
+| **identity** | **owned :4107** | Auth local + 2FA + session (`IDENTITY_OWNED`); Google → Nest |
 | accounts | domínio no monólito | Account/Tenant |
 | marketplace | skeleton | Home/coleções |
 | catalog | domínio no monólito | Híbrido Fase 2 |
