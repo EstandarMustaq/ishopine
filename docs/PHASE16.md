@@ -35,4 +35,4 @@ DATABASE_URL=...
 - Clientes HTTP Correios/DHL
 - Multi-região CDN / PoPs
 - Remotizar `TenantGuard` para todos os serviços
-- Catalog / marketplace extract
+- Catalog / marketplace extract (catalog → Fase 17)
