@@ -350,6 +350,12 @@ export const GATEWAY_ROUTES: GatewayRoute[] = [
     defaultPort: 4108,
   },
   {
+    prefix: "/api/accounts",
+    service: "accounts",
+    envKey: "ACCOUNTS_URL",
+    defaultPort: 4109,
+  },
+  {
     prefix: "/uploads",
     service: "media",
     envKey: "MEDIA_URL",

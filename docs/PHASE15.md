@@ -41,4 +41,4 @@ INTERNAL_SERVICE_SECRET=...
 - Clientes HTTP Correios/DHL
 - Multi-região CDN / PoPs
 - Extrair PaySuite (já Fase 11–12 em payments)
-- Accounts/tenant extract
+- Accounts/tenant extract (Fase 16)
