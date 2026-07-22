@@ -12,7 +12,19 @@ export function getAppUrls() {
   };
 }
 
-/** Absolute URL into another app, with one-time token handoff. */
+/** True when apps share a parent cookie domain (production SSO). */
+export function cookieSsoEnabled() {
+  return (
+    process.env.NEXT_PUBLIC_COOKIE_SSO === "1" ||
+    Boolean(process.env.NEXT_PUBLIC_COOKIE_DOMAIN)
+  );
+}
+
+/**
+ * Absolute URL into another app.
+ * With cookie SSO: no token in query (HttpOnly cookie carries session).
+ * Localhost fallback: one-time `?token=` handoff.
+ */
 export function appHandoffUrl(
   target: Exclude<AppTarget, "marketplace">,
   accessToken: string,
@@ -22,6 +34,8 @@ export function appHandoffUrl(
   const base = urls[target].replace(/\/$/, "");
   const cleanPath = path.startsWith("/") ? path : `/${path}`;
   const url = new URL(`${base}${cleanPath}`);
-  url.searchParams.set("token", accessToken);
+  if (!cookieSsoEnabled() && accessToken) {
+    url.searchParams.set("token", accessToken);
+  }
   return url.toString();
 }

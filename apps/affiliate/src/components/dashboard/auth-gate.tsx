@@ -47,6 +47,14 @@ export function AuthGate({ children, affiliateAccess }: AuthGateProps) {
           window.location.href = `${marketplaceUrl}/entrar?next=affiliate`;
           return;
         }
+      } else if (!useAuthStore.getState().accessToken) {
+        try {
+          const me = await api<User>("/auth/me", { token: null });
+          if (cancelled) return;
+          setAuth("", me);
+        } catch {
+          // unauthenticated
+        }
       }
       if (!cancelled) {
         setBootstrapping(false);
@@ -61,7 +69,7 @@ export function AuthGate({ children, affiliateAccess }: AuthGateProps) {
   }, [setAuth]);
 
   useEffect(() => {
-    if (!ready || bootstrapping || !accessToken) return;
+    if (!ready || bootstrapping || (!accessToken && !user)) return;
     let cancelled = false;
     api<User>("/auth/me")
       .then((me) => {
@@ -71,11 +79,11 @@ export function AuthGate({ children, affiliateAccess }: AuthGateProps) {
     return () => {
       cancelled = true;
     };
-  }, [ready, bootstrapping, accessToken, setUser]);
+  }, [ready, bootstrapping, accessToken, user, setUser]);
 
   useEffect(() => {
     if (!ready || bootstrapping) return;
-    if (!accessToken || !user) {
+    if (!user) {
       window.location.href = `${marketplaceUrl}/entrar?next=affiliate`;
       return;
     }
@@ -95,7 +103,7 @@ export function AuthGate({ children, affiliateAccess }: AuthGateProps) {
     canAccessPainel,
   ]);
 
-  if (!ready || bootstrapping || !accessToken || !user) {
+  if (!ready || bootstrapping || !user) {
     return (
       <div className="flex min-h-[40vh] items-center justify-center text-sm text-[var(--brand-muted)]">
         Carregando...

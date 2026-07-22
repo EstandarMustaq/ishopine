@@ -1,5 +1,7 @@
-# identity
+# Identity (strangler proxy)
 
-Fase 0 skeleton — lógica ainda no monólito `apps/api` (strangler).
+Porta **4107**. Encaminha `/api/auth` para o monólito (SSO cookies definidos no Nest).
 
-Contrato e extracção deste serviço serão feitos quando o domínio estiver estável.
+```bash
+pnpm --filter @ishopine/identity dev
+```

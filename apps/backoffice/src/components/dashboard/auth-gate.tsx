@@ -62,6 +62,14 @@ export function AuthGate({
           window.location.href = `${marketplaceUrl}/entrar?next=backoffice`;
           return;
         }
+      } else if (!useAuthStore.getState().accessToken) {
+        try {
+          const me = await api<User>("/auth/me", { token: null });
+          if (cancelled) return;
+          setAuth("", me);
+        } catch {
+          // unauthenticated
+        }
       }
       if (!cancelled) {
         setBootstrapping(false);
@@ -76,7 +84,7 @@ export function AuthGate({
   }, [setAuth]);
 
   useEffect(() => {
-    if (!ready || bootstrapping || !accessToken) return;
+    if (!ready || bootstrapping || (!accessToken && !user)) return;
     let cancelled = false;
     Promise.all([
       api<User>("/auth/me"),
@@ -97,11 +105,11 @@ export function AuthGate({
     return () => {
       cancelled = true;
     };
-  }, [ready, bootstrapping, accessToken, setUser]);
+  }, [ready, bootstrapping, accessToken, user, setUser]);
 
   useEffect(() => {
     if (!ready || bootstrapping) return;
-    if (!accessToken || !user) {
+    if (!user) {
       window.location.href = `${marketplaceUrl}/entrar?next=backoffice`;
       return;
     }
@@ -125,7 +133,7 @@ export function AuthGate({
     pathname,
   ]);
 
-  if (!ready || bootstrapping || !accessToken || !user) {
+  if (!ready || bootstrapping || !user) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#1A1A1A] text-sm text-white/60">
         Carregando backoffice...

@@ -38,9 +38,10 @@ export function AuthGate({
   }, []);
 
   useEffect(() => {
-    if (!ready || !accessToken) return;
+    if (!ready) return;
     let cancelled = false;
-    api<User>("/auth/me")
+    // Refresh user via Bearer and/or SSO cookie.
+    api<User>("/auth/me", { token: accessToken || null })
       .then((me) => {
         if (!cancelled) setUser(me);
       })
@@ -53,7 +54,7 @@ export function AuthGate({
 
   useEffect(() => {
     if (!ready) return;
-    if (!accessToken || !user) {
+    if (!user) {
       router.replace("/entrar");
       return;
     }
@@ -101,7 +102,7 @@ export function AuthGate({
     isAdmin,
   ]);
 
-  if (!ready || !accessToken || !user) {
+  if (!ready || !user) {
     return (
       <div className="flex min-h-[40vh] items-center justify-center text-sm text-taupe">
         Carregando...
