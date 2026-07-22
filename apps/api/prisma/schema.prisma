@@ -21,6 +21,28 @@ enum ShopRole {
   STAFF
 }
 
+/// Business context owned by an Account (not the login identity itself).
+enum TenantType {
+  PARTICULAR
+  STORE
+}
+
+enum TenantMemberRole {
+  OWNER
+  ADMIN
+  MANAGER
+  STAFF
+  VIEWER
+}
+
+/// Backoffice iShopine staff only — never a seller "god admin".
+enum PlatformStaffRole {
+  OPS
+  MODERATOR
+  ENGINEER
+  FINANCE
+}
+
 enum ShopStatus {
   PENDING
   ACTIVE
@@ -264,6 +286,7 @@ model User {
   updatedAt        DateTime     @updatedAt
 
   organization      Organization        @relation(fields: [organizationId], references: [id])
+  account           Account?
   addresses         Address[]
   cart              Cart?
   shopMemberships   ShopMember[]
@@ -292,6 +315,80 @@ model User {
   @@index([platformRole])
   @@index([googleId])
   @@index([organizationId])
+}
+
+/// Login identity / person. Owns zero or more business tenants.
+model Account {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  email     String   @unique
+  name      String
+  phone     String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user           User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ownedTenants   Tenant[]            @relation("TenantOwner")
+  memberships    TenantMembership[]
+  platformStaff  PlatformStaff?
+
+  @@index([email])
+  @@index([isActive])
+}
+
+/// Isolated business context: PARTICULAR (at most one per account) or STORE (many).
+model Tenant {
+  id               String     @id @default(cuid())
+  type             TenantType
+  name             String
+  slug             String     @unique
+  ownerAccountId   String
+  /// Set only when type = PARTICULAR; enforces one PARTICULAR per account.
+  particularAccountId String? @unique
+  /// Set only when type = STORE; links to legacy Shop during strangler.
+  shopId           String?    @unique
+  isActive         Boolean    @default(true)
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  owner        Account            @relation("TenantOwner", fields: [ownerAccountId], references: [id], onDelete: Cascade)
+  shop         Shop?              @relation(fields: [shopId], references: [id], onDelete: SetNull)
+  memberships  TenantMembership[]
+
+  @@index([ownerAccountId])
+  @@index([type, isActive])
+}
+
+model TenantMembership {
+  id        String           @id @default(cuid())
+  tenantId  String
+  accountId String
+  role      TenantMemberRole @default(STAFF)
+  isActive  Boolean          @default(true)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, accountId])
+  @@index([accountId])
+  @@index([tenantId, isActive])
+}
+
+/// iShopine backoffice operators — platform observability/ops only.
+model PlatformStaff {
+  id        String            @id @default(cuid())
+  accountId String            @unique
+  role      PlatformStaffRole @default(OPS)
+  isActive  Boolean           @default(true)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([role, isActive])
 }
 
 model EmailVerificationCode {
@@ -379,6 +476,7 @@ model Shop {
   reviews       Review[]
   affiliateLinks AffiliateLink[]
   ads            Ad[]
+  tenant         Tenant?
 
   @@unique([organizationId, slug])
   @@index([status])
