@@ -100,7 +100,8 @@ customer               # pode viver em marketplace no início
 | **4** | Wallet + Billing + Pricing (+ premium) |
 | **5** | Store depth, Media, Feature Flags, Developer Platform |
 | **6** | Cookie SSO, media owned extraction, logistics stub |
-| **7+** | Logistics carriers, extracção wallet/orders, resize/CDN |
+| **7** | Logistics carriers/shipments, wallet owned reads, media CDN stub |
+| **8+** | Live carriers, full Nest extract, advanced CDN |
 
 ## Fora de âmbito (MVP)
 

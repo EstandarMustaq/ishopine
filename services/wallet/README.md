@@ -1,5 +1,8 @@
-# wallet (strangler)
+# Wallet (strangler — owned reads)
 
-Fase 4: ledger / carteiras (`/api/wallet/*`).
+Porta **4103**. Com `WALLET_OWNED≠0` (default), trata `GET /api/wallet/me|tenant|ledger`
+localmente. Writes (settle) continuam no monólito.
 
-Proxy para o monólito até extracção completa. Porta default **4103**.
+```bash
+JWT_SECRET=… DATABASE_URL=… pnpm --filter @ishopine/wallet dev
+```

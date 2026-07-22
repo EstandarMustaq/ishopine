@@ -23,4 +23,12 @@ export class ShippingQuoteDto {
   @IsNumber()
   @Min(0)
   subtotalCents!: number;
+
+  @IsOptional()
+  @IsString()
+  preferredMethod?: string;
+
+  @IsOptional()
+  @IsString()
+  preferredCarrier?: string;
 }

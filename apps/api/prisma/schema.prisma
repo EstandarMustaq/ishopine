@@ -766,6 +766,7 @@ model Order {
   couponRedemptions CouponRedemption[]
   disputes          Dispute[]
   couponCode        String?
+  shipments         Shipment[]
 
   @@index([buyerId])
   @@index([sellerShopId])
@@ -1469,4 +1470,65 @@ model MerchantWebhookDelivery {
   @@index([endpointId, createdAt])
   @@index([status])
   @@index([eventType])
+}
+
+/* ── Phase 7: Logistics carriers + shipments ── */
+
+enum CarrierCode {
+  FLAT_RATE
+  FREE_THRESHOLD
+  STORE_PICKUP
+  CORREIOS_MZ
+  MANUAL
+}
+
+enum ShipmentStatus {
+  PENDING
+  LABEL_CREATED
+  IN_TRANSIT
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+  RETURNED
+}
+
+model Shipment {
+  id            String         @id @default(cuid())
+  orderId       String
+  carrierCode   CarrierCode
+  /// Service method mirrored from quote (FLAT/FREE/PICKUP/CUSTOM).
+  method        String
+  status        ShipmentStatus @default(PENDING)
+  trackingCode  String?
+  labelUrl      String?
+  amountCents   Int            @default(0)
+  destinationProvince String?
+  destinationDistrict String?
+  weightKg      Float?
+  metadata      Json?
+  shippedAt     DateTime?
+  deliveredAt   DateTime?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  order  Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  events ShipmentEvent[]
+
+  @@index([orderId])
+  @@index([carrierCode, status])
+  @@index([trackingCode])
+  @@index([status])
+}
+
+model ShipmentEvent {
+  id          String   @id @default(cuid())
+  shipmentId  String
+  status      ShipmentStatus
+  note        String?
+  rawPayload  Json?
+  createdAt   DateTime @default(now())
+
+  shipment Shipment @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+
+  @@index([shipmentId, createdAt])
 }

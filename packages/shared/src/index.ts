@@ -154,13 +154,74 @@ export type ShippingQuoteRequest = {
   subtotalCents: number;
 };
 
+export type CarrierCode =
+  | "FLAT_RATE"
+  | "FREE_THRESHOLD"
+  | "STORE_PICKUP"
+  | "CORREIOS_MZ"
+  | "MANUAL";
+
+export type ShipmentStatus =
+  | "PENDING"
+  | "LABEL_CREATED"
+  | "IN_TRANSIT"
+  | "OUT_FOR_DELIVERY"
+  | "DELIVERED"
+  | "CANCELLED"
+  | "RETURNED";
+
 export type ShippingQuote = {
   method: "FLAT" | "FREE" | "PICKUP" | "CUSTOM";
+  carrierCode?: CarrierCode | string;
   label: string;
   amountCents: number;
   etaDaysMin?: number;
   etaDaysMax?: number;
 };
+
+export type ShipmentSummary = {
+  id: string;
+  orderId: string;
+  carrierCode: CarrierCode | string;
+  method: string;
+  status: ShipmentStatus | string;
+  trackingCode?: string | null;
+  amountCents: number;
+};
+
+/** Cloudinary-style delivery transforms (Phase 7 CDN stub). */
+export type MediaTransformOptions = {
+  width?: number;
+  height?: number;
+  crop?: "fill" | "fit" | "scale" | "thumb";
+  quality?: "auto" | number;
+  format?: "auto" | "webp" | "jpg" | "png";
+};
+
+export function buildMediaUrl(
+  url: string,
+  opts: MediaTransformOptions = {},
+): string {
+  if (!url) return url;
+  // Local paths: return as-is (no CDN).
+  if (url.startsWith("/") || url.startsWith("http://localhost")) {
+    return url;
+  }
+  // Cloudinary delivery URL: insert transform segment after /upload/
+  if (!url.includes("res.cloudinary.com") || !url.includes("/upload/")) {
+    return url;
+  }
+  const parts: string[] = [];
+  if (opts.width) parts.push(`w_${opts.width}`);
+  if (opts.height) parts.push(`h_${opts.height}`);
+  if (opts.crop) parts.push(`c_${opts.crop}`);
+  if (opts.quality != null) parts.push(`q_${opts.quality}`);
+  if (opts.format) parts.push(`f_${opts.format}`);
+  if (parts.length === 0) {
+    parts.push("q_auto", "f_auto");
+  }
+  return url.replace("/upload/", `/upload/${parts.join(",")}/`);
+}
 
 export type WalletOwnerType = "ACCOUNT" | "TENANT" | "PLATFORM";
 export type LedgerEntryType =
