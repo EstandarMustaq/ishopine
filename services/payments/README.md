@@ -4,12 +4,13 @@ Porta **4102**. Prefixo `/api/billing/paysuite`.
 
 ## Owned (`PAYMENTS_OWNED≠0`, default)
 
-| Método | Path | Notas |
+| Método | Path | Auth |
 |---|---|---|
 | POST | `/checkout` | JWT + `Idempotency-Key` |
 | GET | `/status/:paymentId` | JWT |
 | POST | `/webhook` | HMAC PaySuite |
-| POST | `/payouts`, `/refunds` | → Nest upstream |
+| POST | `/payouts` | JWT admin + 2FA |
+| POST | `/refunds` | JWT admin + 2FA |
 
 On `payment.success` / PAID → Nest `POST /api/orders/internal/settle-paid`.
 

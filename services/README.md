@@ -7,11 +7,11 @@
 | marketplace | skeleton | Home/coleções |
 | catalog | domínio no monólito | Híbrido Fase 2 |
 | **orders** | **owned :4101** | Cart + GET + status + checkout (`ORDERS_OWNED`) |
-| **payments** | **owned :4102** | PaySuite checkout/status/webhook (`PAYMENTS_OWNED`) |
+| **payments** | **owned :4102** | PaySuite checkout/status/webhook/**payouts/refunds** |
 | commerce-orchestrator | compose :4100 | Saga: orders checkout → PaySuite |
 | **wallet** | **owned :4103** | Reads + internal settle (`WALLET_OWNED`) |
 | billing | strangler proxy :4104 | Pricing + subscriptions |
-| **media** | **owned :4105** | Upload/list/delete + Sharp/Cloudinary |
+| **media** | **owned :4105** | Upload/list/delete + **static /uploads** cache |
 | developers | strangler proxy :4106 | API keys / v1 / flags |
 | logistics | módulo Nest | Carriers + zonas + webhooks |
 

@@ -105,7 +105,8 @@ customer               # pode viver em marketplace no início
 | **9** | Orders cart/status owned + media Cloudinary/CDN base URL |
 | **10** | Checkout owned + wallet settle idempotente |
 | **11** | PaySuite extract (payments owned) |
-| **12+** | Live carrier partners, multi-region CDN, payouts extract |
+| **12** | Payouts/refunds owned + CDN cache harden |
+| **13+** | Live carrier partners, identity extract, multi-region CDN |
 
 ## Fora de âmbito (MVP)
 
