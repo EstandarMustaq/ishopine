@@ -49,15 +49,27 @@ export async function createApp(): Promise<NestExpressApplication> {
     }),
   );
 
-  const corsOrigin = config.get<string>('CORS_ORIGIN', 'http://localhost:3000');
+  const corsOriginRaw = config.get<string>(
+    'CORS_ORIGIN',
+    'http://localhost:3000,http://localhost:3001,http://localhost:3002,http://localhost:3003',
+  );
+  const corsOrigin =
+    corsOriginRaw === '*'
+      ? isProd
+        ? false
+        : true
+      : corsOriginRaw.includes(',')
+        ? corsOriginRaw.split(',').map((o) => o.trim()).filter(Boolean)
+        : corsOriginRaw;
   app.enableCors({
-    origin: corsOrigin === '*' && isProd ? false : corsOrigin,
+    origin: corsOrigin,
     credentials: true,
     allowedHeaders: [
       'Content-Type',
       'Authorization',
       'Idempotency-Key',
       'X-Request-Id',
+      'x-tenant-id',
     ],
     exposedHeaders: ['X-Request-Id', 'X-Idempotent-Replayed'],
   });

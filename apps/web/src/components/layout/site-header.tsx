@@ -28,6 +28,7 @@ import {
 import { SiteSearch } from "@/components/search/site-search";
 import { BrandLogo } from "@/components/brand/logo";
 import { api } from "@/lib/api";
+import { appHandoffUrl, getAppUrls } from "@/lib/app-urls";
 import { useAuthStore } from "@/lib/auth-store";
 import { cn } from "@/lib/utils";
 
@@ -46,6 +47,7 @@ export function SiteHeader() {
   const accessToken = useAuthStore((s) => s.accessToken);
   const logout = useAuthStore((s) => s.logout);
   const canAccessPainel = useAuthStore((s) => s.canAccessPainel);
+  const isStaff = useAuthStore((s) => s.isStaff);
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -87,6 +89,9 @@ export function SiteHeader() {
   }, [mounted, accessToken, pathname]);
 
   const showPainel = mounted && canAccessPainel();
+  const painelHref = accessToken
+    ? appHandoffUrl(isStaff() ? "backoffice" : "seller", accessToken, "/")
+    : `${getAppUrls().seller}/`;
 
   return (
     <header className="sticky top-0 z-40 border-b border-zinc-100 bg-white/95 backdrop-blur-md">
@@ -116,13 +121,13 @@ export function SiteHeader() {
             );
           })}
           {showPainel && (
-            <Link
-              href="/painel"
+            <a
+              href={painelHref}
               className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[13px] font-medium lowercase text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-900"
             >
               <LayoutDashboard className="size-3.5 shrink-0 opacity-70" />
               painel
-            </Link>
+            </a>
           )}
         </nav>
 
@@ -275,14 +280,14 @@ export function SiteHeader() {
                   </>
                 )}
                 {showPainel && (
-                  <Link
-                    href="/painel"
+                  <a
+                    href={painelHref}
                     onClick={() => setOpen(false)}
                     className="group flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[13px] font-medium lowercase text-zinc-700 hover:bg-zinc-50"
                   >
                     <LayoutDashboard className="size-4 shrink-0 text-zinc-500" />
                     <span className="flex-1">painel</span>
-                  </Link>
+                  </a>
                 )}
                 {mounted && user ? (
                   <Button

@@ -9,7 +9,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { PlatformRole, ProductStatus } from '@prisma/client';
+import { PlatformRole, ProductStatus, TenantType } from '@prisma/client';
 import { CatalogService } from './catalog.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -17,6 +17,10 @@ import { TwoFactorGuard } from '../common/guards/two-factor.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { AuthUser } from '../common/decorators/current-user.decorator';
+import {
+  RequireTenantTypes,
+  TenantGuard,
+} from '../accounts/tenant.guard';
 
 @Controller()
 export class CatalogController {
@@ -94,7 +98,8 @@ export class CatalogController {
     return this.catalog.getProduct(slugOrId);
   }
 
-  @UseGuards(JwtAuthGuard, TwoFactorGuard)
+  @UseGuards(JwtAuthGuard, TwoFactorGuard, TenantGuard)
+  @RequireTenantTypes(TenantType.PARTICULAR, TenantType.STORE)
   @Post('products')
   createProduct(
     @CurrentUser() user: AuthUser,
@@ -103,7 +108,8 @@ export class CatalogController {
     return this.catalog.createProduct(user.id, body);
   }
 
-  @UseGuards(JwtAuthGuard, TwoFactorGuard)
+  @UseGuards(JwtAuthGuard, TwoFactorGuard, TenantGuard)
+  @RequireTenantTypes(TenantType.PARTICULAR, TenantType.STORE)
   @Patch('products/:id')
   updateProduct(
     @Param('id') id: string,
@@ -113,7 +119,8 @@ export class CatalogController {
     return this.catalog.updateProduct(id, user.id, body);
   }
 
-  @UseGuards(JwtAuthGuard, TwoFactorGuard)
+  @UseGuards(JwtAuthGuard, TwoFactorGuard, TenantGuard)
+  @RequireTenantTypes(TenantType.PARTICULAR, TenantType.STORE)
   @Post('products/:id/images')
   addImage(
     @Param('id') id: string,
@@ -124,7 +131,8 @@ export class CatalogController {
     return this.catalog.addProductImage(id, user.id, body);
   }
 
-  @UseGuards(JwtAuthGuard, TwoFactorGuard)
+  @UseGuards(JwtAuthGuard, TwoFactorGuard, TenantGuard)
+  @RequireTenantTypes(TenantType.PARTICULAR, TenantType.STORE)
   @Delete('products/:id')
   deleteProduct(@Param('id') id: string, @CurrentUser() user: AuthUser) {
     return this.catalog.deleteProduct(id, user.id);

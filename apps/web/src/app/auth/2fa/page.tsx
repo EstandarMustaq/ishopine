@@ -8,7 +8,11 @@ import { BrandLogo } from "@/components/brand/logo";
 import { OtpField } from "@/components/forms/otp-field";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
-import { postLoginPath, useAuthStore } from "@/lib/auth-store";
+import {
+  navigatePostLogin,
+  resolvePostLogin,
+  useAuthStore,
+} from "@/lib/auth-store";
 import type { AuthResponse } from "@/lib/types";
 
 function TwoFactorForm() {
@@ -39,7 +43,14 @@ function TwoFactorForm() {
       });
       setAuth(data.accessToken, data.user);
       toast.success(`Olá, ${data.user.name.split(" ")[0]}!`);
-      router.replace(postLoginPath(data.user));
+      navigatePostLogin(
+        resolvePostLogin(
+          data.user,
+          data.accessToken,
+          searchParams.get("next"),
+        ),
+        (path) => router.replace(path),
+      );
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Código inválido",

@@ -1,5 +1,9 @@
 import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
-import { InventoryMovementType, PlatformRole } from '@prisma/client';
+import {
+  InventoryMovementType,
+  PlatformRole,
+  TenantType,
+} from '@prisma/client';
 import { InventoryService } from './inventory.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -7,13 +11,18 @@ import { TwoFactorGuard } from '../common/guards/two-factor.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { AuthUser } from '../common/decorators/current-user.decorator';
+import {
+  RequireTenantTypes,
+  TenantGuard,
+} from '../accounts/tenant.guard';
 
-@UseGuards(JwtAuthGuard, RolesGuard, TwoFactorGuard)
+@UseGuards(JwtAuthGuard, RolesGuard, TwoFactorGuard, TenantGuard)
 @Roles(
   PlatformRole.PLATFORM_ADMIN,
   PlatformRole.PLATFORM_OPERATOR,
   PlatformRole.SELLER,
 )
+@RequireTenantTypes(TenantType.PARTICULAR, TenantType.STORE)
 @Controller('inventory')
 export class InventoryController {
   constructor(private readonly inventory: InventoryService) {}

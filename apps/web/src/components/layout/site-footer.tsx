@@ -20,7 +20,7 @@ const mercadoLinks = [
 const contaLinks = [
   { href: "/entrar", label: "entrar", icon: LogIn },
   { href: "/cadastro", label: "criar conta", icon: UserPlus },
-  { href: "/painel/billing", label: "pagamentos", icon: CreditCard },
+  { href: "/conta", label: "pagamentos", icon: CreditCard },
 ];
 
 function FooterLink({

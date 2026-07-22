@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
+import { appHandoffUrl } from "@/lib/app-urls";
 import { useAuthStore } from "@/lib/auth-store";
 import { formatMZN, formatDateTime } from "@/lib/format";
 import type { Order, OrderStatus } from "@/lib/types";
@@ -74,9 +75,13 @@ export default function AccountPage() {
           user.role === "SELLER" ||
           user.role === "PLATFORM_ADMIN" ||
           user.role === "PLATFORM_OPERATOR") && (
-          <Button asChild variant="outline" size="sm">
-            <Link href="/painel">Ir para o painel</Link>
-          </Button>
+          {accessToken && (
+            <Button asChild variant="outline" size="sm">
+              <a href={appHandoffUrl("seller", accessToken, "/")}>
+                Ir para o painel
+              </a>
+            </Button>
+          )}
         )}
         <Button asChild variant="outline" size="sm">
           <Link href="/favoritos">Favoritos</Link>
