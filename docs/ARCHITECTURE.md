@@ -114,7 +114,8 @@ customer               # pode viver em marketplace no início
 | **18** | Marketplace extract (shops + ads + wishlist owned) |
 | **19** | Developers extract (API keys + v1 + feature-flags owned) |
 | **20** | Logistics extract (zones + shipments + HMAC webhooks owned) |
-| **21+** | Live carrier partners, multi-region CDN |
+| **21** | Accounting extract (ledger owned) |
+| **22+** | Comms (notifications/messages/disputes), live carriers, multi-region CDN |
 
 ## Fora de âmbito (MVP)
 

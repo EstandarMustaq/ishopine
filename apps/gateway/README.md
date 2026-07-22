@@ -20,6 +20,7 @@ Ponto de entrada único. Fases 3–6: routing por prefixo quando
 | `/api/media/*`, `/api/uploads/*` | `MEDIA_URL` | 4105 | media (owned default) |
 | `/api/developers/*`, `/api/v1/*`, `/api/feature-flags/*` | `DEVELOPERS_URL` | 4106 | developers (owned) |
 | `/api/logistics/*` | `LOGISTICS_URL` | 4112 | logistics (owned) |
+| `/api/accounting/*` | `ACCOUNTING_URL` | 4113 | accounting (owned) |
 | resto | `UPSTREAM_API_URL` | 4000 | monólito |
 
 Wallet reads podem ser owned (`WALLET_OWNED=1` no serviço :4103).
