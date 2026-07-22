@@ -8,6 +8,7 @@ Ponto de entrada único. Fases 3–6: routing por prefixo quando
 | Prefixo | Env | Default port | Serviço |
 |---|---|---|---|
 | `/api/auth/*` | `IDENTITY_URL` | 4107 | identity (owned; Google → Nest) |
+| `/api/affiliate/*` | `AFFILIATES_URL` | 4108 | affiliates (owned) |
 | `/api/commerce/*` | `ORCHESTRATOR_URL` | 4100 | commerce-orchestrator |
 | `/api/orders/*`, `/api/cart/*` | `ORDERS_URL` | 4101 | orders |
 | `/api/billing/paysuite/*` | `PAYMENTS_URL` | 4102 | payments |

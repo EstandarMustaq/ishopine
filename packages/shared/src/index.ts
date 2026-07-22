@@ -329,6 +329,7 @@ export type GatewayRoute = {
     | "commerce-orchestrator"
     | "media"
     | "developers"
+    | "affiliates"
     | "monolith";
   /** Env var holding the service base URL. */
   envKey?: string;
@@ -341,6 +342,12 @@ export const GATEWAY_ROUTES: GatewayRoute[] = [
     service: "identity",
     envKey: "IDENTITY_URL",
     defaultPort: 4107,
+  },
+  {
+    prefix: "/api/affiliate",
+    service: "affiliates",
+    envKey: "AFFILIATES_URL",
+    defaultPort: 4108,
   },
   {
     prefix: "/uploads",

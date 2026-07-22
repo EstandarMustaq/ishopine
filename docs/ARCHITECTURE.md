@@ -107,7 +107,8 @@ customer               # pode viver em marketplace no início
 | **11** | PaySuite extract (payments owned) |
 | **12** | Payouts/refunds owned + CDN cache harden |
 | **13** | Identity extract (auth owned + SSO cookies) |
-| **14+** | Live carrier partners, multi-region CDN, affiliate extract |
+| **14** | Affiliate extract (affiliates owned + settle remote) |
+| **15+** | Live carrier partners, multi-region CDN, subscription extract |
 
 ## Fora de âmbito (MVP)
 
