@@ -177,6 +177,16 @@ export class WalletService {
     sellerNetCents: number;
     platformFeeCents: number;
   }) {
+    const already = await this.prisma.walletLedgerEntry.findFirst({
+      where: {
+        reference: input.orderId,
+        type: LedgerEntryType.CREDIT,
+      },
+    });
+    if (already) {
+      return { alreadySettled: true, results: [] as unknown[] };
+    }
+
     const tenant = await this.prisma.tenant.findUnique({
       where: { shopId: input.sellerShopId },
     });
@@ -237,6 +247,6 @@ export class WalletService {
       }
     }
 
-    return results;
+    return { alreadySettled: false, results };
   }
 }

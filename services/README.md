@@ -6,13 +6,13 @@
 | accounts | domínio no monólito | Account/Tenant |
 | marketplace | skeleton | Home/coleções |
 | catalog | domínio no monólito | Híbrido Fase 2 |
-| **orders** | **owned :4101** | Cart + GET + PATCH status (`ORDERS_OWNED`); checkout Nest |
-| payments | strangler proxy :4102 | PaySuite |
-| commerce-orchestrator | compose :4100 | Saga checkout |
-| **wallet** | **owned reads :4103** | GET me/tenant/ledger (`WALLET_OWNED`) |
+| **orders** | **owned :4101** | Cart + GET + status + **checkout** (`ORDERS_OWNED`) |
+| payments | strangler proxy :4102 | PaySuite (Nest) |
+| commerce-orchestrator | compose :4100 | Saga: orders checkout → PaySuite |
+| **wallet** | **owned :4103** | Reads + **internal settle** (`WALLET_OWNED`) |
 | billing | strangler proxy :4104 | Pricing + subscriptions |
-| **media** | **owned :4105** | Upload/list/delete + Sharp/Cloudinary (`MEDIA_OWNED`) |
+| **media** | **owned :4105** | Upload/list/delete + Sharp/Cloudinary |
 | developers | strangler proxy :4106 | API keys / v1 / flags |
-| logistics | módulo Nest | Carriers + zonas + webhooks (Fase 8) |
+| logistics | módulo Nest | Carriers + zonas + webhooks |
 
 Helper: `@ishopine/shared` → `startStranglerProxy`.

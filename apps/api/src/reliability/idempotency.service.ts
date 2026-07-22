@@ -35,6 +35,8 @@ export class IdempotencyService {
         };
       } else if (existing.status === 'STARTED') {
         return { kind: 'in_flight' as const };
+      } else if (existing.status === 'FAILED') {
+        await this.prisma.idempotencyRecord.delete({ where: { id: existing.id } });
       }
     }
 
