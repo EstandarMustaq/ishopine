@@ -14,6 +14,7 @@ import {
   Tag,
   Ticket,
   Users,
+  Flag,
 } from "lucide-react";
 import { useAuthStore } from "@/lib/auth-store";
 import { cn } from "@/lib/utils";
@@ -25,6 +26,7 @@ const links = [
   { href: "/anuncios", label: "Anúncios", icon: Megaphone },
   { href: "/contabilidade", label: "Contabilidade", icon: Receipt },
   { href: "/pricing", label: "Pricing", icon: Tag },
+  { href: "/feature-flags", label: "Flags", icon: Flag },
   { href: "/usuarios", label: "Utilizadores", icon: Users },
   { href: "/cupons", label: "Cupões", icon: Ticket },
   { href: "/configuracoes", label: "Configurações", icon: Settings },

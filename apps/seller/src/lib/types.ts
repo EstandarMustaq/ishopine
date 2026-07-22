@@ -167,6 +167,8 @@ export interface Shop {
   description?: string | null;
   logoUrl?: string | null;
   bannerUrl?: string | null;
+  policiesText?: string | null;
+  hoursJson?: Record<string, string> | null;
   shopType?: ShopType;
   province?: string | null;
   district?: string | null;

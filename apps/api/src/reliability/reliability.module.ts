@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { DevelopersModule } from '../developers/developers.module';
 import { InboxService } from './inbox.service';
 import { OutboxService } from './outbox.service';
 import { IdempotencyService } from './idempotency.service';
@@ -16,6 +17,7 @@ const isServerless = Boolean(process.env.VERCEL);
   imports: [
     ...(isServerless ? [] : [ScheduleModule.forRoot()]),
     NotificationsModule,
+    DevelopersModule,
   ],
   controllers: [ReliabilityController],
   providers: [

@@ -1,10 +1,21 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { v2 as cloudinary } from 'cloudinary';
-import { randomUUID } from 'crypto';
-import { mkdir, writeFile } from 'fs/promises';
+import { createHash, randomUUID } from 'crypto';
+import { mkdir, unlink, writeFile } from 'fs/promises';
 import { join } from 'path';
 import { PrismaService } from '../prisma/prisma.service';
+
+export type UploadScope = {
+  accountId?: string | null;
+  tenantId?: string | null;
+  shopId?: string | null;
+  uploadedById?: string | null;
+};
 
 @Injectable()
 export class UploadsService {
@@ -30,6 +41,7 @@ export class UploadsService {
   async upload(
     file: Express.Multer.File,
     folder = 'products',
+    scope: UploadScope = {},
   ) {
     if (this.provider === 'cloudinary') {
       const result = await new Promise<{
@@ -63,6 +75,10 @@ export class UploadsService {
           sizeBytes: result.bytes,
           folder,
           alt: file.originalname,
+          accountId: scope.accountId ?? null,
+          tenantId: scope.tenantId ?? null,
+          shopId: scope.shopId ?? null,
+          uploadedById: scope.uploadedById ?? null,
         },
       });
     }
@@ -83,15 +99,61 @@ export class UploadsService {
         sizeBytes: file.size,
         folder,
         alt: file.originalname,
+        accountId: scope.accountId ?? null,
+        tenantId: scope.tenantId ?? null,
+        shopId: scope.shopId ?? null,
+        uploadedById: scope.uploadedById ?? null,
       },
     });
   }
 
-  list(folder?: string) {
+  list(opts: {
+    folder?: string;
+    tenantId?: string;
+    accountId?: string;
+    shopId?: string;
+  }) {
     return this.prisma.mediaAsset.findMany({
-      where: folder ? { folder } : undefined,
+      where: {
+        ...(opts.folder ? { folder: opts.folder } : {}),
+        ...(opts.tenantId ? { tenantId: opts.tenantId } : {}),
+        ...(opts.accountId ? { accountId: opts.accountId } : {}),
+        ...(opts.shopId ? { shopId: opts.shopId } : {}),
+      },
       orderBy: { createdAt: 'desc' },
       take: 100,
     });
+  }
+
+  async remove(id: string, userId: string) {
+    const asset = await this.prisma.mediaAsset.findUnique({ where: { id } });
+    if (!asset) throw new NotFoundException('Media não encontrado');
+    if (asset.uploadedById && asset.uploadedById !== userId) {
+      throw new ForbiddenException('Sem permissão para apagar este media');
+    }
+
+    if (asset.provider === 'local' && asset.url.startsWith('/uploads/')) {
+      const absolute = join(process.cwd(), asset.url.replace(/^\//, ''));
+      try {
+        await unlink(absolute);
+      } catch {
+        // file may already be gone
+      }
+    }
+    if (asset.provider === 'cloudinary' && asset.publicId) {
+      try {
+        await cloudinary.uploader.destroy(asset.publicId);
+      } catch {
+        // ignore remote delete failures
+      }
+    }
+
+    await this.prisma.mediaAsset.delete({ where: { id } });
+    return { ok: true };
+  }
+
+  /** Stable fingerprint helper (unused externally; keeps crypto import useful). */
+  hashBuffer(buf: Buffer) {
+    return createHash('sha256').update(buf).digest('hex');
   }
 }

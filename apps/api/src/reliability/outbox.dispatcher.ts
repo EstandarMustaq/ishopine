@@ -4,6 +4,7 @@ import { OutboxService } from './outbox.service';
 import { ProjectionService } from './projection.service';
 import { RELIABILITY_RULES } from './rules';
 import { NotificationsService } from '../notifications/notifications.service';
+import { DevelopersService } from '../developers/developers.service';
 
 @Injectable()
 export class OutboxDispatcher {
@@ -14,6 +15,7 @@ export class OutboxDispatcher {
     private readonly outbox: OutboxService,
     private readonly projections: ProjectionService,
     private readonly notifications: NotificationsService,
+    private readonly developers: DevelopersService,
   ) {}
 
   @Interval(RELIABILITY_RULES.outbox.pollIntervalMs)
@@ -29,7 +31,10 @@ export class OutboxDispatcher {
       const batch = await this.outbox.claimBatch();
       for (const msg of batch) {
         try {
-          await this.dispatch(msg.eventType, msg.payload as Record<string, unknown>);
+          await this.dispatch(
+            msg.eventType,
+            msg.payload as Record<string, unknown>,
+          );
           await this.outbox.markPublished(msg.id);
         } catch (error) {
           const message =
@@ -62,6 +67,7 @@ export class OutboxDispatcher {
           });
         }
         await this.projections.projectOpsPulse();
+        await this.developers.deliverEvent(eventType, payload);
         return;
       }
       case 'billing.payment.failed': {
@@ -70,6 +76,7 @@ export class OutboxDispatcher {
           await this.projections.projectBuyerBilling(buyerId);
         }
         await this.projections.projectOpsPulse();
+        await this.developers.deliverEvent(eventType, payload);
         return;
       }
       case 'security.sync.completed': {
@@ -80,8 +87,11 @@ export class OutboxDispatcher {
         );
         return;
       }
-      case 'commerce.checkout.completed': {
+      case 'commerce.checkout.completed':
+      case 'order.created':
+      case 'order.confirmed': {
         await this.projections.projectOpsPulse();
+        await this.developers.deliverEvent(eventType, payload);
         return;
       }
       case 'affiliate.reward.approved':
@@ -95,6 +105,7 @@ export class OutboxDispatcher {
       }
       default: {
         this.logger.debug(`No handler for outbox event ${eventType}`);
+        await this.developers.deliverEvent(eventType, payload);
       }
     }
   }

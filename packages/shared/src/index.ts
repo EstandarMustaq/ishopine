@@ -53,6 +53,7 @@ export const PLATFORM_MODULES = [
   "subscriptions",
   "discovery",
   "commerce-orchestrator",
+  "developers",
 ] as const;
 
 export type PlatformModule = (typeof PLATFORM_MODULES)[number];
@@ -136,7 +137,8 @@ export type OutboxEventType =
   | "affiliate.reward.paid"
   | "wallet.credited"
   | "subscription.changed"
-  | "platform.invoice.generated";
+  | "platform.invoice.generated"
+  | "merchant.webhook.delivered";
 
 export type WalletOwnerType = "ACCOUNT" | "TENANT" | "PLATFORM";
 export type LedgerEntryType =
@@ -171,6 +173,20 @@ export type PricingPlanSummary = {
   commissionBps: number | null;
 };
 
+export type FeatureFlagEvaluation = {
+  key: string;
+  enabled: boolean;
+  source: "global" | "tenant" | "plan" | "missing";
+};
+
+export type MerchantApiKeySummary = {
+  id: string;
+  name: string;
+  keyPrefix: string;
+  lastUsedAt?: string | null;
+  createdAt: string;
+};
+
 export const IDEMPOTENCY_SCOPES = {
   ordersCheckout: "orders:checkout",
   paysuiteCheckout: "billing:paysuite:checkout",
@@ -186,6 +202,8 @@ export type GatewayRoute = {
   service:
     | FundamentalService
     | "commerce-orchestrator"
+    | "media"
+    | "developers"
     | "monolith";
   /** Env var holding the service base URL. */
   envKey?: string;
@@ -240,5 +258,35 @@ export const GATEWAY_ROUTES: GatewayRoute[] = [
     service: "billing",
     envKey: "BILLING_URL",
     defaultPort: 4104,
+  },
+  {
+    prefix: "/api/media",
+    service: "media",
+    envKey: "MEDIA_URL",
+    defaultPort: 4105,
+  },
+  {
+    prefix: "/api/uploads",
+    service: "media",
+    envKey: "MEDIA_URL",
+    defaultPort: 4105,
+  },
+  {
+    prefix: "/api/developers",
+    service: "developers",
+    envKey: "DEVELOPERS_URL",
+    defaultPort: 4106,
+  },
+  {
+    prefix: "/api/v1",
+    service: "developers",
+    envKey: "DEVELOPERS_URL",
+    defaultPort: 4106,
+  },
+  {
+    prefix: "/api/feature-flags",
+    service: "developers",
+    envKey: "DEVELOPERS_URL",
+    defaultPort: 4106,
   },
 ];

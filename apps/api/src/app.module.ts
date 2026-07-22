@@ -17,6 +17,8 @@ import { CronModule } from './cron/cron.module';
 import { PricingModule } from './pricing/pricing.module';
 import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 import { WalletModule } from './wallet/wallet.module';
+import { FeatureFlagsModule } from './feature-flags/feature-flags.module';
+import { DevelopersModule } from './developers/developers.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { DisputesModule } from './disputes/disputes.module';
 import { InventoryModule } from './inventory/inventory.module';
@@ -71,6 +73,8 @@ import { WishlistModule } from './wishlist/wishlist.module';
     WalletModule,
     PricingModule,
     SubscriptionsModule,
+    FeatureFlagsModule,
+    DevelopersModule,
   ],
   controllers: [AppController],
   providers: [
