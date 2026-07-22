@@ -109,7 +109,8 @@ customer               # pode viver em marketplace no início
 | **13** | Identity extract (auth owned + SSO cookies) |
 | **14** | Affiliate extract (affiliates owned + settle remote) |
 | **15** | Subscription extract (billing owned + usage remote) |
-| **16+** | Live carrier partners, multi-region CDN, accounts extract |
+| **16** | Accounts extract (accounts owned + tenant edge) |
+| **17+** | Live carrier partners, multi-region CDN, catalog extract |
 
 ## Fora de âmbito (MVP)
 
