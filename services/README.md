@@ -2,20 +2,17 @@
 
 | Serviço | Estado | Notas |
 |---|---|---|
-| **identity** | **strangler proxy :4107** | `/api/auth` (SSO cookies no Nest) |
+| identity | strangler proxy :4107 | `/api/auth` |
 | accounts | domínio no monólito | Account/Tenant |
 | marketplace | skeleton | Home/coleções |
 | catalog | domínio no monólito | Híbrido Fase 2 |
-| orders | strangler proxy :4101 | `/api/orders`, `/api/cart` |
-| payments | strangler proxy :4102 | `/api/billing/paysuite` |
+| orders | strangler proxy :4101 | checkout/mutations Nest |
+| payments | strangler proxy :4102 | PaySuite |
 | commerce-orchestrator | compose :4100 | Saga checkout |
-| wallet | strangler proxy :4103 | Ledger |
+| **wallet** | **owned reads :4103** | GET me/tenant/ledger (`WALLET_OWNED`) |
 | billing | strangler proxy :4104 | Pricing + subscriptions |
-| **media** | **owned :4105** | Upload/list locais (`MEDIA_OWNED`) |
+| media | owned :4105 | Upload/list + CDN URL stub |
 | developers | strangler proxy :4106 | API keys / v1 / flags |
-| feature-flags | módulo no monólito | via developers proxy |
-| logistics | stub no monólito | `POST /api/logistics/quote` |
+| logistics | módulo Nest | Carriers + shipments (Fase 7) |
 
-Helper partilhado: `@ishopine/shared` → `startStranglerProxy` (`mode`, `handleOwned`).
-
-Gateway: `apps/gateway/README.md` (`STRANGLER_ROUTING=1`).
+Helper: `@ishopine/shared` → `startStranglerProxy`.

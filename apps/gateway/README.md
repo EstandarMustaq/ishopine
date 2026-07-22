@@ -15,9 +15,10 @@ Ponto de entrada único. Fases 3–6: routing por prefixo quando
 | `/api/pricing/*`, `/api/subscriptions/*`, `/api/billing/*` | `BILLING_URL` | 4104 | billing |
 | `/api/media/*`, `/api/uploads/*` | `MEDIA_URL` | 4105 | media (owned default) |
 | `/api/developers/*`, `/api/v1/*`, `/api/feature-flags/*` | `DEVELOPERS_URL` | 4106 | developers |
-| resto | `UPSTREAM_API_URL` | 4000 | monólito |
+| resto (incl. `/api/logistics`) | `UPSTREAM_API_URL` | 4000 | monólito |
 
-Prefixos mais específicos vêm primeiro.
+Wallet reads podem ser owned (`WALLET_OWNED=1` no serviço :4103).
+Logistics permanece no monólito nesta fase.
 
 Sem `STRANGLER_ROUTING=1`, **tudo** vai para o monólito.
 

@@ -45,6 +45,8 @@ export class OrdersController {
       notes?: string;
       couponCode?: string;
       affiliateCode?: string;
+      shippingMethod?: 'FLAT' | 'FREE' | 'PICKUP' | 'CUSTOM';
+      shippingCarrier?: string;
     },
   ) {
     return this.orders.checkout(user.id, body);

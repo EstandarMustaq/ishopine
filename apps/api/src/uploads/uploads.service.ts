@@ -1,13 +1,14 @@
 import {
+  ForbiddenException,
   Injectable,
   NotFoundException,
-  ForbiddenException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { v2 as cloudinary } from 'cloudinary';
 import { createHash, randomUUID } from 'crypto';
 import { mkdir, unlink, writeFile } from 'fs/promises';
 import { join } from 'path';
+import { buildMediaUrl } from '@ishopine/shared';
 import { PrismaService } from '../prisma/prisma.service';
 
 export type UploadScope = {
@@ -38,6 +39,28 @@ export class UploadsService {
     }
   }
 
+  private withVariants<T extends { url: string }>(asset: T) {
+    return {
+      ...asset,
+      variants: {
+        original: asset.url,
+        thumb: buildMediaUrl(asset.url, {
+          width: 200,
+          height: 200,
+          crop: 'fill',
+          quality: 'auto',
+          format: 'auto',
+        }),
+        card: buildMediaUrl(asset.url, {
+          width: 640,
+          crop: 'fit',
+          quality: 'auto',
+          format: 'auto',
+        }),
+      },
+    };
+  }
+
   async upload(
     file: Express.Multer.File,
     folder = 'products',
@@ -66,7 +89,7 @@ export class UploadsService {
         stream.end(file.buffer);
       });
 
-      return this.prisma.mediaAsset.create({
+      const created = await this.prisma.mediaAsset.create({
         data: {
           url: result.secure_url,
           publicId: result.public_id,
@@ -81,6 +104,7 @@ export class UploadsService {
           uploadedById: scope.uploadedById ?? null,
         },
       });
+      return this.withVariants(created);
     }
 
     const dir = join(process.cwd(), this.uploadDir, folder);
@@ -91,7 +115,7 @@ export class UploadsService {
     await writeFile(absolute, file.buffer);
 
     const url = `/uploads/${folder}/${filename}`;
-    return this.prisma.mediaAsset.create({
+    const created = await this.prisma.mediaAsset.create({
       data: {
         url,
         provider: 'local',
@@ -105,15 +129,16 @@ export class UploadsService {
         uploadedById: scope.uploadedById ?? null,
       },
     });
+    return this.withVariants(created);
   }
 
-  list(opts: {
+  async list(opts: {
     folder?: string;
     tenantId?: string;
     accountId?: string;
     shopId?: string;
   }) {
-    return this.prisma.mediaAsset.findMany({
+    const rows = await this.prisma.mediaAsset.findMany({
       where: {
         ...(opts.folder ? { folder: opts.folder } : {}),
         ...(opts.tenantId ? { tenantId: opts.tenantId } : {}),
@@ -123,6 +148,7 @@ export class UploadsService {
       orderBy: { createdAt: 'desc' },
       take: 100,
     });
+    return rows.map((r) => this.withVariants(r));
   }
 
   async remove(id: string, userId: string) {
@@ -152,7 +178,6 @@ export class UploadsService {
     return { ok: true };
   }
 
-  /** Stable fingerprint helper (unused externally; keeps crypto import useful). */
   hashBuffer(buf: Buffer) {
     return createHash('sha256').update(buf).digest('hex');
   }

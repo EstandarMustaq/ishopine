@@ -50,3 +50,5 @@ JWT_SECRET=…                         # required by owned media
 - Extrair wallet/orders Nest para fora do monólito
 - Integrações de transportadoras
 - Resize/CDN avançado
+
+Ver [`docs/PHASE7.md`](./PHASE7.md).

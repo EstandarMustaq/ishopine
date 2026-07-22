@@ -9,11 +9,14 @@
     "lint": "echo ok"
   },
   "dependencies": {
+    "@ishopine/shared": "workspace:*",
+    "@prisma/client": "^6.19.0",
     "http-proxy": "^1.18.1",
-    "@ishopine/shared": "workspace:*"
+    "jsonwebtoken": "^9.0.2"
   },
   "devDependencies": {
     "@types/http-proxy": "^1.17.16",
+    "@types/jsonwebtoken": "^9.0.9",
     "@types/node": "^22.10.0",
     "tsx": "^4.19.2",
     "typescript": "^5.9.3"

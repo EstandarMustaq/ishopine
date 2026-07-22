@@ -17,6 +17,7 @@ import {
   Store,
   Wallet,
   Code2,
+  Truck,
 } from "lucide-react";
 import { useAuthStore } from "@/lib/auth-store";
 import { useTenantStore } from "@/lib/tenant-store";
@@ -32,6 +33,7 @@ import {
 const storeLinks = [
   { href: "/", label: "Visão geral", icon: LayoutDashboard, exact: true },
   { href: "/pedidos", label: "Pedidos", icon: ShoppingBag },
+  { href: "/envios", label: "Envios", icon: Truck },
   { href: "/produtos", label: "Produtos", icon: Package },
   { href: "/estoque", label: "Estoque", icon: Boxes },
   { href: "/billing", label: "Pagamentos", icon: CreditCard },

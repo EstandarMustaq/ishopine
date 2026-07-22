@@ -8,6 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import {
   AccountingEntryStatus,
   AccountingEntryType,
+  CarrierCode,
   InventoryMovementType,
   OrderStatus,
   PaymentMethod,
@@ -21,6 +22,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { AffiliateService } from '../affiliate/affiliate.service';
 import { WalletService } from '../wallet/wallet.service';
 import { SubscriptionsService } from '../subscriptions/subscriptions.service';
+import { LogisticsService } from '../logistics/logistics.service';
 
 @Injectable()
 export class OrdersService {
@@ -30,6 +32,7 @@ export class OrdersService {
     private readonly affiliates: AffiliateService,
     private readonly wallets: WalletService,
     private readonly subscriptions: SubscriptionsService,
+    private readonly logistics: LogisticsService,
   ) {}
 
   private async nextOrderNumber(tx: {
@@ -47,6 +50,8 @@ export class OrdersService {
       notes?: string;
       couponCode?: string;
       affiliateCode?: string;
+      shippingMethod?: 'FLAT' | 'FREE' | 'PICKUP' | 'CUSTOM';
+      shippingCarrier?: string;
     },
   ) {
     const buyer = await this.prisma.user.findUnique({ where: { id: buyerId } });
@@ -89,15 +94,57 @@ export class OrdersService {
     const settings = await this.prisma.platformSettings.findFirst({
       where: { organization: { slug: orgSlug } },
     });
-    const freeShipping = settings?.freeShippingCents ?? 99900;
-    const flatShipping = settings?.shippingFlatCents ?? 4900;
     const commissionBps = settings?.commissionBps ?? 500;
+
+    let destinationProvince = 'Maputo Cidade';
+    let destinationDistrict = 'KaMpfumo';
+    if (data.addressId) {
+      const address = await this.prisma.address.findFirst({
+        where: { id: data.addressId, userId: buyerId },
+      });
+      if (!address) {
+        throw new BadRequestException('Morada inválida');
+      }
+      destinationProvince = address.state;
+      destinationDistrict = address.district;
+    }
 
     const byShop = new Map<string, typeof cart.items>();
     for (const item of cart.items) {
       const list = byShop.get(item.product.shopId) ?? [];
       list.push(item);
       byShop.set(item.product.shopId, list);
+    }
+
+    const shippingByShop = new Map<
+      string,
+      { amountCents: number; method: string; carrierCode: CarrierCode; weightKg: number; label: string }
+    >();
+    for (const [sellerShopId, items] of byShop) {
+      const subtotalCents = items.reduce(
+        (sum, item) => sum + item.quantity * item.product.priceCents,
+        0,
+      );
+      const weightKg = items.reduce(
+        (sum, item) => sum + item.quantity * (item.product.weightKg ?? 0.5),
+        0,
+      );
+      const quote = await this.logistics.resolveCheckoutShipping({
+        shopId: sellerShopId,
+        destinationProvince,
+        destinationDistrict,
+        subtotalCents,
+        weightKg,
+        preferredMethod: data.shippingMethod,
+        preferredCarrier: data.shippingCarrier,
+      });
+      shippingByShop.set(sellerShopId, {
+        amountCents: quote.amountCents,
+        method: quote.method,
+        carrierCode: this.logistics.parseCarrierCode(quote.carrierCode),
+        weightKg,
+        label: quote.label,
+      });
     }
 
     let coupon:
@@ -133,8 +180,8 @@ export class OrdersService {
           (sum, item) => sum + item.quantity * item.product.priceCents,
           0,
         );
-        const shippingCents =
-          subtotalCents >= freeShipping ? 0 : flatShipping;
+        const shipping = shippingByShop.get(sellerShopId)!;
+        const shippingCents = shipping.amountCents;
         const platformFeeCents = Math.round(
           (subtotalCents * commissionBps) / 10_000,
         );
@@ -219,6 +266,23 @@ export class OrdersService {
                 method: data.paymentMethod ?? PaymentMethod.PIX,
                 amountCents: totalCents,
                 status: PaymentStatus.PENDING,
+              },
+            },
+            shipments: {
+              create: {
+                carrierCode: shipping.carrierCode,
+                method: shipping.method,
+                amountCents: shipping.amountCents,
+                destinationProvince,
+                destinationDistrict,
+                weightKg: shipping.weightKg,
+                status: 'PENDING',
+                events: {
+                  create: {
+                    status: 'PENDING',
+                    note: `Cotação ${shipping.label}`,
+                  },
+                },
               },
             },
           },
@@ -427,7 +491,7 @@ export class OrdersService {
       throw new NotFoundException('Pedido não encontrado');
     }
 
-    return this.prisma.$transaction(async (tx) => {
+    const updated = await this.prisma.$transaction(async (tx) => {
       const data: {
         status: OrderStatus;
         shippedAt?: Date;
@@ -539,5 +603,28 @@ export class OrdersService {
         },
       });
     });
+
+    if (status === OrderStatus.SHIPPED) {
+      try {
+        await this.logistics.createLabel(id);
+      } catch (error) {
+        console.error('[orders] shipment label failed', id, error);
+      }
+    }
+    if (status === OrderStatus.DELIVERED) {
+      const shipment = await this.prisma.shipment.findFirst({
+        where: { orderId: id, status: { not: 'CANCELLED' } },
+        orderBy: { createdAt: 'desc' },
+      });
+      if (shipment) {
+        try {
+          await this.logistics.markDelivered(shipment.id);
+        } catch (error) {
+          console.error('[orders] shipment deliver failed', id, error);
+        }
+      }
+    }
+
+    return updated;
   }
 }

@@ -94,6 +94,12 @@ export class OutboxDispatcher {
         await this.developers.deliverEvent(eventType, payload);
         return;
       }
+      case 'shipping.quote.requested':
+      case 'shipping.label.created': {
+        await this.projections.projectOpsPulse();
+        await this.developers.deliverEvent(eventType, payload);
+        return;
+      }
       case 'affiliate.reward.approved':
       case 'affiliate.reward.paid': {
         await this.projections.projectOpsPulse();
