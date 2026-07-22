@@ -13,6 +13,7 @@
 | billing | strangler proxy :4104 | Pricing + subscriptions |
 | **media** | **owned :4105** | Upload/list/delete + **static /uploads** cache |
 | developers | strangler proxy :4106 | API keys / v1 / flags |
+| **affiliates** | **owned :4108** | Links/clicks/rewards + internal conversion (`AFFILIATES_OWNED`) |
 | logistics | módulo Nest | Carriers + zonas + webhooks |
 
 Helper: `@ishopine/shared` → `startStranglerProxy`.

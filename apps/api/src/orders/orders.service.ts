@@ -439,11 +439,16 @@ export class OrdersService {
       if (order.paymentStatus === PaymentStatus.PAID) continue;
       await this.updateStatus(id, OrderStatus.CONFIRMED, order.buyerId);
       if (order.affiliateCode) {
-        await this.affiliates.registerConversion({
-          code: order.affiliateCode,
-          orderId: order.id,
-          amountCents: order.subtotalCents,
-        });
+        try {
+          await this.registerAffiliateConversion({
+            code: order.affiliateCode,
+            orderId: order.id,
+            amountCents: order.subtotalCents,
+          });
+        } catch (error) {
+          // Affiliate conversion must not roll back payment confirmation.
+          console.error('[orders] affiliate conversion failed', order.id, error);
+        }
       }
 
       const sellerNetCents = Math.max(
@@ -479,6 +484,49 @@ export class OrdersService {
         }
       }
     }
+  }
+
+  /**
+   * Prefer affiliates strangler when AFFILIATES_URL + secret are set
+   * (AFFILIATES_SETTLE_REMOTE≠0). Falls back to in-process AffiliateService.
+   */
+  private async registerAffiliateConversion(input: {
+    code?: string | null;
+    orderId: string;
+    amountCents: number;
+  }) {
+    const affiliatesUrl = this.config.get<string>('AFFILIATES_URL');
+    const secret =
+      this.config.get<string>('INTERNAL_SERVICE_SECRET') ||
+      this.config.get<string>('CRON_SECRET');
+    const remote =
+      this.config.get<string>('AFFILIATES_SETTLE_REMOTE') !== '0' &&
+      Boolean(affiliatesUrl) &&
+      Boolean(secret);
+
+    if (!remote || !affiliatesUrl || !secret) {
+      return this.affiliates.registerConversion(input);
+    }
+
+    const base = affiliatesUrl.replace(/\/$/, '');
+    const res = await fetch(
+      `${base}/api/affiliate/internal/register-conversion`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${secret}`,
+        },
+        body: JSON.stringify(input),
+      },
+    );
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(
+        `Affiliate conversion remoto falhou (${res.status}): ${text.slice(0, 300)}`,
+      );
+    }
+    return res.json();
   }
 
   /**

@@ -40,4 +40,5 @@ DATABASE_URL=...
 - Clientes HTTP Correios/DHL (sem API pública útil)
 - Multi-região CDN / PoPs
 - Extrair Google OAuth para identity (fica Nest até Passport edge)
-- Affiliate / subscription extract
+- Affiliate extract (Fase 14)
+- Subscription extract
