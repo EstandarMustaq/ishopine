@@ -356,6 +356,36 @@ export const GATEWAY_ROUTES: GatewayRoute[] = [
     defaultPort: 4109,
   },
   {
+    prefix: "/api/categories",
+    service: "catalog",
+    envKey: "CATALOG_URL",
+    defaultPort: 4110,
+  },
+  {
+    prefix: "/api/seller/categories",
+    service: "catalog",
+    envKey: "CATALOG_URL",
+    defaultPort: 4110,
+  },
+  {
+    prefix: "/api/seller/products",
+    service: "catalog",
+    envKey: "CATALOG_URL",
+    defaultPort: 4110,
+  },
+  {
+    prefix: "/api/admin/products",
+    service: "catalog",
+    envKey: "CATALOG_URL",
+    defaultPort: 4110,
+  },
+  {
+    prefix: "/api/products",
+    service: "catalog",
+    envKey: "CATALOG_URL",
+    defaultPort: 4110,
+  },
+  {
     prefix: "/uploads",
     service: "media",
     envKey: "MEDIA_URL",
