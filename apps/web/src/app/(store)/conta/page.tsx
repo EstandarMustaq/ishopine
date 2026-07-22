@@ -68,21 +68,20 @@ export default function AccountPage() {
       <p className="mt-2 text-sm text-taupe">{user.email}</p>
 
       <div className="mt-4 flex flex-wrap gap-2">
-        {(user.canSell ||
-          user.platformRole === "SELLER" ||
-          user.platformRole === "PLATFORM_ADMIN" ||
-          user.platformRole === "PLATFORM_OPERATOR" ||
-          user.role === "SELLER" ||
-          user.role === "PLATFORM_ADMIN" ||
-          user.role === "PLATFORM_OPERATOR") && (
-          {accessToken && (
+        {accessToken &&
+          (user.canSell ||
+            user.platformRole === "SELLER" ||
+            user.platformRole === "PLATFORM_ADMIN" ||
+            user.platformRole === "PLATFORM_OPERATOR" ||
+            user.role === "SELLER" ||
+            user.role === "PLATFORM_ADMIN" ||
+            user.role === "PLATFORM_OPERATOR") && (
             <Button asChild variant="outline" size="sm">
               <a href={appHandoffUrl("seller", accessToken, "/")}>
                 Ir para o painel
               </a>
             </Button>
           )}
-        )}
         <Button asChild variant="outline" size="sm">
           <Link href="/favoritos">Favoritos</Link>
         </Button>

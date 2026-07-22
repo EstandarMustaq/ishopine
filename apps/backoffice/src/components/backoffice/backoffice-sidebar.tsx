@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import {
   Activity,
   ChevronLeft,
@@ -38,7 +38,6 @@ export function BackofficeSidebar({
   className?: string;
 }) {
   const pathname = usePathname();
-  const router = useRouter();
   const logout = useAuthStore((s) => s.logout);
   const marketplaceUrl =
     process.env.NEXT_PUBLIC_MARKETPLACE_URL || "http://localhost:3000";

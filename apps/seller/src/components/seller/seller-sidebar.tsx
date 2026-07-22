@@ -106,11 +106,11 @@ export function SellerSidebar({
             if ("storeOnly" in link && link.storeOnly) {
               // Loja settings only meaningful for STORE — still show; API scopes by tenant
             }
-            const active = link.exact
+            const exact = "exact" in link && Boolean(link.exact);
+            const active = exact
               ? pathname === link.href
               : pathname.startsWith(link.href) && link.href !== "/";
-            const exactActive = link.exact && pathname === "/";
-            const isActive = link.exact ? exactActive : active;
+            const isActive = exact ? pathname === "/" : active;
             const Icon = link.icon;
             const item = (
               <Link
