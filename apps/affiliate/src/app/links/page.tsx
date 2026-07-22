@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Check, Copy } from "lucide-react";
+import { Check, Copy, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 type AffLink = {
   id: string;
@@ -11,19 +13,29 @@ type AffLink = {
   url?: string;
   clicks?: number;
   label?: string;
-  product?: { name: string };
+  product?: { name: string; slug?: string };
+  shop?: { name: string; slug?: string };
 };
 
 export default function AffiliateLinksPage() {
   const [links, setLinks] = useState<AffLink[]>([]);
   const [copied, setCopied] = useState<string | null>(null);
+  const [productId, setProductId] = useState("");
+  const [creating, setCreating] = useState(false);
   const marketplace =
     process.env.NEXT_PUBLIC_MARKETPLACE_URL || "http://localhost:3000";
 
+  async function load() {
+    try {
+      const data = await api<AffLink[]>("/affiliate/links");
+      setLinks(Array.isArray(data) ? data : []);
+    } catch {
+      setLinks([]);
+    }
+  }
+
   useEffect(() => {
-    api<AffLink[]>("/affiliate/links")
-      .then((data) => setLinks(Array.isArray(data) ? data : []))
-      .catch(() => setLinks([]));
+    void load();
   }, []);
 
   const copy = async (text: string, id: string) => {
@@ -33,24 +45,69 @@ export default function AffiliateLinksPage() {
     setTimeout(() => setCopied(null), 1500);
   };
 
+  async function createLink() {
+    if (!productId.trim()) {
+      toast.error("Indique o ID do produto");
+      return;
+    }
+    setCreating(true);
+    try {
+      await api("/affiliate/links", {
+        method: "POST",
+        body: JSON.stringify({ productId: productId.trim() }),
+      });
+      toast.success("Link criado");
+      setProductId("");
+      await load();
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Erro ao criar link",
+      );
+    } finally {
+      setCreating(false);
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold">Meus links</h1>
         <p className="text-sm text-[var(--brand-muted)]">
-          Links de afiliado associados à tua conta.
+          Links de afiliado — partilha e acompanha cliques.
         </p>
+      </div>
+
+      <div className="flex flex-col gap-2 rounded-2xl border border-[var(--brand-border)] bg-white p-4 sm:flex-row sm:items-end">
+        <div className="min-w-0 flex-1">
+          <label className="text-xs font-medium text-[var(--brand-muted)]">
+            ID do produto
+          </label>
+          <Input
+            value={productId}
+            onChange={(e) => setProductId(e.target.value)}
+            placeholder="cuid do produto no marketplace"
+            className="mt-1"
+          />
+        </div>
+        <Button onClick={() => void createLink()} disabled={creating}>
+          <Plus className="mr-1 size-4" />
+          Criar link
+        </Button>
       </div>
 
       {links.length === 0 ? (
         <p className="rounded-2xl border border-dashed border-[var(--brand-border)] bg-white p-8 text-center text-[var(--brand-muted)]">
-          Ainda não tens links. Cria a partir de um produto no marketplace.
+          Ainda não tens links. Cria um com o ID de um produto.
         </p>
       ) : (
         <ul className="space-y-3">
           {links.map((link) => {
-            const url =
-              link.url || `${marketplace}/produtos?ref=${link.code}`;
+            const path = link.product?.slug
+              ? `/produtos/${link.product.slug}`
+              : link.shop?.slug
+                ? `/lojas/${link.shop.slug}`
+                : "/produtos";
+            const url = `${marketplace}${path}?ref=${link.code}`;
             return (
               <li
                 key={link.id}
@@ -58,13 +115,16 @@ export default function AffiliateLinksPage() {
               >
                 <div className="min-w-0">
                   <p className="truncate font-medium">
-                    {link.product?.name || link.label || `Código ${link.code}`}
+                    {link.product?.name ||
+                      link.shop?.name ||
+                      link.label ||
+                      `Código ${link.code}`}
                   </p>
                   <p className="truncate text-xs text-[var(--brand-muted)]">
                     {url}
                   </p>
                   <p className="mt-1 text-xs text-[var(--brand-muted)]">
-                    {link.clicks ?? 0} cliques
+                    {link.clicks ?? 0} cliques · {link.code}
                   </p>
                 </div>
                 <button

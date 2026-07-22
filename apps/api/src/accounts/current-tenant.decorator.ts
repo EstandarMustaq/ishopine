@@ -10,8 +10,10 @@ export type RequestTenant = {
 };
 
 export const CurrentTenant = createParamDecorator(
-  (_data: unknown, ctx: ExecutionContext): RequestTenant => {
-    const request = ctx.switchToHttp().getRequest<{ tenant: RequestTenant }>();
-    return request.tenant;
+  (_data: unknown, ctx: ExecutionContext): RequestTenant | null => {
+    const request = ctx.switchToHttp().getRequest<{
+      tenant?: RequestTenant | null;
+    }>();
+    return request.tenant ?? null;
   },
 );

@@ -5,43 +5,30 @@ import Link from "next/link";
 import { Gift, Link2, TrendingUp } from "lucide-react";
 import { api } from "@/lib/api";
 
-type AffLink = { id: string; clicks?: number };
+type Summary = {
+  activeLinks?: number;
+  linksCount?: number;
+  clicks?: number;
+  pendingCents?: number;
+  earnedCents?: number;
+  commissionsCents?: number;
+  paidCents?: number;
+};
 
 export default function AffiliateHomePage() {
-  const [stats, setStats] = useState({
-    links: 0,
-    clicks: 0,
-    commissionsCents: 0,
-  });
+  const [summary, setSummary] = useState<Summary | null>(null);
 
   useEffect(() => {
-    Promise.allSettled([
-      api<AffLink[]>("/affiliate/links"),
-      api<{
-        linksCount?: number;
-        clicks?: number;
-        commissionsCents?: number;
-      }>("/affiliate/summary"),
-    ]).then(([linksRes, summaryRes]) => {
-      let links = 0;
-      let clicks = 0;
-      if (linksRes.status === "fulfilled") {
-        const arr = Array.isArray(linksRes.value) ? linksRes.value : [];
-        links = arr.length;
-        clicks = arr.reduce((n, l) => n + (l.clicks || 0), 0);
-      }
-      if (summaryRes.status === "fulfilled") {
-        const s = summaryRes.value;
-        setStats({
-          links: s.linksCount ?? links,
-          clicks: s.clicks ?? clicks,
-          commissionsCents: s.commissionsCents ?? 0,
-        });
-        return;
-      }
-      setStats({ links, clicks, commissionsCents: 0 });
-    });
+    api<Summary>("/affiliate/summary")
+      .then(setSummary)
+      .catch(() => setSummary({}));
   }, []);
+
+  const links = summary?.activeLinks ?? summary?.linksCount ?? 0;
+  const clicks = summary?.clicks ?? 0;
+  const commissions =
+    (summary?.commissionsCents ??
+      (summary?.pendingCents ?? 0) + (summary?.earnedCents ?? 0)) / 100;
 
   return (
     <div className="space-y-8">
@@ -56,11 +43,11 @@ export default function AffiliateHomePage() {
 
       <div className="grid gap-4 sm:grid-cols-3">
         {[
-          { label: "Links activos", value: stats.links, icon: Link2 },
-          { label: "Cliques", value: stats.clicks, icon: TrendingUp },
+          { label: "Links activos", value: links, icon: Link2 },
+          { label: "Cliques", value: clicks, icon: TrendingUp },
           {
             label: "Comissões (MZN)",
-            value: (stats.commissionsCents / 100).toLocaleString("pt-MZ"),
+            value: commissions.toLocaleString("pt-MZ"),
             icon: Gift,
           },
         ].map((card) => {

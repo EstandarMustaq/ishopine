@@ -145,6 +145,8 @@ export interface Category {
   description?: string | null;
   imageUrl?: string | null;
   sortOrder: number;
+  scope?: "GLOBAL" | "STORE";
+  shopId?: string | null;
   _count?: { products: number };
 }
 

@@ -21,6 +21,12 @@ export class AffiliateController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Get('rewards')
+  rewards(@CurrentUser() user: AuthUser) {
+    return this.affiliate.listRewards(user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Post('links')
   create(
     @CurrentUser() user: AuthUser,
