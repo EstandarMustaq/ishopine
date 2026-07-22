@@ -356,6 +356,24 @@ export const GATEWAY_ROUTES: GatewayRoute[] = [
     defaultPort: 4109,
   },
   {
+    prefix: "/api/shops",
+    service: "marketplace",
+    envKey: "MARKETPLACE_URL",
+    defaultPort: 4111,
+  },
+  {
+    prefix: "/api/ads",
+    service: "marketplace",
+    envKey: "MARKETPLACE_URL",
+    defaultPort: 4111,
+  },
+  {
+    prefix: "/api/wishlist",
+    service: "marketplace",
+    envKey: "MARKETPLACE_URL",
+    defaultPort: 4111,
+  },
+  {
     prefix: "/api/categories",
     service: "catalog",
     envKey: "CATALOG_URL",

@@ -111,7 +111,8 @@ customer               # pode viver em marketplace no início
 | **15** | Subscription extract (billing owned + usage remote) |
 | **16** | Accounts extract (accounts owned + tenant edge) |
 | **17** | Catalog extract (hybrid categories + products owned) |
-| **18+** | Live carrier partners, multi-region CDN, marketplace extract |
+| **18** | Marketplace extract (shops + ads + wishlist owned) |
+| **19+** | Live carrier partners, multi-region CDN, developers extract |
 
 ## Fora de âmbito (MVP)
 
