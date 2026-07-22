@@ -1,25 +1,36 @@
 /**
- * Phase 6–8: media service owns upload + list when MEDIA_OWNED≠0.
- * Local uploads generate real Sharp thumb/card variants.
+ * Phase 6–9: media service owns upload + list (+ delete) when MEDIA_OWNED≠0.
+ * Local: Sharp variants. Cloudinary: when UPLOAD_PROVIDER=cloudinary.
+ * Public URLs via MEDIA_PUBLIC_BASE_URL / buildMediaUrl.
  */
 import http from "node:http";
-import { createWriteStream } from "node:fs";
-import { mkdir } from "node:fs/promises";
+import { mkdir, unlink, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { randomUUID } from "node:crypto";
 import { PrismaClient } from "@prisma/client";
 import Busboy from "busboy";
+import { v2 as cloudinary } from "cloudinary";
 import jwt from "jsonwebtoken";
 import sharp from "sharp";
 import {
   AUTH_COOKIE_NAME,
   buildMediaUrl,
   localVariantUrl,
+  publicMediaUrl,
 } from "@ishopine/shared";
 
 const prisma = new PrismaClient();
 const uploadDir = process.env.UPLOAD_DIR || "uploads";
 const jwtSecret = process.env.JWT_SECRET || "";
+const provider = (process.env.UPLOAD_PROVIDER || "local").toLowerCase();
+
+if (provider === "cloudinary") {
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+  });
+}
 
 type JwtPayload = { sub: string };
 
@@ -65,10 +76,12 @@ function pathOnly(url?: string) {
 }
 
 function withVariants<T extends { url: string }>(asset: T) {
+  const url = publicMediaUrl(asset.url);
   return {
     ...asset,
+    url,
     variants: {
-      original: asset.url,
+      original: buildMediaUrl(asset.url),
       thumb: buildMediaUrl(asset.url, {
         width: 200,
         height: 200,
@@ -109,6 +122,127 @@ async function writeLocalVariants(absoluteOriginal: string, publicUrl: string) {
   ]);
 }
 
+function collectUpload(
+  req: http.IncomingMessage,
+  folder: string,
+): Promise<{
+  buffer: Buffer;
+  mimeType: string;
+  alt: string;
+  sizeBytes: number;
+}> {
+  return new Promise((resolve, reject) => {
+    const bb = Busboy({
+      headers: req.headers,
+      limits: { fileSize: 8 * 1024 * 1024 },
+    });
+    let settled = false;
+    bb.on("file", (_name, file, info) => {
+      const chunks: Buffer[] = [];
+      file.on("data", (d: Buffer) => chunks.push(d));
+      file.on("limit", () => {
+        reject(new Error("Ficheiro demasiado grande (máx 8MB)"));
+      });
+      file.on("end", () => {
+        if (settled) return;
+        settled = true;
+        const buffer = Buffer.concat(chunks);
+        resolve({
+          buffer,
+          mimeType: info.mimeType,
+          alt: info.filename,
+          sizeBytes: buffer.length,
+        });
+      });
+      file.on("error", reject);
+    });
+    bb.on("error", reject);
+    bb.on("finish", () => {
+      if (!settled) {
+        reject(new Error("Ficheiro em falta (campo file)"));
+      }
+    });
+    // folder unused here — kept for call-site clarity
+    void folder;
+    req.pipe(bb);
+  });
+}
+
+async function uploadLocal(
+  file: { buffer: Buffer; mimeType: string; alt: string; sizeBytes: number },
+  folder: string,
+) {
+  const ext = (file.alt.split(".").pop() || "bin").replace(
+    /[^a-zA-Z0-9]/g,
+    "",
+  );
+  const filename = `${randomUUID()}.${ext || "bin"}`;
+  const dir = join(process.cwd(), uploadDir, folder);
+  await mkdir(dir, { recursive: true });
+  const absolute = join(dir, filename);
+  await writeFile(absolute, file.buffer);
+  const url = `/uploads/${folder}/${filename}`;
+  if (file.mimeType.startsWith("image/")) {
+    try {
+      await writeLocalVariants(absolute, url);
+    } catch (error) {
+      console.error("[media] sharp variants failed", error);
+    }
+  }
+  return {
+    url,
+    provider: "local" as const,
+    publicId: null as string | null,
+    mimeType: file.mimeType,
+    sizeBytes: file.sizeBytes,
+    alt: file.alt,
+  };
+}
+
+async function uploadCloudinary(
+  file: { buffer: Buffer; mimeType: string; alt: string; sizeBytes: number },
+  folder: string,
+) {
+  if (
+    !process.env.CLOUDINARY_CLOUD_NAME ||
+    !process.env.CLOUDINARY_API_KEY ||
+    !process.env.CLOUDINARY_API_SECRET
+  ) {
+    throw new Error(
+      "Cloudinary não configurado (CLOUDINARY_CLOUD_NAME/API_KEY/API_SECRET)",
+    );
+  }
+  const result = await new Promise<{
+    secure_url: string;
+    public_id: string;
+    bytes: number;
+  }>((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      { folder: `ishopine/${folder}` },
+      (error, uploadResult) => {
+        if (error || !uploadResult) {
+          reject(error ?? new Error("Falha no upload Cloudinary"));
+          return;
+        }
+        resolve({
+          secure_url: uploadResult.secure_url,
+          public_id: uploadResult.public_id,
+          bytes: uploadResult.bytes,
+        });
+      },
+    );
+    stream.end(file.buffer);
+  });
+  return {
+    url: result.secure_url,
+    provider: "cloudinary" as const,
+    publicId: result.public_id,
+    mimeType: file.mimeType,
+    sizeBytes: result.bytes,
+    alt: file.alt,
+  };
+}
+
 export async function handleOwnedMedia(
   req: http.IncomingMessage,
   res: http.ServerResponse,
@@ -139,6 +273,55 @@ export async function handleOwnedMedia(
     return true;
   }
 
+  const deleteMatch = path.match(/^\/api\/(?:media|uploads)\/([^/]+)$/);
+  if (req.method === "DELETE" && deleteMatch) {
+    const user = verifyUser(req);
+    if (!user) {
+      json(res, 401, { message: "Não autenticado" });
+      return true;
+    }
+    const asset = await prisma.mediaAsset.findUnique({
+      where: { id: deleteMatch[1] },
+    });
+    if (!asset) {
+      json(res, 404, { message: "Media não encontrado" });
+      return true;
+    }
+    if (asset.uploadedById && asset.uploadedById !== user.sub) {
+      json(res, 403, { message: "Sem permissão para apagar este media" });
+      return true;
+    }
+    if (asset.provider === "local" && asset.url.startsWith("/uploads/")) {
+      const absolute = join(process.cwd(), asset.url.replace(/^\//, ""));
+      try {
+        await unlink(absolute);
+      } catch {
+        // already gone
+      }
+      for (const variant of ["thumb", "card"] as const) {
+        const v = join(
+          process.cwd(),
+          localVariantUrl(asset.url, variant).replace(/^\//, ""),
+        );
+        try {
+          await unlink(v);
+        } catch {
+          // ignore
+        }
+      }
+    }
+    if (asset.provider === "cloudinary" && asset.publicId) {
+      try {
+        await cloudinary.uploader.destroy(asset.publicId);
+      } catch {
+        // ignore remote delete failures
+      }
+    }
+    await prisma.mediaAsset.delete({ where: { id: asset.id } });
+    json(res, 200, { ok: true });
+    return true;
+  }
+
   if (
     req.method === "POST" &&
     (path === "/api/media" || path === "/api/uploads")
@@ -159,72 +342,21 @@ export async function handleOwnedMedia(
         : null;
 
     try {
-      const asset = await new Promise<{
-        url: string;
-        mimeType: string;
-        sizeBytes: number;
-        alt: string;
-        absolute: string;
-      }>((resolve, reject) => {
-        const bb = Busboy({
-          headers: req.headers,
-          limits: { fileSize: 8 * 1024 * 1024 },
-        });
-        let settled = false;
-        bb.on("file", (_name, file, info) => {
-          const ext = (info.filename.split(".").pop() || "bin").replace(
-            /[^a-zA-Z0-9]/g,
-            "",
-          );
-          const filename = `${randomUUID()}.${ext || "bin"}`;
-          const dir = join(process.cwd(), uploadDir, folder);
-          void mkdir(dir, { recursive: true }).then(() => {
-            const absolute = join(dir, filename);
-            const out = createWriteStream(absolute);
-            let size = 0;
-            file.on("data", (d: Buffer) => {
-              size += d.length;
-            });
-            file.pipe(out);
-            out.on("finish", () => {
-              if (settled) return;
-              settled = true;
-              resolve({
-                url: `/uploads/${folder}/${filename}`,
-                mimeType: info.mimeType,
-                sizeBytes: size,
-                alt: info.filename,
-                absolute,
-              });
-            });
-            out.on("error", reject);
-          });
-        });
-        bb.on("error", reject);
-        bb.on("finish", () => {
-          if (!settled) {
-            reject(new Error("Ficheiro em falta (campo file)"));
-          }
-        });
-        req.pipe(bb);
-      });
-
-      if (asset.mimeType.startsWith("image/")) {
-        try {
-          await writeLocalVariants(asset.absolute, asset.url);
-        } catch (error) {
-          console.error("[media] sharp variants failed", error);
-        }
-      }
+      const file = await collectUpload(req, folder);
+      const stored =
+        provider === "cloudinary"
+          ? await uploadCloudinary(file, folder)
+          : await uploadLocal(file, folder);
 
       const created = await prisma.mediaAsset.create({
         data: {
-          url: asset.url,
-          provider: "local",
-          mimeType: asset.mimeType,
-          sizeBytes: asset.sizeBytes,
+          url: stored.url,
+          publicId: stored.publicId,
+          provider: stored.provider,
+          mimeType: stored.mimeType,
+          sizeBytes: stored.sizeBytes,
           folder,
-          alt: asset.alt,
+          alt: stored.alt,
           uploadedById: user.sub,
           tenantId,
           shopId: shopId || null,
@@ -240,6 +372,5 @@ export async function handleOwnedMedia(
     return true;
   }
 
-  // Other media routes (DELETE, etc.) → upstream Nest for now.
   return false;
 }

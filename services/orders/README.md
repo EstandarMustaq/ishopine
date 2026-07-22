@@ -1,8 +1,16 @@
 # orders (strangler)
 
-Fase 3: serviço de borda para `/api/orders/*` e `/api/cart/*`.
+Porta **4101**. Rotas: `/api/orders/*`, `/api/cart/*`.
 
-Neste passo ainda **proxy** para o monólito (`UPSTREAM_API_URL`).
-O gateway encaminha estas rotas para `ORDERS_URL` quando definido.
+## Modo owned (`ORDERS_OWNED≠0`, default)
 
-Próximo: mover handlers Nest do monólito para aqui.
+| Método | Path | Owner |
+|---|---|---|
+| GET/POST/PATCH/DELETE | `/api/cart*` | **owned** |
+| GET | `/api/orders/mine`, `/selling`, `/:id` | **owned** |
+| PATCH | `/api/orders/:id/status` | **owned** |
+| POST | `/api/orders/checkout` | Nest upstream |
+
+## Proxy
+
+`ORDERS_OWNED=0` → tudo para `UPSTREAM_API_URL`.

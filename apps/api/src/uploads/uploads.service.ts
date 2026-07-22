@@ -43,8 +43,9 @@ export class UploadsService {
   private withVariants<T extends { url: string }>(asset: T) {
     return {
       ...asset,
+      url: buildMediaUrl(asset.url),
       variants: {
-        original: asset.url,
+        original: buildMediaUrl(asset.url),
         thumb: buildMediaUrl(asset.url, {
           width: 200,
           height: 200,

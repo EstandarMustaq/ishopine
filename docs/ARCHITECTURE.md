@@ -102,7 +102,8 @@ customer               # pode viver em marketplace no início
 | **6** | Cookie SSO, media owned extraction, logistics stub |
 | **7** | Logistics carriers/shipments, wallet owned reads, media CDN stub |
 | **8** | Production hardening: adapters reais, Sharp, authz, PaySuite |
-| **9+** | Live carrier APIs, full Nest extract, advanced CDN |
+| **9** | Orders cart/status owned + media Cloudinary/CDN base URL |
+| **10+** | Checkout extract, live carrier partners, multi-region CDN |
 
 ## Fora de âmbito (MVP)
 

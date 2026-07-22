@@ -657,6 +657,9 @@ importers:
       busboy:
         specifier: ^1.6.0
         version: 1.6.0
+      cloudinary:
+        specifier: ^2.10.0
+        version: 2.10.0
       http-proxy:
         specifier: ^1.18.1
         version: 1.18.1
