@@ -1,5 +1,6 @@
-# payments
+# payments (strangler)
 
-Fase 0 skeleton — lógica ainda no monólito `apps/api` (strangler).
+Fase 3: serviço de borda para `/api/billing/paysuite/*`.
 
-Contrato e extracção deste serviço serão feitos quando o domínio estiver estável.
+Proxy para o monólito até a extracção completa do domínio PaySuite.
+Gateway usa `PAYMENTS_URL` quando definido.

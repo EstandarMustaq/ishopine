@@ -80,6 +80,15 @@ export class OutboxDispatcher {
         );
         return;
       }
+      case 'commerce.checkout.completed': {
+        await this.projections.projectOpsPulse();
+        return;
+      }
+      case 'affiliate.reward.approved':
+      case 'affiliate.reward.paid': {
+        await this.projections.projectOpsPulse();
+        return;
+      }
       case 'ops.pulse.refresh': {
         await this.projections.projectOpsPulse();
         return;

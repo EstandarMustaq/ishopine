@@ -1,6 +1,18 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
+import { PlatformRole } from '@prisma/client';
 import { AffiliateService } from './affiliate.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../common/guards/roles.guard';
+import { TwoFactorGuard } from '../common/guards/two-factor.guard';
+import { Roles } from '../common/decorators/roles.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { AuthUser } from '../common/decorators/current-user.decorator';
 
@@ -38,5 +50,19 @@ export class AffiliateController {
   @Post('click/:code')
   click(@Param('code') code: string) {
     return this.affiliate.trackClick(code);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard, TwoFactorGuard)
+  @Roles(PlatformRole.PLATFORM_ADMIN, PlatformRole.PLATFORM_OPERATOR)
+  @Patch('rewards/:id/approve')
+  approveReward(@Param('id') id: string) {
+    return this.affiliate.approveReward(id);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard, TwoFactorGuard)
+  @Roles(PlatformRole.PLATFORM_ADMIN, PlatformRole.PLATFORM_OPERATOR)
+  @Patch('rewards/:id/pay')
+  payReward(@Param('id') id: string, @Body() body: { note?: string }) {
+    return this.affiliate.markRewardPaid(id, body.note);
   }
 }

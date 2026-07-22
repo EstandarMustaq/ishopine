@@ -28,7 +28,6 @@ import { cn } from "@/lib/utils";
 import type {
   Address,
   Cart,
-  CheckoutResult,
   CouponValidation,
   PaysuiteCheckoutResponse,
   PaysuiteMethod,
@@ -242,36 +241,31 @@ export default function CheckoutPage() {
             ? "EMOLA"
             : "CREDIT_CARD";
 
-      const checkout = await api<CheckoutResult>("/orders/checkout", {
+      const commerce = await api<{
+        sagaId: string;
+        orders: Array<{ id: string; orderNumber: string }>;
+        orderCount: number;
+        payment: PaysuiteCheckoutResponse;
+      }>("/commerce/checkout", {
         method: "POST",
         body: JSON.stringify({
           addressId,
           paymentMethod: orderPaymentMethod,
           couponCode: coupon?.valid ? coupon.code : undefined,
           affiliateCode: getStoredAffiliateCode() || undefined,
+          paysuiteMethod: payMethod,
+          msisdn:
+            payMethod === "mpesa" || payMethod === "emola"
+              ? normalizeMsisdn(msisdn) || undefined
+              : undefined,
         }),
       });
 
-      const orderIds = checkout.orders.map((o) => o.id);
+      const session = commerce.payment;
       const orderLabel =
-        checkout.orders.length === 1
-          ? checkout.orders[0].orderNumber
-          : `${checkout.orderCount} pedidos`;
-
-      const session = await api<PaysuiteCheckoutResponse>(
-        "/billing/paysuite/checkout",
-        {
-          method: "POST",
-          body: JSON.stringify({
-            orderIds,
-            method: payMethod,
-            msisdn:
-              payMethod === "mpesa" || payMethod === "emola"
-                ? normalizeMsisdn(msisdn) || undefined
-                : undefined,
-          }),
-        },
-      );
+        commerce.orders.length === 1
+          ? commerce.orders[0].orderNumber
+          : `${commerce.orderCount} pedidos`;
 
       const url = session.checkoutUrl ?? session.url;
       if (url && !session.simulated) {

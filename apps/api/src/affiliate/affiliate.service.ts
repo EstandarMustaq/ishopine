@@ -207,4 +207,59 @@ export class AffiliateService {
     });
     return reward;
   }
+
+  async approveReward(rewardId: string) {
+    const reward = await this.prisma.affiliateReward.findUnique({
+      where: { id: rewardId },
+    });
+    if (!reward) throw new NotFoundException('Recompensa não encontrada');
+    if (reward.status !== AffiliateRewardStatus.PENDING) {
+      throw new BadRequestException('Só recompensas PENDING podem ser aprovadas');
+    }
+    return this.prisma.$transaction(async (tx) => {
+      const updated = await tx.affiliateReward.update({
+        where: { id: rewardId },
+        data: { status: AffiliateRewardStatus.APPROVED },
+      });
+      await tx.affiliateLink.update({
+        where: { id: reward.linkId },
+        data: {
+          pendingCents: { decrement: reward.amountCents },
+        },
+      });
+      return updated;
+    });
+  }
+
+  async markRewardPaid(rewardId: string, note?: string) {
+    const reward = await this.prisma.affiliateReward.findUnique({
+      where: { id: rewardId },
+    });
+    if (!reward) throw new NotFoundException('Recompensa não encontrada');
+    if (
+      reward.status !== AffiliateRewardStatus.APPROVED &&
+      reward.status !== AffiliateRewardStatus.PENDING
+    ) {
+      throw new BadRequestException(
+        'Só recompensas APPROVED (ou PENDING) podem ser marcadas como pagas',
+      );
+    }
+    return this.prisma.$transaction(async (tx) => {
+      const wasPending = reward.status === AffiliateRewardStatus.PENDING;
+      const updated = await tx.affiliateReward.update({
+        where: { id: rewardId },
+        data: {
+          status: AffiliateRewardStatus.PAID,
+          note: note ?? reward.note,
+        },
+      });
+      await tx.affiliateLink.update({
+        where: { id: reward.linkId },
+        data: wasPending
+          ? { pendingCents: { decrement: reward.amountCents } }
+          : {},
+      });
+      return updated;
+    });
+  }
 }

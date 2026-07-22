@@ -12,6 +12,7 @@ import { BillingModule } from './billing/billing.module';
 import { CartModule } from './cart/cart.module';
 import { CatalogModule } from './catalog/catalog.module';
 import { CouponsModule } from './coupons/coupons.module';
+import { CommerceModule } from './commerce/commerce.module';
 import { CronModule } from './cron/cron.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { DisputesModule } from './disputes/disputes.module';
@@ -63,6 +64,7 @@ import { WishlistModule } from './wishlist/wishlist.module';
     MessagesModule,
     CouponsModule,
     DisputesModule,
+    CommerceModule,
   ],
   controllers: [AppController],
   providers: [
