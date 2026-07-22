@@ -31,5 +31,6 @@ PAYSUITE_TOKEN=...
 ## Fora de âmbito
 - Clientes HTTP Correios/DHL
 - Multi-região CDN / PoPs inventados
-- Affiliate/subscription/identity extract
+- Affiliate/subscription extract
+- Identity extract (Fase 13)
 - Cloudinary signed URLs (assets públicos)
