@@ -14,6 +14,9 @@ import { CatalogModule } from './catalog/catalog.module';
 import { CouponsModule } from './coupons/coupons.module';
 import { CommerceModule } from './commerce/commerce.module';
 import { CronModule } from './cron/cron.module';
+import { PricingModule } from './pricing/pricing.module';
+import { SubscriptionsModule } from './subscriptions/subscriptions.module';
+import { WalletModule } from './wallet/wallet.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { DisputesModule } from './disputes/disputes.module';
 import { InventoryModule } from './inventory/inventory.module';
@@ -65,6 +68,9 @@ import { WishlistModule } from './wishlist/wishlist.module';
     CouponsModule,
     DisputesModule,
     CommerceModule,
+    WalletModule,
+    PricingModule,
+    SubscriptionsModule,
   ],
   controllers: [AppController],
   providers: [

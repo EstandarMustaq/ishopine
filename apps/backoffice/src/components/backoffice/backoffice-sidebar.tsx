@@ -11,6 +11,7 @@ import {
   Megaphone,
   Receipt,
   Settings,
+  Tag,
   Ticket,
   Users,
 } from "lucide-react";
@@ -23,6 +24,7 @@ const links = [
   { href: "/observability", label: "Observability", icon: Activity },
   { href: "/anuncios", label: "Anúncios", icon: Megaphone },
   { href: "/contabilidade", label: "Contabilidade", icon: Receipt },
+  { href: "/pricing", label: "Pricing", icon: Tag },
   { href: "/usuarios", label: "Utilizadores", icon: Users },
   { href: "/cupons", label: "Cupões", icon: Ticket },
   { href: "/configuracoes", label: "Configurações", icon: Settings },

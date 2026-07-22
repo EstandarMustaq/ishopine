@@ -15,9 +15,12 @@ import {
   PlatformRole,
   ProductStatus,
   ShopStatus,
+  UsageMetric,
 } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AffiliateService } from '../affiliate/affiliate.service';
+import { WalletService } from '../wallet/wallet.service';
+import { SubscriptionsService } from '../subscriptions/subscriptions.service';
 
 @Injectable()
 export class OrdersService {
@@ -25,6 +28,8 @@ export class OrdersService {
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
     private readonly affiliates: AffiliateService,
+    private readonly wallets: WalletService,
+    private readonly subscriptions: SubscriptionsService,
   ) {}
 
   private async nextOrderNumber(tx: {
@@ -375,6 +380,39 @@ export class OrdersService {
           orderId: order.id,
           amountCents: order.subtotalCents,
         });
+      }
+
+      const sellerNetCents = Math.max(
+        0,
+        order.totalCents - order.platformFeeCents,
+      );
+      try {
+        await this.wallets.settleOrderPayout({
+          orderId: order.id,
+          orderNumber: order.orderNumber,
+          sellerShopId: order.sellerShopId,
+          sellerNetCents,
+          platformFeeCents: order.platformFeeCents,
+        });
+      } catch (error) {
+        // Wallet settlement must not roll back payment confirmation.
+        console.error('[orders] wallet settle failed', order.id, error);
+      }
+
+      const tenant = await this.prisma.tenant.findUnique({
+        where: { shopId: order.sellerShopId },
+      });
+      if (tenant) {
+        try {
+          await this.subscriptions.recordUsage({
+            tenantId: tenant.id,
+            metric: UsageMetric.ORDERS,
+            quantity: 1,
+            reference: order.id,
+          });
+        } catch (error) {
+          console.error('[orders] usage record failed', order.id, error);
+        }
       }
     }
   }
