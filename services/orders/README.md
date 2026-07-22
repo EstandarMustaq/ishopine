@@ -11,7 +11,8 @@ Porta **4101**. Rotas: `/api/orders/*`, `/api/cart/*`.
 | PATCH | `/api/orders/:id/status` | **owned** |
 | POST | `/api/orders/checkout` | **owned** (+ `Idempotency-Key`) |
 
-Checkout pede cotação a `UPSTREAM_API_URL/api/logistics/quote` (Nest).
+Checkout pede cotação a `LOGISTICS_URL/api/logistics/quote`
+(fallback `UPSTREAM_API_URL`).
 
 ## Proxy
 

@@ -54,6 +54,7 @@ export const PLATFORM_MODULES = [
   "discovery",
   "commerce-orchestrator",
   "developers",
+  "logistics",
 ] as const;
 
 export type PlatformModule = (typeof PLATFORM_MODULES)[number];
@@ -330,6 +331,7 @@ export type GatewayRoute = {
     | "media"
     | "developers"
     | "affiliates"
+    | "logistics"
     | "monolith";
   /** Env var holding the service base URL. */
   envKey?: string;
@@ -486,6 +488,12 @@ export const GATEWAY_ROUTES: GatewayRoute[] = [
     service: "developers",
     envKey: "DEVELOPERS_URL",
     defaultPort: 4106,
+  },
+  {
+    prefix: "/api/logistics",
+    service: "logistics",
+    envKey: "LOGISTICS_URL",
+    defaultPort: 4112,
   },
 ];
 
