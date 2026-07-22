@@ -1,6 +1,6 @@
 /**
  * Nest OrdersService.checkout parity — Prisma transaction + logistics quote.
- * Shipping quotes via Nest logistics (single adapter/zone source of truth).
+ * Shipping quotes via logistics owned (LOGISTICS_URL) or Nest fallthrough.
  */
 import {
   CarrierCode,
@@ -15,8 +15,10 @@ import type { ShippingQuote } from "@ishopine/shared";
 
 const prisma = new PrismaClient();
 const orgSlug = process.env.PLATFORM_ORG_SLUG || "ishopine";
-const upstream =
-  process.env.UPSTREAM_API_URL || "http://127.0.0.1:4000";
+const logisticsBase =
+  process.env.LOGISTICS_URL ||
+  process.env.UPSTREAM_API_URL ||
+  "http://127.0.0.1:4000";
 
 export type CheckoutInput = {
   addressId?: string;
@@ -65,7 +67,7 @@ async function fetchQuotes(input: {
   subtotalCents: number;
   weightKg: number;
 }): Promise<ShippingQuote[]> {
-  const res = await fetch(`${upstream}/api/logistics/quote`, {
+  const res = await fetch(`${logisticsBase}/api/logistics/quote`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({

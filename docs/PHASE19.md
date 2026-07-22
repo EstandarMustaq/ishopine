@@ -34,4 +34,4 @@ DATABASE_URL=...
 - Clientes HTTP Correios/DHL
 - Multi-região CDN / PoPs
 - Remover deliverEvent do Nest (fica outbox)
-- Extrair logistics / carriers live
+- Extrair logistics → **Fase 20** ([PHASE20.md](./PHASE20.md))

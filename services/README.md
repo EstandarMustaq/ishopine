@@ -14,6 +14,6 @@
 | **media** | **owned :4105** | Upload/list/delete + **static /uploads** cache |
 | **developers** | **owned :4106** | API keys + v1 + feature-flags (`DEVELOPERS_OWNED`); fan-out Nest |
 | **affiliates** | **owned :4108** | Links/clicks/rewards + internal conversion (`AFFILIATES_OWNED`) |
-| logistics | módulo Nest | Carriers + zonas + webhooks |
+| **logistics** | **owned :4112** | Zones + shipments + HMAC webhooks (`LOGISTICS_OWNED`) |
 
 Helper: `@ishopine/shared` → `startStranglerProxy`.

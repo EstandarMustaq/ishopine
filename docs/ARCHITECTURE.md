@@ -27,7 +27,7 @@ Commerce Platform
 ├── Billing + Pricing + Subscriptions
 ├── Affiliate
 ├── Payments
-├── Logistics        (depois)
+├── Logistics        (owned — Fase 20)
 ├── Developers       (owned — Fase 19)
 └── Commerce APIs
 ```
@@ -113,7 +113,8 @@ customer               # pode viver em marketplace no início
 | **17** | Catalog extract (hybrid categories + products owned) |
 | **18** | Marketplace extract (shops + ads + wishlist owned) |
 | **19** | Developers extract (API keys + v1 + feature-flags owned) |
-| **20+** | Live carrier partners, multi-region CDN |
+| **20** | Logistics extract (zones + shipments + HMAC webhooks owned) |
+| **21+** | Live carrier partners, multi-region CDN |
 
 ## Fora de âmbito (MVP)
 
