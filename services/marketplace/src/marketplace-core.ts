@@ -71,7 +71,9 @@ function assertGeo(data: {
     !data.province ||
     !data.district ||
     typeof data.latitude !== "number" ||
-    typeof data.longitude !== "number"
+    typeof data.longitude !== "number" ||
+    !Number.isFinite(data.latitude) ||
+    !Number.isFinite(data.longitude)
   ) {
     throw new HttpError(
       400,

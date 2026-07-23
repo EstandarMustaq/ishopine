@@ -373,11 +373,9 @@ export async function handleOwnedMarketplace(
       return true;
     }
     if (method === "GET" && path === "/api/shops/mine") {
-      const { userId } = await requireSellerTenant(req, [
-        TenantType.PARTICULAR,
-        TenantType.STORE,
-      ]);
-      json(res, 200, await myShops(userId));
+      // Own shops by user — no tenant header required (new sellers have none yet).
+      const { user } = await requireAuth(req);
+      json(res, 200, await myShops(user.id));
       return true;
     }
     if (method === "POST" && path === "/api/shops") {

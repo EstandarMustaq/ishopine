@@ -199,18 +199,32 @@ export default function PainelLojaPage() {
 
   async function onCreate(e: React.FormEvent) {
     e.preventDefault();
+    if (!form.name.trim()) {
+      toast.error("Nome da loja é obrigatório");
+      return;
+    }
+    if (!form.province || !form.district) {
+      toast.error("Selecione província e distrito");
+      return;
+    }
+    const latitude = Number(form.latitude);
+    const longitude = Number(form.longitude);
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+      toast.error("Informe coordenadas válidas ou use GPS");
+      return;
+    }
     setSaving(true);
     try {
       const shop = await api<Shop>("/shops", {
         method: "POST",
         body: JSON.stringify({
-          name: form.name,
+          name: form.name.trim(),
           description: form.description || undefined,
           shopType: form.shopType,
           province: form.province,
           district: form.district,
-          latitude: Number(form.latitude),
-          longitude: Number(form.longitude),
+          latitude,
+          longitude,
         }),
       });
       toast.success(`Loja "${shop.name}" criada!`);
