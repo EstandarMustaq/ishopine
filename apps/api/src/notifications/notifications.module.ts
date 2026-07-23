@@ -1,9 +1,11 @@
 import { Module } from '@nestjs/common';
-import { NotificationsController } from './notifications.controller';
 import { NotificationsService } from './notifications.service';
 
+/**
+ * Phase 34: Nest notifications HTTP → comms strangler.
+ * Keep NotificationsService for OutboxDispatcher DI.
+ */
 @Module({
-  controllers: [NotificationsController],
   providers: [NotificationsService],
   exports: [NotificationsService],
 })

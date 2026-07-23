@@ -38,5 +38,5 @@ Sem mudança — gate Fase 29; `docs/contracts/` sem OpenAPI.
 
 ## Fora de âmbito
 - Cliente HTTP Correios
-- Coupons / inventory / reviews / comms Nest controllers → Fase 34+
+- Coupons / inventory / reviews / comms Nest controllers → **Fase 34**
 - Remover Nest Auth / Reliability engine / Mail
