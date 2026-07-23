@@ -536,6 +536,18 @@ export const GATEWAY_ROUTES: GatewayRoute[] = [
     defaultPort: 4102,
   },
   {
+    prefix: "/api/billing/stripe",
+    service: "payments",
+    envKey: "PAYMENTS_URL",
+    defaultPort: 4102,
+  },
+  {
+    prefix: "/api/billing/mpesa",
+    service: "payments",
+    envKey: "PAYMENTS_URL",
+    defaultPort: 4102,
+  },
+  {
     prefix: "/api/wallet",
     service: "wallet",
     envKey: "WALLET_URL",

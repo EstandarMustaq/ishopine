@@ -1,7 +1,7 @@
 /**
- * Phase 15: billing owns pricing + subscriptions + usage/invoices when BILLING_OWNED≠0.
- * PaySuite (/api/billing/paysuite*, legacy stripe/mpesa) falls through to Nest/payments.
- * Internal: POST /api/billing/internal/record-usage (settle from Nest).
+ * Phase 15–31: billing owns pricing + subscriptions + usage/invoices when BILLING_OWNED≠0.
+ * PaySuite + legacy stripe/mpesa → payments (return false here).
+ * Internal: POST /api/billing/internal/record-usage.
  */
 import http from "node:http";
 import {

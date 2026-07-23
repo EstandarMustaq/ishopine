@@ -44,5 +44,5 @@ PAYMENTS_OWNED=1
 
 ## Fora de âmbito
 - Cliente HTTP Correios (OpenAPI ausente)
-- Legacy stripe/mpesa aliases no Nest billing
-- Remover Passport Google do Nest monólito (pode ficar como dead code até cleanup)
+- Legacy stripe/mpesa aliases no Nest billing → **Fase 31**
+- Remover Passport Google do Nest monólito → **Fase 31**
