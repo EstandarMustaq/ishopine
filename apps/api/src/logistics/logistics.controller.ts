@@ -33,6 +33,11 @@ export class LogisticsController {
     return this.logistics.listCarriers();
   }
 
+  @Get('partners')
+  partners() {
+    return this.logistics.listCarrierPartners();
+  }
+
   @Post('quote')
   quote(@Body() body: ShippingQuoteDto) {
     return this.logistics.quote(body);

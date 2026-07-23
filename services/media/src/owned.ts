@@ -17,6 +17,7 @@ import {
   AUTH_COOKIE_NAME,
   buildMediaUrl,
   localVariantUrl,
+  mediaCdnStatus,
   publicMediaUrl,
 } from "@ishopine/shared";
 
@@ -293,6 +294,11 @@ export async function handleOwnedMedia(
       "X-Content-Type-Options": "nosniff",
     });
     createReadStream(absolute).pipe(res);
+    return true;
+  }
+
+  if (req.method === "GET" && path === "/api/media/cdn") {
+    json(res, 200, mediaCdnStatus());
     return true;
   }
 

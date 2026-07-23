@@ -11,10 +11,10 @@
 | commerce-orchestrator | compose :4100 | Saga: orders checkout → PaySuite |
 | **wallet** | **owned :4103** | Reads + internal settle (`WALLET_OWNED`) |
 | **billing** | **owned :4104** | Pricing + subscriptions + usage (`BILLING_OWNED`); PaySuite → payments |
-| **media** | **owned :4105** | Upload/list/delete + **static /uploads** cache |
+| **media** | **owned :4105** | Upload/list/delete + **static /uploads** + **CDN status** (`MEDIA_CDN_HOST`) |
 | **developers** | **owned :4106** | API keys + v1 + feature-flags (`DEVELOPERS_OWNED`); fan-out Nest |
 | **affiliates** | **owned :4108** | Links/clicks/rewards + internal conversion (`AFFILIATES_OWNED`) |
-| **logistics** | **owned :4112** | Zones + shipments + HMAC webhooks (`LOGISTICS_OWNED`) |
+| **logistics** | **owned :4112** | Zones + shipments + HMAC + **DHL live fail-closed** (`LOGISTICS_OWNED`) |
 | **accounting** | **owned :4113** | Plano de contas + lançamentos (`ACCOUNTING_OWNED`) |
 | **comms** | **owned :4114** | Notifications + conversations + disputes (`COMMS_OWNED`) |
 

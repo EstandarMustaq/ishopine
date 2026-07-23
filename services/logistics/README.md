@@ -1,16 +1,22 @@
-# Logistics (owned — Fase 20)
+# Logistics (owned — Fases 20–23)
 
 Porta **4112**. Com `LOGISTICS_OWNED≠0` (default) trata cotações, envios,
-etiquetas HTML e webhooks HMAC — adapters reais (`FLAT_RATE`, `FREE_THRESHOLD`,
-`STORE_PICKUP`, `MANUAL`) + zonas `ShippingRateZone`.
+etiquetas HTML e webhooks HMAC.
 
-**Não** inclui clientes HTTP Correios/DHL nem CDN multi-região.
+## Adapters
+
+| Code | Modo |
+|---|---|
+| `FLAT_RATE`, `FREE_THRESHOLD`, `STORE_PICKUP`, `MANUAL` | local + zonas DB |
+| `DHL_EXPRESS` | **live MyDHL** se credenciais; senão omitido nas cotações |
+| `CORREIOS_MZ` (legacy) | → `MANUAL` (sem API) |
 
 ## Rotas owned
 
 | Método | Path | Auth |
 |---|---|---|
 | GET | `/api/logistics/carriers` | público |
+| GET | `/api/logistics/partners` | público (estado live) |
 | POST | `/api/logistics/quote` | público |
 | POST | `/api/logistics/webhooks/:carrier` | HMAC `x-carrier-signature` |
 | GET | `/api/logistics/shipments` | JWT + tenant STORE |
@@ -20,11 +26,9 @@ etiquetas HTML e webhooks HMAC — adapters reais (`FLAT_RATE`, `FREE_THRESHOLD`
 | POST | `/api/logistics/shipments/:id/delivered` | JWT + STORE |
 | GET | `/api/logistics/shipments/:id/label` | HTML público |
 
-Checkout (`services/orders`) deve apontar `LOGISTICS_URL` para cotações.
-
 ```bash
 LOGISTICS_OWNED=1
 LOGISTICS_URL=http://127.0.0.1:4112
-CARRIER_WEBHOOK_SECRET=...
+# DHL_EXPRESS_API_KEY=… DHL_EXPRESS_API_SECRET=… DHL_EXPRESS_ACCOUNT_NUMBER=…
 pnpm --filter @ishopine/logistics dev
 ```

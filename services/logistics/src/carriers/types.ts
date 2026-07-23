@@ -24,9 +24,11 @@ export type CarrierAdapter = {
   method: ShippingQuote["method"];
   /**
    * Build a quote for this carrier, or null if not applicable
-   * (e.g. FREE_THRESHOLD when subtotal below limiar).
+   * (e.g. FREE_THRESHOLD when subtotal below limiar; DHL without credentials).
    */
-  quote(ctx: QuoteContext): ShippingQuote | null;
+  quote(
+    ctx: QuoteContext,
+  ): ShippingQuote | null | Promise<ShippingQuote | null>;
   /**
    * Tracking code for label creation.
    * MANUAL requires seller-provided code; others use deterministic platform codes.

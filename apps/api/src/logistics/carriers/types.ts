@@ -26,7 +26,9 @@ export type CarrierAdapter = {
    * Build a quote for this carrier, or null if not applicable
    * (e.g. FREE_THRESHOLD when subtotal below limiar).
    */
-  quote(ctx: QuoteContext): ShippingQuote | null;
+  quote(
+    ctx: QuoteContext,
+  ): ShippingQuote | null | Promise<ShippingQuote | null>;
   /**
    * Tracking code for label creation.
    * MANUAL requires seller-provided code; others use deterministic platform codes.
