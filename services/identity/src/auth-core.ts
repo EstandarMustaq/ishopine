@@ -89,7 +89,7 @@ async function issueVerificationCode(
     },
   });
 
-  await sendVerificationCode(
+  const sendResult = await sendVerificationCode(
     email,
     code,
     purpose === VerificationPurpose.LOGIN_OTP
@@ -97,9 +97,15 @@ async function issueVerificationCode(
       : "verificação de e-mail",
   );
 
+  // Surface the code when mail is not delivered (misconfigured SMTP /
+  // provider outage) so onboarding is not blocked. Prefer fixing SMTP.
+  const exposeCode =
+    !sendResult.delivered || (!isProd && !mailConfigured());
+
   return {
     code,
-    devCode: !isProd && !mailConfigured() ? code : undefined,
+    delivered: sendResult.delivered,
+    devCode: exposeCode ? code : undefined,
   };
 }
 
@@ -254,7 +260,7 @@ export async function register(body: Record<string, unknown>) {
     },
   });
 
-  const { devCode } = await issueVerificationCode(
+  const { devCode, delivered } = await issueVerificationCode(
     email,
     VerificationPurpose.EMAIL_VERIFY,
     user.id,
@@ -270,8 +276,9 @@ export async function register(body: Record<string, unknown>) {
   });
 
   return {
-    message:
-      "Conta criada. Verifique seu e-mail com o código de 6 dígitos antes de acessar.",
+    message: delivered
+      ? "Conta criada. Verifique seu e-mail com o código de 6 dígitos antes de acessar."
+      : "Conta criada. O envio de e-mail falhou temporariamente — use o código mostrado no ecrã de verificação.",
     email,
     requiresEmailVerification: true,
     ...(devCode ? { devCode } : {}),

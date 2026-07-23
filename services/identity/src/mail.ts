@@ -44,10 +44,21 @@ export async function sendVerificationCode(
 
   const tx = ensureTransporter();
   if (!tx) {
-    console.warn(`[identity][DEV] SMTP não configurado. Código para ${email}: ${code}`);
+    console.warn(
+      `[identity] SMTP não configurado. Código para ${email}: ${code}`,
+    );
     return { delivered: false, logged: true };
   }
 
-  await tx.sendMail({ from, to: email, subject, text, html });
-  return { delivered: true, logged: false };
+  try {
+    await tx.sendMail({ from, to: email, subject, text, html });
+    return { delivered: true, logged: false };
+  } catch (error) {
+    // Never block register/login on SMTP outages or bad credentials.
+    console.error(
+      `[identity] SMTP send failed for ${email}; código: ${code}`,
+      error,
+    );
+    return { delivered: false, logged: true };
+  }
 }
