@@ -42,4 +42,5 @@ CARRIER_WEBHOOK_SECRET=...
 - Clientes HTTP Correios / DHL / parceiros live
 - Multi-região CDN / PoPs
 - Remover `LogisticsService` do Nest (ainda usado in-process)
-- Accounting → **Fase 21**; Comms → **Fase 22** ([PHASE22.md](./PHASE22.md))
+- Accounting ledger → **Fase 21** ([PHASE21.md](./PHASE21.md))
+- Comms → **Fase 22** ([PHASE22.md](./PHASE22.md))

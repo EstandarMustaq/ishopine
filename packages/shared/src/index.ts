@@ -55,6 +55,7 @@ export const PLATFORM_MODULES = [
   "commerce-orchestrator",
   "developers",
   "logistics",
+  "accounting",
   "comms",
 ] as const;
 
@@ -333,6 +334,7 @@ export type GatewayRoute = {
     | "developers"
     | "affiliates"
     | "logistics"
+    | "accounting"
     | "comms"
     | "monolith";
   /** Env var holding the service base URL. */
@@ -496,6 +498,12 @@ export const GATEWAY_ROUTES: GatewayRoute[] = [
     service: "logistics",
     envKey: "LOGISTICS_URL",
     defaultPort: 4112,
+  },
+  {
+    prefix: "/api/accounting",
+    service: "accounting",
+    envKey: "ACCOUNTING_URL",
+    defaultPort: 4113,
   },
   {
     prefix: "/api/notifications",
