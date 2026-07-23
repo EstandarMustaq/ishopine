@@ -34,4 +34,4 @@ DATABASE_URL=...
 
 ## Fora de âmbito
 - Cliente HTTP Correios
-- Users admin / reliability / cron extract
+- Users admin / reliability / cron extract → **Fase 28** (`platform-ops`)
