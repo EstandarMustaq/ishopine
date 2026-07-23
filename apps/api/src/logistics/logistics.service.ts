@@ -11,6 +11,8 @@ import {
   ShipmentStatus,
 } from '@prisma/client';
 import { createHmac, timingSafeEqual } from 'crypto';
+import { existsSync } from 'fs';
+import { resolve } from 'path';
 import type { ShippingQuote, ShippingQuoteRequest } from '@ishopine/shared';
 import { PrismaService } from '../prisma/prisma.service';
 import { OutboxService } from '../reliability/outbox.service';
@@ -45,7 +47,7 @@ export class LogisticsService {
     }));
   }
 
-  /** Phase 23–26: partner capability report (no fake Correios). */
+  /** Phase 23–29: partner capability report (no fake Correios HTTP). */
   listCarrierPartners() {
     const base = (this.config.get<string>('CORREIOS_MZ_API_BASE') || '').trim();
     const key = (this.config.get<string>('CORREIOS_MZ_API_KEY') || '').trim();
@@ -55,6 +57,37 @@ export class LogisticsService {
     const contractedFlag =
       this.config.get<string>('CORREIOS_MZ_CONTRACTED') === '1';
     const envPresent = Boolean(base && key && secret);
+    const openApiFromEnv = (
+      this.config.get<string>('CORREIOS_MZ_OPENAPI_PATH') || ''
+    ).trim();
+    const candidates = openApiFromEnv
+      ? [resolve(openApiFromEnv)]
+      : [
+          resolve(process.cwd(), 'docs/contracts/correios-mz.openapi.yaml'),
+          resolve(
+            process.cwd(),
+            '../../docs/contracts/correios-mz.openapi.yaml',
+          ),
+        ];
+    const openApiPath =
+      candidates.find((p) => existsSync(p)) ?? candidates[0];
+    const openapiPresent = existsSync(openApiPath);
+    const adapterPresent = false;
+    let reason: string;
+    if (!openapiPresent) {
+      reason =
+        'Sem OpenAPI/contrato em docs/contracts/correios-mz.openapi.yaml — HTTP bloqueado; mapsTo MANUAL';
+    } else if (!adapterPresent) {
+      reason =
+        'OpenAPI presente, mas adapter HTTP ainda não gerado a partir do contrato — mapsTo MANUAL';
+    } else if (!envPresent) {
+      reason =
+        'OpenAPI+adapter presentes, mas credenciais CORREIOS_MZ_* em falta';
+    } else if (!contractedFlag) {
+      reason = 'Definir CORREIOS_MZ_CONTRACTED=1 após contrato assinado';
+    } else {
+      reason = 'Contrato completo — ativar live no adapter';
+    }
     return {
       local: listCarrierAdapters()
         .filter((a) => a.code !== CarrierCode.DHL_EXPRESS)
@@ -84,15 +117,18 @@ export class LogisticsService {
           mode: 'unavailable' as const,
           contractedFlag,
           credentialsPresent: envPresent,
-          reason: envPresent
-            ? 'Credenciais presentes, mas sem OpenAPI/contrato no monorepo — adapter HTTP não inventado; mapsTo MANUAL'
-            : 'Sem API pública/contratada no monorepo — pedidos legacy mapeiam para MANUAL',
+          openapiPresent,
+          openApiPath,
+          adapterPresent,
+          readyForAdapter: contractedFlag && openapiPresent && envPresent,
+          reason,
           mapsTo: 'MANUAL',
           env: [
             'CORREIOS_MZ_CONTRACTED',
             'CORREIOS_MZ_API_BASE',
             'CORREIOS_MZ_API_KEY',
             'CORREIOS_MZ_API_SECRET',
+            'CORREIOS_MZ_OPENAPI_PATH',
           ],
         },
       ],

@@ -62,6 +62,7 @@ export const PLATFORM_MODULES = [
   "reviews",
   "platform-settings",
   "platform-ops",
+  "platform-security",
 ] as const;
 
 export type PlatformModule = (typeof PLATFORM_MODULES)[number];
@@ -416,6 +417,7 @@ export type GatewayRoute = {
     | "reviews"
     | "platform-settings"
     | "platform-ops"
+    | "platform-security"
     | "monolith";
   /** Env var holding the service base URL. */
   envKey?: string;
@@ -664,6 +666,12 @@ export const GATEWAY_ROUTES: GatewayRoute[] = [
     service: "platform-ops",
     envKey: "PLATFORM_OPS_URL",
     defaultPort: 4119,
+  },
+  {
+    prefix: "/api/security",
+    service: "platform-security",
+    envKey: "PLATFORM_SECURITY_URL",
+    defaultPort: 4120,
   },
 ];
 
