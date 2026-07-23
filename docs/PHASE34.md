@@ -18,7 +18,7 @@ Retirar HTTP Nest já owned por coupons / inventory / reviews / comms —
 
 ### Kept on Nest
 - `NotificationsModule` / `NotificationsService` — `OutboxDispatcher` DI
-- Reliability engine, auth, commerce/billing, shops, catalog, etc.
+- Reliability engine, auth, commerce/billing, shops, catalog, etc. (shops/catalog → Fase 35)
 
 ### Production path
 ```bash
@@ -37,4 +37,4 @@ Sem mudança — gate Fase 29; `docs/contracts/` sem OpenAPI.
 ## Fora de âmbito
 - Cliente HTTP Correios
 - Remover Nest Auth / Reliability / NotificationsService
-- Remover Nest shops/catalog/wishlist (marketplace/catalog owned separately)
+- Remover Nest shops/catalog/wishlist → **Fase 35** ([PHASE35.md](./PHASE35.md))
