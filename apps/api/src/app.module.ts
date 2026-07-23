@@ -20,7 +20,6 @@ import { WalletModule } from './wallet/wallet.module';
 import { FeatureFlagsModule } from './feature-flags/feature-flags.module';
 import { DevelopersModule } from './developers/developers.module';
 import { LogisticsModule } from './logistics/logistics.module';
-import { DashboardModule } from './dashboard/dashboard.module';
 import { DisputesModule } from './disputes/disputes.module';
 import { InventoryModule } from './inventory/inventory.module';
 import { MailModule } from './mail/mail.module';
@@ -63,7 +62,6 @@ import { WishlistModule } from './wishlist/wishlist.module';
     AffiliateModule,
     AdsModule,
     UploadsModule,
-    DashboardModule,
     WishlistModule,
     ReviewsModule,
     NotificationsModule,

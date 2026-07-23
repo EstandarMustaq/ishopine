@@ -1,78 +1,13 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { PlatformRole } from '@prisma/client';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
+/**
+ * Nest users remnant (Phase 33). Admin list/role/active → platform-ops.
+ * Address helpers kept for Nest fallthrough.
+ */
 @Injectable()
 export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
-
-  list(platformRole?: PlatformRole) {
-    return this.prisma.user.findMany({
-      where: platformRole ? { platformRole } : undefined,
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        platformRole: true,
-        phone: true,
-        isActive: true,
-        canBuy: true,
-        canSell: true,
-        totpEnabled: true,
-        emailVerifiedAt: true,
-        createdAt: true,
-        _count: {
-          select: {
-            buyerOrders: true,
-            ownedShops: true,
-            shopMemberships: true,
-          },
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
-  }
-
-  async updateRole(id: string, platformRole: PlatformRole) {
-    const user = await this.prisma.user.findUnique({ where: { id } });
-    if (!user) {
-      throw new NotFoundException('Usuário não encontrado');
-    }
-    return this.prisma.user.update({
-      where: { id },
-      data: {
-        platformRole,
-        canSell:
-          platformRole === PlatformRole.SELLER ||
-          platformRole === PlatformRole.PLATFORM_ADMIN ||
-          platformRole === PlatformRole.PLATFORM_OPERATOR
-            ? true
-            : user.canSell,
-      },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        platformRole: true,
-        isActive: true,
-        canSell: true,
-      },
-    });
-  }
-
-  async setActive(id: string, isActive: boolean) {
-    return this.prisma.user.update({
-      where: { id },
-      data: { isActive },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        platformRole: true,
-        isActive: true,
-      },
-    });
-  }
 
   listAddresses(userId: string) {
     return this.prisma.address.findMany({
