@@ -123,7 +123,8 @@ customer               # pode viver em marketplace no início
 | **27** | Platform-settings / dashboard extract (`:4118`); Correios still blocked |
 | **28** | Platform-ops extract (`:4119`) — users admin + reliability + cron; Correios still blocked |
 | **29** | Platform-security extract (`:4120`) + Correios OpenAPI gate (`docs/contracts/`); no invented HTTP |
-| **30+** | Correios HTTP adapter when OpenAPI lands + remaining Nest surfaces |
+| **30** | Google OAuth → identity; settle-paid → orders; Correios still blocked |
+| **31+** | Correios HTTP adapter when OpenAPI lands; Nest cleanup (Passport/legacy aliases) |
 
 ## Fora de âmbito (MVP)
 

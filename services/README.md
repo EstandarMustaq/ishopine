@@ -2,11 +2,11 @@
 
 | Serviço | Estado | Notas |
 |---|---|---|
-| **identity** | **owned :4107** | Auth local + 2FA + session (`IDENTITY_OWNED`); Google → Nest |
+| **identity** | **owned :4107** | Auth local + 2FA + session + **Google OAuth** (`IDENTITY_OWNED`) |
 | **accounts** | **owned :4109** | Account + tenants + **addresses** (`ACCOUNTS_OWNED`) |
 | **marketplace** | **owned :4111** | Shops + ads + wishlist (`MARKETPLACE_OWNED`) |
 | **catalog** | **owned :4110** | Categorias + produtos híbridos (`CATALOG_OWNED`) |
-| **orders** | **owned :4101** | Cart + GET + status + checkout; remote coupon/inventory/label/accounting |
+| **orders** | **owned :4101** | Cart + GET + status + checkout + **settle-paid internal**; remote coupon/inventory/label/accounting/wallet/affiliates |
 | **payments** | **owned :4102** | PaySuite checkout/status/webhook/**payouts/refunds** |
 | commerce-orchestrator | compose :4100 | Saga: **ORDERS_URL** → **PAYMENTS_URL** (Fase 25) |
 | **wallet** | **owned :4103** | Reads + internal settle (`WALLET_OWNED`) |

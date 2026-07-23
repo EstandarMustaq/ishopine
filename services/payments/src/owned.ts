@@ -1,6 +1,6 @@
 /**
- * Phase 11: payments owns PaySuite checkout / status / webhook when PAYMENTS_OWNED≠0.
- * On PAID → Nest POST /api/orders/internal/settle-paid (affiliates + wallet + usage).
+ * Phase 11–30: payments owns PaySuite checkout / status / webhook when PAYMENTS_OWNED≠0.
+ * On PAID → orders POST /api/orders/internal/settle-paid (ORDERS_URL, else Nest upstream).
  */
 import http from "node:http";
 import { randomBytes } from "node:crypto";
@@ -36,6 +36,8 @@ const prisma = new PrismaClient();
 const jwtSecret = process.env.JWT_SECRET || "";
 const nestUpstream =
   process.env.UPSTREAM_API_URL || "http://127.0.0.1:4000";
+const ordersUpstream =
+  process.env.ORDERS_URL || nestUpstream;
 const internalSecret =
   process.env.INTERNAL_SERVICE_SECRET || process.env.CRON_SECRET || "";
 const isProd = process.env.NODE_ENV === "production";
@@ -323,8 +325,8 @@ async function loadPayableOrders(buyerId: string, orderIds: string[]) {
   return { orders, amountCents };
 }
 
-/** Nest settlePaidOrders — affiliates + wallet + subscriptions. */
-async function callNestSettlePaid(orderIds: string[]) {
+/** Orders settlePaidOrders — affiliates + wallet + subscriptions. */
+async function callOrdersSettlePaid(orderIds: string[]) {
   if (!internalSecret) {
     throw httpError(
       503,
@@ -332,7 +334,7 @@ async function callNestSettlePaid(orderIds: string[]) {
     );
   }
   const res = await fetch(
-    `${nestUpstream.replace(/\/$/, "")}/api/orders/internal/settle-paid`,
+    `${ordersUpstream.replace(/\/$/, "")}/api/orders/internal/settle-paid`,
     {
       method: "POST",
       headers: {
@@ -346,7 +348,7 @@ async function callNestSettlePaid(orderIds: string[]) {
     const text = await res.text();
     throw httpError(
       502,
-      `Settle Nest falhou (${res.status}): ${text.slice(0, 300)}`,
+      `Settle orders falhou (${res.status}): ${text.slice(0, 300)}`,
     );
   }
   return res.json();
@@ -378,9 +380,9 @@ async function markBillingPaid(
   });
 
   try {
-    await callNestSettlePaid(payment.orderIds);
+    await callOrdersSettlePaid(payment.orderIds);
   } catch (error) {
-    console.error("[payments] nest settle failed", paymentId, error);
+    console.error("[payments] orders settle failed", paymentId, error);
   }
 
   await prisma.outboxMessage.create({

@@ -1,6 +1,6 @@
 /**
- * Phase 13: identity auth core — parity with Nest AuthService (local + 2FA + me).
- * Google OAuth stays on Nest via strangler fallthrough.
+ * Phase 13–30: identity auth core — local + 2FA + me.
+ * Google OAuth lives in google-oauth.ts (owned by identity).
  */
 import { createHash, randomBytes, randomInt } from "node:crypto";
 import {

@@ -66,6 +66,18 @@ export function accountingPostRemoteEnabled() {
   return remoteOn("ACCOUNTING_POST_REMOTE", process.env.ACCOUNTING_URL);
 }
 
+export function affiliatesSettleRemoteEnabled() {
+  return remoteOn("AFFILIATES_SETTLE_REMOTE", process.env.AFFILIATES_URL);
+}
+
+export function walletSettleRemoteEnabled() {
+  return remoteOn("WALLET_SETTLE_REMOTE", process.env.WALLET_URL);
+}
+
+export function billingUsageRemoteEnabled() {
+  return remoteOn("BILLING_USAGE_REMOTE", process.env.BILLING_URL);
+}
+
 export async function remoteRedeemCoupon(input: {
   code: string;
   orderId: string;
@@ -139,6 +151,45 @@ export async function remoteRecordOrderRevenue(input: {
   return postJson(
     process.env.ACCOUNTING_URL!,
     "/api/accounting/internal/record-order-revenue",
+    input,
+  );
+}
+
+export async function remoteAffiliateConversion(input: {
+  code?: string | null;
+  orderId: string;
+  amountCents: number;
+}) {
+  return postJson(
+    process.env.AFFILIATES_URL!,
+    "/api/affiliate/internal/register-conversion",
+    input,
+  );
+}
+
+export async function remoteWalletSettleOrder(input: {
+  orderId: string;
+  orderNumber: string;
+  sellerShopId: string;
+  sellerNetCents: number;
+  platformFeeCents: number;
+}) {
+  return postJson(
+    process.env.WALLET_URL!,
+    "/api/wallet/internal/settle-order",
+    input,
+  );
+}
+
+export async function remoteRecordUsage(input: {
+  tenantId: string;
+  metric: string;
+  quantity?: number;
+  reference?: string;
+}) {
+  return postJson(
+    process.env.BILLING_URL!,
+    "/api/billing/internal/record-usage",
     input,
   );
 }
