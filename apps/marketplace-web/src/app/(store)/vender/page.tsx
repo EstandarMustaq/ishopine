@@ -8,14 +8,13 @@ import { useAuthStore } from "@/lib/auth-store";
 
 export default function VenderPage() {
   const accessToken = useAuthStore((s) => s.accessToken);
-  const canAccessPainel = useAuthStore((s) => s.canAccessPainel);
-  const user = useAuthStore((s) => s.user);
 
   useEffect(() => {
-    if (accessToken && (canAccessPainel() || user?.canSell)) {
+    // Any signed-in user can open a shop — do not wait for canSell.
+    if (accessToken) {
       window.location.href = appHandoffUrl("seller", accessToken, "/loja");
     }
-  }, [accessToken, canAccessPainel, user]);
+  }, [accessToken]);
 
   const sellerUrl = getAppUrls().seller;
 

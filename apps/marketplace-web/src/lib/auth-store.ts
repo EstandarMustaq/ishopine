@@ -111,7 +111,14 @@ export function resolvePostLogin(
     };
   }
   if (next === "seller") {
-    const path = user.totpEnabled ? "/" : "/seguranca?required=1";
+    // First-time sellers land on /loja to create a shop (canSell is false yet).
+    // Existing sellers without 2FA go to security setup.
+    const canSell =
+      Boolean(user.canSell) ||
+      role === "SELLER" ||
+      isStaff;
+    const path =
+      canSell && !user.totpEnabled ? "/seguranca?required=1" : "/loja";
     return {
       kind: "external",
       href: appHandoffUrl("seller", accessToken, path),
@@ -126,7 +133,7 @@ export function resolvePostLogin(
   }
 
   if (canSell) {
-    const path = user.totpEnabled ? "/" : "/seguranca?required=1";
+    const path = user.totpEnabled ? "/loja" : "/seguranca?required=1";
     return {
       kind: "external",
       href: appHandoffUrl("seller", accessToken, path),

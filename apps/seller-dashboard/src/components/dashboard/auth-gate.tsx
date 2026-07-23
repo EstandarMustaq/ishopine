@@ -156,7 +156,10 @@ export function AuthGate({
       return;
     }
 
-    if ((painelAccess || sellerAccess) && !canAccessPainel()) {
+    // Seller app is the onboarding surface for first shop — any signed-in
+    // user may enter. Do NOT require canSell (that flag is set only after
+    // createShop succeeds).
+    if (painelAccess && !sellerAccess && !canAccessPainel()) {
       window.location.href = `${marketplaceUrl}/conta`;
       return;
     }
@@ -168,12 +171,16 @@ export function AuthGate({
 
     const onSecurity =
       allowWithout2fa || pathname.startsWith("/seguranca");
+    // Allow /loja without 2FA so first-time sellers can create a shop.
+    const onShopOnboarding = pathname.startsWith("/loja");
 
     if (
       (painelAccess || sellerAccess) &&
+      canAccessPainel() &&
       requiresTwoFactor() &&
       !user.totpEnabled &&
-      !onSecurity
+      !onSecurity &&
+      !onShopOnboarding
     ) {
       router.replace("/seguranca?required=1");
     }
@@ -209,15 +216,18 @@ export function AuthGate({
   if (staffAccess && !isStaff()) return null;
   if (adminOnly && !isAdmin()) return null;
   if (roles && (!role || !roles.includes(role))) return null;
-  if ((painelAccess || sellerAccess) && !canAccessPainel()) return null;
+  if (painelAccess && !sellerAccess && !canAccessPainel()) return null;
 
   const onSecurity =
     allowWithout2fa || pathname.startsWith("/seguranca");
+  const onShopOnboarding = pathname.startsWith("/loja");
   if (
     (painelAccess || sellerAccess) &&
+    canAccessPainel() &&
     requiresTwoFactor() &&
     !user.totpEnabled &&
-    !onSecurity
+    !onSecurity &&
+    !onShopOnboarding
   ) {
     return (
       <div className="flex min-h-[40vh] items-center justify-center text-sm text-taupe">

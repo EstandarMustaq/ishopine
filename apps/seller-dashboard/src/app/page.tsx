@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import {
@@ -10,6 +11,7 @@ import {
   type ChartConfig,
 } from "@/components/ui/chart";
 import { api } from "@/lib/api";
+import { useAuthStore } from "@/lib/auth-store";
 import { formatMZN, formatDateTime } from "@/lib/format";
 import type { DashboardCharts, DashboardOverview } from "@/lib/types";
 
@@ -23,10 +25,20 @@ const ordersConfig = {
 } satisfies ChartConfig;
 
 export default function PainelOverviewPage() {
+  const router = useRouter();
+  const canAccessPainel = useAuthStore((s) => s.canAccessPainel);
   const [data, setData] = useState<DashboardOverview | null>(null);
   const [charts, setCharts] = useState<DashboardCharts | null>(null);
 
   useEffect(() => {
+    // Buyers opening the seller app should create a shop first.
+    if (!canAccessPainel()) {
+      router.replace("/loja");
+    }
+  }, [canAccessPainel, router]);
+
+  useEffect(() => {
+    if (!canAccessPainel()) return;
     api<DashboardOverview>("/dashboard/overview")
       .then(setData)
       .catch((error) =>
@@ -37,7 +49,7 @@ export default function PainelOverviewPage() {
     api<DashboardCharts>("/dashboard/charts")
       .then(setCharts)
       .catch(() => setCharts(null));
-  }, []);
+  }, [canAccessPainel]);
 
   const series = useMemo(
     () =>
