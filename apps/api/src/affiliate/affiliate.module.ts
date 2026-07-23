@@ -1,9 +1,11 @@
 import { Module } from '@nestjs/common';
-import { AffiliateController } from './affiliate.controller';
 import { AffiliateService } from './affiliate.service';
 
+/**
+ * Nest affiliate remnant (Phase 36). HTTP → affiliates strangler (:4108).
+ * AffiliateService kept for Nest OrdersService settle fallback.
+ */
 @Module({
-  controllers: [AffiliateController],
   providers: [AffiliateService],
   exports: [AffiliateService],
 })

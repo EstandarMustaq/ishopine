@@ -32,5 +32,5 @@ Sem mudança — gate Fase 29; `docs/contracts/` sem OpenAPI.
 ## Fora de âmbito
 - Cliente HTTP Correios
 - Remover Nest Auth / Reliability / NotificationsService
-- Remover Nest accounts/affiliate/wallet/billing/media/developers/logistics
-  (próximas fases de retirement)
+- Remover Nest accounts/affiliate/accounting → **Fase 36** ([PHASE36.md](./PHASE36.md))
+- Remover Nest wallet/billing/media/developers/logistics (próximas fases)
