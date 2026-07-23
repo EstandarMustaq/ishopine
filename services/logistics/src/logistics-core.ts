@@ -308,6 +308,18 @@ export async function markDelivered(shipmentId: string) {
   return updated;
 }
 
+/** Phase 25: internal — find shipment by orderId then mark delivered. */
+export async function markDeliveredForOrder(orderId: string) {
+  const shipment = await prisma.shipment.findFirst({
+    where: { orderId, status: { not: ShipmentStatus.CANCELLED } },
+    orderBy: { createdAt: "desc" },
+  });
+  if (!shipment) {
+    throw new HttpError(404, "Envio não encontrado para este pedido");
+  }
+  return markDelivered(shipment.id);
+}
+
 export function listShipments(opts: {
   shopId?: string;
   orderId?: string;

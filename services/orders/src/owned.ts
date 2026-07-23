@@ -24,10 +24,20 @@ import {
   failIdempotency,
   hashCheckoutBody,
 } from "./idempotency";
+import {
+  inventoryReserveRemoteEnabled,
+  logisticsLabelRemoteEnabled,
+  remoteCreateLabel,
+  remoteFulfillStock,
+  remoteMarkDelivered,
+  remoteReleaseStock,
+} from "./remote";
 
 const prisma = new PrismaClient();
 const jwtSecret = process.env.JWT_SECRET || "";
 const orgSlug = process.env.PLATFORM_ORG_SLUG || "ishopine";
+const inventoryRemote = () => inventoryReserveRemoteEnabled();
+const logisticsRemote = () => logisticsLabelRemoteEnabled();
 const isProd = process.env.NODE_ENV === "production";
 
 type JwtPayload = {
@@ -388,21 +398,23 @@ async function updateOrderStatus(
 
     if (status === OrderStatus.CANCELLED || status === OrderStatus.REFUNDED) {
       data.cancelledAt = new Date();
-      for (const item of order.items) {
-        await tx.product.update({
-          where: { id: item.productId },
-          data: { reservedStock: { decrement: item.quantity } },
-        });
-        await tx.inventoryMovement.create({
-          data: {
-            productId: item.productId,
-            type: InventoryMovementType.RELEASE,
-            quantity: item.quantity,
-            reason: `Liberação por cancelamento do pedido ${order.orderNumber}`,
-            reference: order.id,
-            operatorId,
-          },
-        });
+      if (!inventoryRemote()) {
+        for (const item of order.items) {
+          await tx.product.update({
+            where: { id: item.productId },
+            data: { reservedStock: { decrement: item.quantity } },
+          });
+          await tx.inventoryMovement.create({
+            data: {
+              productId: item.productId,
+              type: InventoryMovementType.RELEASE,
+              quantity: item.quantity,
+              reason: `Liberação por cancelamento do pedido ${order.orderNumber}`,
+              reference: order.id,
+              operatorId,
+            },
+          });
+        }
       }
     }
 
@@ -417,24 +429,26 @@ async function updateOrderStatus(
         where: { orderId: order.id },
         data: { status: PaymentStatus.PAID, paidAt: new Date() },
       });
-      for (const item of order.items) {
-        await tx.product.update({
-          where: { id: item.productId },
-          data: {
-            stock: { decrement: item.quantity },
-            reservedStock: { decrement: item.quantity },
-          },
-        });
-        await tx.inventoryMovement.create({
-          data: {
-            productId: item.productId,
-            type: InventoryMovementType.OUT,
-            quantity: item.quantity,
-            reason: `Saída por pedido ${order.orderNumber}`,
-            reference: order.id,
-            operatorId,
-          },
-        });
+      if (!inventoryRemote()) {
+        for (const item of order.items) {
+          await tx.product.update({
+            where: { id: item.productId },
+            data: {
+              stock: { decrement: item.quantity },
+              reservedStock: { decrement: item.quantity },
+            },
+          });
+          await tx.inventoryMovement.create({
+            data: {
+              productId: item.productId,
+              type: InventoryMovementType.OUT,
+              quantity: item.quantity,
+              reason: `Saída por pedido ${order.orderNumber}`,
+              reference: order.id,
+              operatorId,
+            },
+          });
+        }
       }
       const cashAccount = await tx.accountingAccount.findUnique({
         where: { code: "1.1.01" },
@@ -479,16 +493,51 @@ async function updateOrderStatus(
     });
   });
 
+  if (inventoryRemote()) {
+    const items = order.items.map((item) => ({
+      productId: item.productId,
+      quantity: item.quantity,
+    }));
+    if (status === OrderStatus.CANCELLED || status === OrderStatus.REFUNDED) {
+      await remoteReleaseStock({
+        orderId: id,
+        orderNumber: order.orderNumber,
+        items,
+        operatorId,
+      });
+    }
+    const shouldFulfillRemote =
+      (status === OrderStatus.CONFIRMED ||
+        status === OrderStatus.PROCESSING) &&
+      order.paymentStatus !== PaymentStatus.PAID;
+    if (shouldFulfillRemote) {
+      await remoteFulfillStock({
+        orderId: id,
+        orderNumber: order.orderNumber,
+        items,
+        operatorId,
+      });
+    }
+  }
+
   if (status === OrderStatus.SHIPPED) {
     try {
-      await createLabelForOrder(id);
+      if (logisticsRemote()) {
+        await remoteCreateLabel(id);
+      } else {
+        await createLabelForOrder(id);
+      }
     } catch (error) {
       console.error("[orders] shipment label failed", id, error);
     }
   }
   if (status === OrderStatus.DELIVERED) {
     try {
-      await markShipmentDelivered(id);
+      if (logisticsRemote()) {
+        await remoteMarkDelivered(id);
+      } else {
+        await markShipmentDelivered(id);
+      }
     } catch (error) {
       console.error("[orders] shipment deliver failed", id, error);
     }

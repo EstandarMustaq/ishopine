@@ -6,9 +6,9 @@
 | **accounts** | **owned :4109** | Account + tenants PARTICULAR/STORE (`ACCOUNTS_OWNED`) |
 | **marketplace** | **owned :4111** | Shops + ads + wishlist (`MARKETPLACE_OWNED`) |
 | **catalog** | **owned :4110** | Categorias + produtos híbridos (`CATALOG_OWNED`) |
-| **orders** | **owned :4101** | Cart + GET + status + checkout (`ORDERS_OWNED`) |
+| **orders** | **owned :4101** | Cart + GET + status + checkout; remote coupon/inventory/label (Fase 25) |
 | **payments** | **owned :4102** | PaySuite checkout/status/webhook/**payouts/refunds** |
-| commerce-orchestrator | compose :4100 | Saga: orders checkout → PaySuite |
+| commerce-orchestrator | compose :4100 | Saga: **ORDERS_URL** → **PAYMENTS_URL** (Fase 25) |
 | **wallet** | **owned :4103** | Reads + internal settle (`WALLET_OWNED`) |
 | **billing** | **owned :4104** | Pricing + subscriptions + usage (`BILLING_OWNED`); PaySuite → payments |
 | **media** | **owned :4105** | Upload/list/delete + **static /uploads** + **CDN status** (`MEDIA_CDN_HOST`) |

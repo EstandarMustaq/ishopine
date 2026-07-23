@@ -10,10 +10,13 @@ import {
   createCoupon,
   listCoupons,
   prisma,
+  redeemCoupon,
   validateCoupon,
 } from "./coupons-core";
 
 const jwtSecret = process.env.JWT_SECRET || "";
+const internalSecret =
+  process.env.INTERNAL_SERVICE_SECRET || process.env.CRON_SECRET || "";
 
 type JwtPayload = { sub: string };
 
@@ -45,6 +48,13 @@ function verifyJwt(req: http.IncomingMessage): JwtPayload | null {
   } catch {
     return null;
   }
+}
+
+function verifyInternal(req: http.IncomingMessage): boolean {
+  if (!internalSecret) return false;
+  const auth = req.headers.authorization;
+  if (!auth?.toLowerCase().startsWith("bearer ")) return false;
+  return auth.slice(7).trim() === internalSecret;
 }
 
 function pathOnly(url?: string) {
@@ -174,6 +184,41 @@ export async function handleOwnedCoupons(
         throw new HttpError(400, "subtotalCents obrigatório");
       }
       json(res, 200, await validateCoupon(body.code, body.subtotalCents));
+      return true;
+    }
+
+    if (method === "POST" && path === "/api/coupons/internal/redeem") {
+      if (!verifyInternal(req)) {
+        json(res, 401, "Não autorizado");
+        return true;
+      }
+      const body = await readJsonBody(req);
+      if (typeof body.code !== "string" || !body.code.trim()) {
+        throw new HttpError(400, "code obrigatório");
+      }
+      if (typeof body.orderId !== "string" || !body.orderId.trim()) {
+        throw new HttpError(400, "orderId obrigatório");
+      }
+      if (
+        typeof body.subtotalCents !== "number" ||
+        !Number.isFinite(body.subtotalCents)
+      ) {
+        throw new HttpError(400, "subtotalCents obrigatório");
+      }
+      const amountCents =
+        typeof body.amountCents === "number" && Number.isFinite(body.amountCents)
+          ? body.amountCents
+          : 0;
+      json(
+        res,
+        200,
+        await redeemCoupon({
+          code: body.code,
+          orderId: body.orderId,
+          amountCents,
+          subtotalCents: body.subtotalCents,
+        }),
+      );
       return true;
     }
 

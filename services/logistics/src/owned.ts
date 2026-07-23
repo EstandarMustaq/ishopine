@@ -16,6 +16,7 @@ import {
   listCarrierPartners,
   listShipments,
   markDelivered,
+  markDeliveredForOrder,
   markInTransit,
   prisma,
   quote,
@@ -25,6 +26,8 @@ import {
 } from "./logistics-core";
 
 const jwtSecret = process.env.JWT_SECRET || "";
+const internalSecret =
+  process.env.INTERNAL_SERVICE_SECRET || process.env.CRON_SECRET || "";
 
 type JwtPayload = { sub: string };
 
@@ -54,6 +57,13 @@ function verifyJwt(req: http.IncomingMessage): JwtPayload | null {
   } catch {
     return null;
   }
+}
+
+function verifyInternal(req: http.IncomingMessage): boolean {
+  if (!internalSecret) return false;
+  const auth = req.headers.authorization;
+  if (!auth?.toLowerCase().startsWith("bearer ")) return false;
+  return auth.slice(7).trim() === internalSecret;
 }
 
 function pathOnly(url?: string) {
@@ -310,6 +320,44 @@ export async function handleOwnedLogistics(
         decodeURIComponent(shipmentMatch[1]),
       );
       json(res, 200, shipment);
+      return true;
+    }
+
+    if (method === "POST" && path === "/api/logistics/internal/create-label") {
+      if (!verifyInternal(req)) {
+        json(res, 401, "Não autorizado");
+        return true;
+      }
+      const raw = await readRawBody(req);
+      const body = parseJsonObject(raw);
+      if (typeof body.orderId !== "string" || !body.orderId.trim()) {
+        throw new HttpError(400, "orderId obrigatório");
+      }
+      json(
+        res,
+        200,
+        await createLabel(
+          body.orderId,
+          typeof body.trackingCode === "string" ? body.trackingCode : undefined,
+        ),
+      );
+      return true;
+    }
+
+    if (
+      method === "POST" &&
+      path === "/api/logistics/internal/mark-delivered"
+    ) {
+      if (!verifyInternal(req)) {
+        json(res, 401, "Não autorizado");
+        return true;
+      }
+      const raw = await readRawBody(req);
+      const body = parseJsonObject(raw);
+      if (typeof body.orderId !== "string" || !body.orderId.trim()) {
+        throw new HttpError(400, "orderId obrigatório");
+      }
+      json(res, 200, await markDeliveredForOrder(body.orderId));
       return true;
     }
 

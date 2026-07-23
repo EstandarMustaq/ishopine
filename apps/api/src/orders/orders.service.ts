@@ -42,6 +42,42 @@ export class OrdersService {
     return `NK${String(count + 1).padStart(6, '0')}`;
   }
 
+  private internalSecret() {
+    return (
+      this.config.get<string>('INTERNAL_SERVICE_SECRET') ||
+      this.config.get<string>('CRON_SECRET')
+    );
+  }
+
+  private remoteEnabled(flag: string, urlKey: string) {
+    const url = this.config.get<string>(urlKey);
+    const secret = this.internalSecret();
+    return (
+      this.config.get<string>(flag) !== '0' &&
+      Boolean(url) &&
+      Boolean(secret)
+    );
+  }
+
+  private async postInternal(baseUrl: string, path: string, body: unknown) {
+    const secret = this.internalSecret();
+    const res = await fetch(`${baseUrl.replace(/\/$/, '')}${path}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${secret}`,
+      },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      throw new BadRequestException(
+        `Remote ${path} falhou (${res.status}): ${text.slice(0, 300)}`,
+      );
+    }
+    return res.json();
+  }
+
   async checkout(
     buyerId: string,
     data: {
@@ -171,6 +207,15 @@ export class OrdersService {
       }
     }
 
+    const skipInlineReserve = this.remoteEnabled(
+      'INVENTORY_RESERVE_REMOTE',
+      'INVENTORY_URL',
+    );
+    const skipInlineRedeem = this.remoteEnabled(
+      'COUPON_REDEEM_REMOTE',
+      'COUPONS_URL',
+    );
+
     const orders = await this.prisma.$transaction(async (tx) => {
       const createdOrders = [];
       let couponApplied = false;
@@ -211,13 +256,15 @@ export class OrdersService {
         );
         const orderNumber = await this.nextOrderNumber(tx);
 
-        for (const item of items) {
-          await tx.product.update({
-            where: { id: item.productId },
-            data: {
-              reservedStock: { increment: item.quantity },
-            },
-          });
+        if (!skipInlineReserve) {
+          for (const item of items) {
+            await tx.product.update({
+              where: { id: item.productId },
+              data: {
+                reservedStock: { increment: item.quantity },
+              },
+            });
+          }
         }
 
         const created = await tx.order.create({
@@ -241,7 +288,7 @@ export class OrdersService {
                 note: 'Pedido criado no iShopine',
               },
             },
-            ...(coupon && appliedCode
+            ...(!skipInlineRedeem && coupon && appliedCode
               ? {
                   couponRedemptions: {
                     create: {
@@ -299,7 +346,7 @@ export class OrdersService {
         createdOrders.push(created);
       }
 
-      if (coupon && couponApplied) {
+      if (!skipInlineRedeem && coupon && couponApplied) {
         await tx.coupon.update({
           where: { id: coupon.id },
           data: { usedCount: { increment: 1 } },
@@ -309,6 +356,65 @@ export class OrdersService {
       await tx.cartItem.deleteMany({ where: { cartId: cart.id } });
       return createdOrders;
     });
+
+    try {
+      if (skipInlineReserve) {
+        const inventoryUrl = this.config.get<string>('INVENTORY_URL')!;
+        for (const order of orders) {
+          await this.postInternal(inventoryUrl, '/api/inventory/internal/reserve', {
+            orderId: order.id,
+            orderNumber: order.orderNumber,
+            items: order.items.map((item) => ({
+              productId: item.productId,
+              quantity: item.quantity,
+            })),
+            operatorId: buyerId,
+          });
+        }
+      }
+      if (skipInlineRedeem && coupon) {
+        const couponsUrl = this.config.get<string>('COUPONS_URL')!;
+        const redeemed = orders.find((o) => o.couponCode && o.discountCents > 0);
+        if (redeemed?.couponCode) {
+          await this.postInternal(couponsUrl, '/api/coupons/internal/redeem', {
+            code: redeemed.couponCode,
+            orderId: redeemed.id,
+            amountCents: redeemed.discountCents,
+            subtotalCents: redeemed.subtotalCents,
+          });
+        }
+      }
+    } catch (error) {
+      if (skipInlineReserve) {
+        const inventoryUrl = this.config.get<string>('INVENTORY_URL');
+        if (inventoryUrl) {
+          for (const order of orders) {
+            try {
+              await this.postInternal(
+                inventoryUrl,
+                '/api/inventory/internal/release',
+                {
+                  orderId: order.id,
+                  orderNumber: order.orderNumber,
+                  items: order.items.map((item) => ({
+                    productId: item.productId,
+                    quantity: item.quantity,
+                  })),
+                  operatorId: buyerId,
+                },
+              );
+            } catch {
+              // ignore compensate
+            }
+          }
+        }
+      }
+      await this.prisma.order.updateMany({
+        where: { id: { in: orders.map((o) => o.id) } },
+        data: { status: OrderStatus.CANCELLED, cancelledAt: new Date() },
+      });
+      throw error;
+    }
 
     return {
       orders,
@@ -639,23 +745,27 @@ export class OrdersService {
       }
       if (status === OrderStatus.CANCELLED || status === OrderStatus.REFUNDED) {
         data.cancelledAt = new Date();
-        for (const item of order.items) {
-          await tx.product.update({
-            where: { id: item.productId },
-            data: {
-              reservedStock: { decrement: item.quantity },
-            },
-          });
-          await tx.inventoryMovement.create({
-            data: {
-              productId: item.productId,
-              type: InventoryMovementType.RELEASE,
-              quantity: item.quantity,
-              reason: `Liberação por cancelamento do pedido ${order.orderNumber}`,
-              reference: order.id,
-              operatorId,
-            },
-          });
+        if (
+          !this.remoteEnabled('INVENTORY_RESERVE_REMOTE', 'INVENTORY_URL')
+        ) {
+          for (const item of order.items) {
+            await tx.product.update({
+              where: { id: item.productId },
+              data: {
+                reservedStock: { decrement: item.quantity },
+              },
+            });
+            await tx.inventoryMovement.create({
+              data: {
+                productId: item.productId,
+                type: InventoryMovementType.RELEASE,
+                quantity: item.quantity,
+                reason: `Liberação por cancelamento do pedido ${order.orderNumber}`,
+                reference: order.id,
+                operatorId,
+              },
+            });
+          }
         }
       }
 
@@ -671,24 +781,28 @@ export class OrdersService {
           data: { status: PaymentStatus.PAID, paidAt: new Date() },
         });
 
-        for (const item of order.items) {
-          await tx.product.update({
-            where: { id: item.productId },
-            data: {
-              stock: { decrement: item.quantity },
-              reservedStock: { decrement: item.quantity },
-            },
-          });
-          await tx.inventoryMovement.create({
-            data: {
-              productId: item.productId,
-              type: InventoryMovementType.OUT,
-              quantity: item.quantity,
-              reason: `Saída por pedido ${order.orderNumber}`,
-              reference: order.id,
-              operatorId,
-            },
-          });
+        if (
+          !this.remoteEnabled('INVENTORY_RESERVE_REMOTE', 'INVENTORY_URL')
+        ) {
+          for (const item of order.items) {
+            await tx.product.update({
+              where: { id: item.productId },
+              data: {
+                stock: { decrement: item.quantity },
+                reservedStock: { decrement: item.quantity },
+              },
+            });
+            await tx.inventoryMovement.create({
+              data: {
+                productId: item.productId,
+                type: InventoryMovementType.OUT,
+                quantity: item.quantity,
+                reason: `Saída por pedido ${order.orderNumber}`,
+                reference: order.id,
+                operatorId,
+              },
+            });
+          }
         }
 
         const cashAccount = await tx.accountingAccount.findUnique({
@@ -735,24 +849,71 @@ export class OrdersService {
       });
     });
 
+    if (this.remoteEnabled('INVENTORY_RESERVE_REMOTE', 'INVENTORY_URL')) {
+      const inventoryUrl = this.config.get<string>('INVENTORY_URL')!;
+      const items = order.items.map((item) => ({
+        productId: item.productId,
+        quantity: item.quantity,
+      }));
+      if (
+        status === OrderStatus.CANCELLED ||
+        status === OrderStatus.REFUNDED
+      ) {
+        await this.postInternal(inventoryUrl, '/api/inventory/internal/release', {
+          orderId: id,
+          orderNumber: order.orderNumber,
+          items,
+          operatorId,
+        });
+      }
+      const shouldFulfillRemote =
+        (status === OrderStatus.CONFIRMED ||
+          status === OrderStatus.PROCESSING) &&
+        order.paymentStatus !== PaymentStatus.PAID;
+      if (shouldFulfillRemote) {
+        await this.postInternal(inventoryUrl, '/api/inventory/internal/fulfill', {
+          orderId: id,
+          orderNumber: order.orderNumber,
+          items,
+          operatorId,
+        });
+      }
+    }
+
     if (status === OrderStatus.SHIPPED) {
       try {
-        await this.logistics.createLabel(id);
+        if (this.remoteEnabled('LOGISTICS_LABEL_REMOTE', 'LOGISTICS_URL')) {
+          await this.postInternal(
+            this.config.get<string>('LOGISTICS_URL')!,
+            '/api/logistics/internal/create-label',
+            { orderId: id },
+          );
+        } else {
+          await this.logistics.createLabel(id);
+        }
       } catch (error) {
         console.error('[orders] shipment label failed', id, error);
       }
     }
     if (status === OrderStatus.DELIVERED) {
-      const shipment = await this.prisma.shipment.findFirst({
-        where: { orderId: id, status: { not: 'CANCELLED' } },
-        orderBy: { createdAt: 'desc' },
-      });
-      if (shipment) {
-        try {
-          await this.logistics.markDelivered(shipment.id);
-        } catch (error) {
-          console.error('[orders] shipment deliver failed', id, error);
+      try {
+        if (this.remoteEnabled('LOGISTICS_LABEL_REMOTE', 'LOGISTICS_URL')) {
+          await this.postInternal(
+            this.config.get<string>('LOGISTICS_URL')!,
+            '/api/logistics/internal/mark-delivered',
+            { orderId: id },
+          );
+        } else {
+          const shipment = await this.prisma.shipment.findFirst({
+            where: { orderId: id, status: { not: 'CANCELLED' } },
+            orderBy: { createdAt: 'desc' },
+          });
+          if (shipment) {
+            await this.logistics.markDelivered(shipment.id);
+          }
         }
+      } catch (error) {
+        console.error('[orders] shipment deliver failed', id, error);
       }
     }
 
