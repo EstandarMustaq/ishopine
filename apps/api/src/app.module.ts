@@ -22,12 +22,11 @@ import { OrdersModule } from './orders/orders.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ReliabilityModule } from './reliability/reliability.module';
 import { SecurityModule } from './security/security.module';
-import { UploadsModule } from './uploads/uploads.module';
 
 /**
- * Nest monolith remnant. Accounts/affiliate/accounting HTTP retired
- * (Phase 36) — owned by stranglers. AccountsService/TenantGuard +
- * AffiliateService kept for Nest DI. NotificationsModule for OutboxDispatcher.
+ * Nest monolith remnant. Media/developers/logistics HTTP retired (Phase 38)
+ * — owned by stranglers. DevelopersService kept for OutboxDispatcher;
+ * LogisticsService for Orders fallthrough. UploadsModule removed (media owned).
  */
 @Module({
   imports: [
@@ -49,7 +48,6 @@ import { UploadsModule } from './uploads/uploads.module';
     OrdersModule,
     BillingModule,
     AffiliateModule,
-    UploadsModule,
     NotificationsModule,
     CommerceModule,
     WalletModule,
