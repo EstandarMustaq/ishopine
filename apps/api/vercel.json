@@ -1,7 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
-  "buildCommand": "pnpm exec prisma generate && pnpm exec nest build && node ./scripts/build-composition.mjs",
+  "buildCommand": "pnpm exec prisma generate && pnpm exec nest build",
   "installCommand": "cd ../.. && corepack enable && pnpm install --frozen-lockfile --config.production=false",
   "outputDirectory": "public",
   "rewrites": [{ "source": "/(.*)", "destination": "/api" }],
