@@ -20,7 +20,7 @@ Secrets live in Vercel Production env + local gitignored `.env` / `apps/api/.env
 |---|---|
 | Neon `DATABASE_URL` | Schema pushed + seeded |
 | Google OAuth | Client ID/secret on API; **add redirect URI in Google Console** (below) |
-| SMTP Gmail | `smtp.gmail.com:587` (host corrected from `gmail.com`) |
+| SMTP Gmail | Host `smtp.gmail.com:587` — **credenciais atuais rejeitadas (535)**; register soft-fails e mostra código no ecrã até App Password ser corrigida |
 | Cloudinary | `UPLOAD_PROVIDER=cloudinary` |
 | DHL Express | MyDHL test credentials |
 | PaySuite | **`PAYSUITE_ENABLED=0`** until merchant quota |
