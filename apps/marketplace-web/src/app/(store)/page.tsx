@@ -51,41 +51,37 @@ export default async function HomePage() {
 
   return (
     <>
-      <section className="relative min-h-[88svh] w-full overflow-hidden sm:min-h-[92svh]">
+      <section className="relative min-h-[88svh] w-full overflow-hidden sm:min-h-[90svh]">
         <Image
           src={heroAd?.imageUrl || HERO_IMAGE}
-          alt={heroAd?.title || "iShopine — mercado aberto"}
+          alt=""
           fill
           priority
           className="object-cover"
           sizes="100vw"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/75 via-zinc-900/25 to-zinc-900/10" />
-        <div className="relative z-10 flex min-h-[88svh] flex-col justify-end px-4 pb-14 pt-28 sm:min-h-[92svh] sm:px-8 sm:pb-20 lg:px-16">
-          <div className="animate-hero-in max-w-xl">
-            <p className="text-[13px] font-semibold uppercase tracking-[0.14em] text-[var(--ds-brand)]">
+        <div className="absolute inset-0 bg-gradient-to-t from-[#202223]/80 via-[#202223]/35 to-[#202223]/15" />
+        <div className="relative z-10 mx-auto flex min-h-[88svh] max-w-[var(--ds-max-width)] flex-col justify-end px-4 pb-14 pt-28 sm:min-h-[90svh] sm:px-6 sm:pb-20">
+          <div className="max-w-xl animate-[fadeIn_0.6s_ease-out]">
+            <p className="text-[40px] font-bold leading-[1.1] tracking-[-0.02em] text-white sm:text-[48px]">
               iShopine
             </p>
-            <h1 className="animate-hero-in-delay mt-3 text-4xl font-bold leading-[1.05] tracking-tight text-white sm:text-5xl md:text-6xl">
+            <h1 className="mt-3 text-[28px] font-bold leading-[1.2] tracking-[-0.01em] text-white sm:text-[32px]">
               {heroAd?.title || "Mercado de Moçambique"}
             </h1>
-            <p className="animate-hero-in-delay-2 mt-3 max-w-md text-[15px] leading-relaxed text-white/80 sm:text-base">
+            <p className="mt-3 max-w-md text-[14px] leading-[1.6] text-white/85">
               {heroAd?.subtitle ||
-                "Venda e pague com M-Pesa, e-Mola ou cartão."}
+                "Compre e venda com M-Pesa, e-Mola ou cartão."}
             </p>
-            <div className="animate-hero-in-delay-2 mt-7 flex flex-wrap gap-2.5">
-              <Button
-                asChild
-                size="lg"
-                className="rounded-[var(--ds-radius-sm)] bg-[var(--ds-brand)] font-semibold text-white hover:bg-[var(--ds-brand-dark)]"
-              >
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Button asChild size="lg">
                 <Link href={heroAd?.linkUrl || "/produtos"}>Explorar mercado</Link>
               </Button>
               <Button
                 asChild
                 size="lg"
                 variant="outline"
-                className="rounded-[var(--ds-radius-sm)] border-white/35 bg-transparent text-white hover:bg-white/10 hover:text-white"
+                className="border-white/40 bg-transparent text-white hover:bg-white/10 hover:text-white"
               >
                 <Link href="/vender">Abrir loja</Link>
               </Button>
@@ -94,120 +90,120 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {stripAds.length > 0 && (
-        <section className="px-4 py-10 sm:px-6">
-          <div className="mx-auto max-w-6xl">
+      {stripAds.length > 0 ? (
+        <section className="bg-[var(--ds-bg)] px-4 py-8 sm:px-6">
+          <div className="mx-auto max-w-[var(--ds-max-width)]">
             <AdStrip ads={stripAds} />
           </div>
         </section>
-      )}
+      ) : null}
 
-      <section className="px-4 py-12 sm:px-6 sm:py-14">
-        <div className="mx-auto max-w-6xl">
-          <h2 className="section-title">categorias</h2>
-          <p className="mt-1.5 text-[14px] text-zinc-500">
-            deslize e ache o que procura.
+      <section className="bg-[var(--ds-bg)] px-4 py-10 sm:px-6 sm:py-12">
+        <div className="mx-auto max-w-[var(--ds-max-width)]">
+          <h2 className="text-[20px] font-semibold leading-[1.3] text-[var(--ds-text)]">
+            Categorias
+          </h2>
+          <p className="mt-1 text-[14px] text-[var(--ds-text-secondary)]">
+            Encontre o que precisa no mercado.
           </p>
-          <div className="mt-7">
+          <div className="mt-6">
             <HorizontalCatalog>
               {categories.map((category) => (
                 <HorizontalCatalogItem key={category.id}>
                   <Link
                     href={`/produtos?category=${category.slug}`}
-                    className="group block overflow-hidden rounded-2xl bg-zinc-50 transition-transform duration-300 hover:scale-[1.02]"
+                    className="group block overflow-hidden rounded-[var(--ds-radius-md)] border border-[var(--ds-border-subdued)] bg-[var(--ds-surface)] shadow-[var(--ds-shadow-raised)]"
                   >
-                    <div className="relative aspect-square bg-zinc-100">
+                    <div className="relative aspect-square bg-[var(--ds-bg)]">
                       {category.imageUrl ? (
                         <Image
                           src={category.imageUrl}
                           alt={category.name}
                           fill
-                          className="object-cover transition-transform duration-500 group-hover:scale-105"
+                          className="object-cover"
                           sizes="168px"
                         />
                       ) : null}
                     </div>
                     <div className="px-3 py-3">
-                      <p className="text-[13px] font-semibold lowercase text-zinc-900">
+                      <p className="text-[14px] font-semibold text-[var(--ds-text)]">
                         {category.name}
                       </p>
-                      {category._count && (
-                        <p className="text-[12px] text-zinc-500">
+                      {category._count ? (
+                        <p className="text-[12px] text-[var(--ds-text-secondary)]">
                           {category._count.products} itens
                         </p>
-                      )}
+                      ) : null}
                     </div>
                   </Link>
                 </HorizontalCatalogItem>
               ))}
-              {categories.length === 0 && (
-                <p className="text-[13px] text-zinc-500">
-                  categorias em breve.
+              {categories.length === 0 ? (
+                <p className="text-[14px] text-[var(--ds-text-secondary)]">
+                  Categorias em breve.
                 </p>
-              )}
+              ) : null}
             </HorizontalCatalog>
           </div>
         </div>
       </section>
 
-      <section className="px-4 py-12 sm:px-6 sm:py-14">
-        <div className="mx-auto max-w-6xl">
+      <section className="bg-[var(--ds-bg)] px-4 py-10 sm:px-6 sm:py-12">
+        <div className="mx-auto max-w-[var(--ds-max-width)]">
           <div className="flex items-end justify-between gap-4">
             <div>
-              <h2 className="section-title">corre pra pegar</h2>
-              <p className="mt-1.5 text-[14px] text-zinc-500">
-                selecção em destaque no mercado.
+              <h2 className="text-[20px] font-semibold leading-[1.3] text-[var(--ds-text)]">
+                Em destaque
+              </h2>
+              <p className="mt-1 text-[14px] text-[var(--ds-text-secondary)]">
+                Selecção do mercado.
               </p>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              asChild
-              className="rounded-full"
-            >
-              <Link href="/produtos">ver todos</Link>
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/produtos">Ver todos</Link>
             </Button>
           </div>
-          <div className="mt-7 grid grid-cols-2 gap-x-3 gap-y-8 md:grid-cols-3 lg:grid-cols-4 md:gap-x-4">
+          <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-4">
             {featured.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
-            {featured.length === 0 && (
-              <p className="col-span-full text-[13px] text-zinc-500">
-                nenhum destaque disponível no momento.
+            {featured.length === 0 ? (
+              <p className="col-span-full text-[14px] text-[var(--ds-text-secondary)]">
+                Ainda sem produtos em destaque.{" "}
+                <Link href="/vender" className="font-medium text-[var(--ds-interactive)]">
+                  Abra a sua loja
+                </Link>
+                .
               </p>
-            )}
+            ) : null}
           </div>
         </div>
       </section>
 
-      {heroAds.length > 1 && (
-        <section className="px-4 py-8 sm:px-6">
-          <div className="mx-auto max-w-6xl">
+      {heroAds.length > 1 ? (
+        <section className="bg-[var(--ds-bg)] px-4 py-8 sm:px-6">
+          <div className="mx-auto max-w-[var(--ds-max-width)]">
             <AdBanner ads={heroAds.slice(1)} />
           </div>
         </section>
-      )}
+      ) : null}
 
-      <section className="px-4 py-12 sm:px-6 sm:py-14">
-        <div className="mx-auto max-w-6xl">
+      <section className="bg-[var(--ds-bg)] px-4 py-10 sm:px-6 sm:py-12">
+        <div className="mx-auto max-w-[var(--ds-max-width)]">
           <div className="flex items-end justify-between gap-4">
             <div>
-              <h2 className="section-title">lojas pra visitar</h2>
-              <p className="mt-1.5 text-[14px] text-zinc-500">
-                vendedores com reputação em moçambique.
+              <h2 className="text-[20px] font-semibold leading-[1.3] text-[var(--ds-text)]">
+                Lojas
+              </h2>
+              <p className="mt-1 text-[14px] text-[var(--ds-text-secondary)]">
+                Vendedores em Moçambique.
               </p>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              asChild
-              className="rounded-full"
-            >
-              <Link href="/lojas">ver lojas</Link>
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/lojas">Ver lojas</Link>
             </Button>
           </div>
-          <div className="mt-7">
+          <div className="mt-6">
             <HorizontalCatalog>
               {shops.map((shop) => (
                 <HorizontalCatalogItem
@@ -216,16 +212,16 @@ export default async function HomePage() {
                 >
                   <Link
                     href={`/lojas/${shop.slug}`}
-                    className="block h-full rounded-2xl border border-zinc-100 bg-white px-4 py-4 transition-transform duration-300 hover:scale-[1.01]"
+                    className="block h-full rounded-[var(--ds-radius-md)] border border-[var(--ds-border-subdued)] bg-[var(--ds-surface)] px-5 py-5 shadow-[var(--ds-shadow-raised)]"
                   >
-                    <p className="text-[14px] font-semibold text-zinc-900">
+                    <p className="text-[16px] font-semibold text-[var(--ds-text)]">
                       {shop.name}
                     </p>
-                    <p className="mt-1 text-[11px] font-medium lowercase tracking-wide text-zinc-400">
+                    <p className="mt-1 text-[12px] text-[var(--ds-text-secondary)]">
                       {shopTypeLabel(shop.shopType)}
                     </p>
-                    <p className="mt-2 line-clamp-2 text-[13px] text-zinc-500">
-                      {shop.description || "vitrine no mercado aberto"}
+                    <p className="mt-2 line-clamp-2 text-[14px] leading-[1.6] text-[var(--ds-text-secondary)]">
+                      {shop.description || "Loja no iShopine"}
                     </p>
                     <ReputationBadge
                       className="mt-3"
@@ -234,26 +230,21 @@ export default async function HomePage() {
                       ratingCount={shop.ratingCount}
                       reputationScore={shop.reputationScore}
                     />
-                    <p className="mt-2 text-[12px] text-zinc-500">
-                      {[shop.district, shop.province]
-                        .filter(Boolean)
-                        .join(" · ")}
-                    </p>
                   </Link>
                 </HorizontalCatalogItem>
               ))}
-              {shops.length === 0 && (
-                <p className="text-[13px] text-zinc-500">
-                  ainda não há lojas. seja o primeiro a{" "}
+              {shops.length === 0 ? (
+                <p className="text-[14px] text-[var(--ds-text-secondary)]">
+                  Ainda não há lojas.{" "}
                   <Link
                     href="/vender"
-                    className="font-medium text-zinc-900 underline-offset-4 hover:underline"
+                    className="font-medium text-[var(--ds-interactive)]"
                   >
-                    abrir a sua
+                    Seja o primeiro
                   </Link>
                   .
                 </p>
-              )}
+              ) : null}
             </HorizontalCatalog>
           </div>
         </div>

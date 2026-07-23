@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   },
   description: "Operabilidade e métricas da plataforma iShopine",
   icons: {
-    icon: [{ url: "/brand/ishopine-icon.svg", type: "image/svg+xml" }],
+    icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
   },
 };
 

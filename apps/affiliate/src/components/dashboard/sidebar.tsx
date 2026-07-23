@@ -126,16 +126,13 @@ export function DashboardSidebar({
             collapsed && "justify-center",
           )}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/brand/ishopine-mark.svg"
-            alt=""
-            className={cn(collapsed ? "size-7" : "size-8")}
-          />
-          {!collapsed && (
-            <span className="text-[15px] font-bold tracking-tight">
-              <span className="text-[var(--brand-orange)]">i</span>
-              <span className="text-[var(--brand-charcoal)]">Shopine</span>
+          {!collapsed ? (
+            <span className="text-[15px] font-bold tracking-tight text-[var(--ds-text)]">
+              iShopine
+            </span>
+          ) : (
+            <span className="text-[13px] font-bold tracking-tight text-[var(--ds-brand)]">
+              iS
             </span>
           )}
         </Link>

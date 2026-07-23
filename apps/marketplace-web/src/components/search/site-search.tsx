@@ -59,7 +59,7 @@ export function SiteSearch({
         type="button"
         onClick={() => setOpen(true)}
         className={cn(
-          "flex w-full items-center gap-2 rounded-full border border-zinc-200 bg-zinc-50 text-left text-zinc-500 transition-colors hover:border-zinc-300 hover:bg-white",
+          "flex w-full items-center gap-2 rounded-[var(--ds-radius-sm)] border border-zinc-200 bg-zinc-50 text-left text-zinc-500 transition-colors hover:border-zinc-300 hover:bg-white",
           variant === "nav" && "h-9 max-w-md px-3.5 text-[13px]",
           variant === "mercado" && "h-11 px-4 text-[14px] shadow-soft",
           className,
@@ -190,7 +190,7 @@ function SearchOverlay({
           <button
             type="button"
             onClick={onClose}
-            className="flex size-10 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-zinc-700 transition-colors hover:bg-zinc-200"
+            className="flex size-10 shrink-0 items-center justify-center rounded-[var(--ds-radius-sm)] bg-zinc-100 text-zinc-700 transition-colors hover:bg-zinc-200"
             aria-label="Fechar pesquisa"
           >
             <X className="size-5" />
@@ -203,7 +203,7 @@ function SearchOverlay({
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={placeholder}
-              className="h-11 rounded-full border-zinc-200 bg-zinc-50 pl-10 text-[15px] focus-visible:ring-[var(--ds-brand)]"
+              className="h-11 rounded-[var(--ds-radius-sm)] border-zinc-200 bg-zinc-50 pl-10 text-[15px] focus-visible:ring-[var(--ds-brand)]"
               aria-label={
                 mode === "products" ? "Buscar produtos" : "Buscar lojas"
               }
@@ -219,7 +219,7 @@ function SearchOverlay({
             type="button"
             onClick={() => setMode("products")}
             className={cn(
-              "inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-[13px] font-semibold transition-colors",
+              "inline-flex items-center gap-1.5 rounded-[var(--ds-radius-sm)] px-4 py-2 text-[13px] font-semibold transition-colors",
               mode === "products"
                 ? "bg-[var(--ds-brand)] text-white"
                 : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200",
@@ -232,7 +232,7 @@ function SearchOverlay({
             type="button"
             onClick={() => setMode("shops")}
             className={cn(
-              "inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-[13px] font-semibold transition-colors",
+              "inline-flex items-center gap-1.5 rounded-[var(--ds-radius-sm)] px-4 py-2 text-[13px] font-semibold transition-colors",
               mode === "shops"
                 ? "bg-[var(--ds-brand)] text-white"
                 : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200",

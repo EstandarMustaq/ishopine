@@ -14,7 +14,7 @@
 
 ## Design system
 
-Brand Green `#008060` · top bar `#1A1A1A` · sidebar `#F1F1F1` — see [DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md).
+Brand Green `#008060` · white top bar `#FFFFFF` · dark sidebar `#1A1A1A` · page `#F6F6F7` — text wordmark only (no pictorial logo). See [DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md).
 
 ## Environment
 

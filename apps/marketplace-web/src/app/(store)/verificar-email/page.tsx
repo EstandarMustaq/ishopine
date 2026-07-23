@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { BrandLogo } from "@/components/brand/logo";
 import { OtpField } from "@/components/forms/otp-field";
 import { Button } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";
@@ -98,7 +97,7 @@ function VerifyEmailForm() {
 
   return (
     <div className="mx-auto flex min-h-[70vh] max-w-md flex-col justify-center px-4 py-12">
-      <BrandLogo variant="wordmark" href={null} className="justify-start" />
+      <p className="text-[18px] font-bold tracking-[-0.02em] text-[var(--ds-text)]">iShopine</p>
       <h1 className="mt-6 text-2xl font-bold text-[var(--brand-charcoal)]">
         Verificar e-mail
       </h1>

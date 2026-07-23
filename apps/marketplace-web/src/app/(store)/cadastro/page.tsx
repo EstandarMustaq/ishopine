@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
-import { BrandLogo } from "@/components/brand/logo";
 import { Button } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -55,7 +54,7 @@ export default function RegisterPage() {
 
   return (
     <div className="mx-auto flex min-h-[70vh] max-w-md flex-col justify-center px-4 py-12">
-      <BrandLogo variant="wordmark" href={null} className="justify-start" />
+      <p className="text-[18px] font-bold tracking-[-0.02em] text-[var(--ds-text)]">iShopine</p>
       <p className="mt-3 text-sm text-[var(--brand-taupe)]">
         Crie a sua conta para comprar e vender
       </p>

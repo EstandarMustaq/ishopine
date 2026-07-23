@@ -1,14 +1,7 @@
 import type { Metadata } from "next";
-import { Outfit } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
-
-const outfit = Outfit({
-  subsets: ["latin"],
-  variable: "--font-outfit",
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   title: {
@@ -19,8 +12,8 @@ export const metadata: Metadata = {
     "iShopine — o marketplace livre de Moçambique. Compre e venda em meticais com M-Pesa, e-Mola ou cartão.",
   metadataBase: new URL("https://ishopine.com"),
   icons: {
-    icon: [{ url: "/brand/ishopine-icon.svg", type: "image/svg+xml" }],
-    apple: [{ url: "/brand/ishopine-icon.svg" }],
+    icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
+    apple: [{ url: "/favicon.svg" }],
   },
 };
 
@@ -31,7 +24,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-MZ">
-      <body className={`${outfit.variable} font-sans antialiased`}>
+      <body className="font-sans antialiased">
         <TooltipProvider delayDuration={200}>
           {children}
           <Toaster theme="light" position="top-center" richColors />
