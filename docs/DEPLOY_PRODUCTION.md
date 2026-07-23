@@ -1,11 +1,16 @@
 # Production deploy status
 
-## Live (Vercel)
+## Live surfaces (Vercel)
 
 | Surface | URL |
 |---|---|
 | Marketplace | https://ishopine.vercel.app |
-| API | https://ishopine-api.vercel.app |
+| API (composition) | https://ishopine-api.vercel.app |
+| Customer | https://ishopine-customer.vercel.app |
+| Seller | https://ishopine-seller.vercel.app |
+| Admin | https://ishopine-admin.vercel.app |
+| Affiliate | https://ishopine-affiliate.vercel.app |
+
 
 ## Configured (not committed)
 
