@@ -10,10 +10,12 @@ Porta **4101**. Rotas: `/api/orders/*`, `/api/cart/*`.
 | GET | `/api/orders/mine`, `/selling`, `/:id` | **owned** |
 | PATCH | `/api/orders/:id/status` | **owned** |
 | POST | `/api/orders/checkout` | **owned** (+ `Idempotency-Key`) |
-| POST | `/api/orders/internal/settle-paid` | **owned** (Bearer internal; Fase 30) |
+| POST | `/api/orders/internal/settle-paid` | **owned** (Bearer internal; Fase 30–32; Nest HTTP removed) |
 
 Checkout pede cotação a `LOGISTICS_URL/api/logistics/quote`
 (fallback `UPSTREAM_API_URL`).
+
+Payments must set `ORDERS_URL` so settle does not depend on Nest HTTP.
 
 ### Fase 25–30 — side-effects remotos (opcional)
 
