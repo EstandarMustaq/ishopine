@@ -20,7 +20,7 @@ Retirar HTTP Nest já owned por wallet / billing / orchestrator —
 - `WalletService` — OrdersService settle fallback
 - `BillingService` / `CommerceService` — Nest checkout fallthrough
 - `PricingService` / `SubscriptionsService` — usage settle fallback
-- Media/developers/logistics/auth/orders HTTP (próximas fases)
+- Media/developers/logistics HTTP → **Fase 38** ([PHASE38.md](./PHASE38.md)); auth/orders remnant
 - AccountsService / TenantGuard / AffiliateService / NotificationsService
 
 ### Production path
@@ -40,5 +40,6 @@ Sem mudança — gate Fase 29; `docs/contracts/` sem OpenAPI.
 ## Fora de âmbito
 - Cliente HTTP Correios
 - Remover Nest Auth / Reliability / NotificationsService
-- Remover Nest media/developers/feature-flags/logistics/orders/cart HTTP
+- Remover Nest media/developers/feature-flags/logistics HTTP → **Fase 38** ([PHASE38.md](./PHASE38.md))
+- Remover Nest auth/orders/cart HTTP (seguintes)
 - Remover finance services (ainda DI Nest)

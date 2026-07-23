@@ -38,5 +38,5 @@ Sem mudança — gate Fase 29; `docs/contracts/` sem OpenAPI.
 - Cliente HTTP Correios
 - Remover Nest Auth / Reliability / NotificationsService
 - Remover Nest wallet/billing/pricing/subscriptions/commerce HTTP → **Fase 37** ([PHASE37.md](./PHASE37.md))
-- Remover Nest media/developers/logistics HTTP (seguintes)
+- Remover Nest media/developers/logistics HTTP → **Fase 38** ([PHASE38.md](./PHASE38.md))
 - Remover AccountsService / AffiliateService / TenantGuard (ainda DI Nest)
