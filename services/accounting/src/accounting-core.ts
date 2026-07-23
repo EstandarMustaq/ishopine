@@ -144,6 +144,52 @@ export async function createEntry(
   });
 }
 
+/**
+ * Phase 26: order fulfill revenue — idempotent on orderId + REVENUE.
+ * Resolves cash 1.1.01 / revenue 3.1.01 like Nest/orders inline.
+ */
+export async function recordOrderRevenue(input: {
+  orderId: string;
+  orderNumber: string;
+  amountCents: number;
+  operatorId: string;
+}) {
+  if (input.amountCents <= 0) {
+    throw new HttpError(400, "Valor deve ser positivo");
+  }
+  const existing = await prisma.accountingEntry.findFirst({
+    where: { orderId: input.orderId, type: AccountingEntryType.REVENUE },
+  });
+  if (existing) {
+    return { entry: existing, alreadyPosted: true as const };
+  }
+
+  const cashAccount = await prisma.accountingAccount.findUnique({
+    where: { code: "1.1.01" },
+  });
+  const revenueAccount = await prisma.accountingAccount.findUnique({
+    where: { code: "3.1.01" },
+  });
+  if (!cashAccount || !revenueAccount) {
+    throw new HttpError(
+      400,
+      "Contas 1.1.01 / 3.1.01 em falta — seed accounting",
+    );
+  }
+
+  const entry = await createEntry(input.operatorId, {
+    description: `Receita do pedido ${input.orderNumber}`,
+    type: AccountingEntryType.REVENUE,
+    amountCents: input.amountCents,
+    debitAccountId: cashAccount.id,
+    creditAccountId: revenueAccount.id,
+    orderId: input.orderId,
+    postImmediately: true,
+  });
+
+  return { entry, alreadyPosted: false as const };
+}
+
 export async function postEntry(id: string, reviewerId: string) {
   const entry = await prisma.accountingEntry.findUnique({
     where: { id },

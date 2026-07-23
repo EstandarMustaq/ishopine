@@ -62,6 +62,10 @@ export function logisticsLabelRemoteEnabled() {
   return remoteOn("LOGISTICS_LABEL_REMOTE", process.env.LOGISTICS_URL);
 }
 
+export function accountingPostRemoteEnabled() {
+  return remoteOn("ACCOUNTING_POST_REMOTE", process.env.ACCOUNTING_URL);
+}
+
 export async function remoteRedeemCoupon(input: {
   code: string;
   orderId: string;
@@ -123,5 +127,18 @@ export async function remoteMarkDelivered(orderId: string) {
     process.env.LOGISTICS_URL!,
     "/api/logistics/internal/mark-delivered",
     { orderId },
+  );
+}
+
+export async function remoteRecordOrderRevenue(input: {
+  orderId: string;
+  orderNumber: string;
+  amountCents: number;
+  operatorId: string;
+}) {
+  return postJson(
+    process.env.ACCOUNTING_URL!,
+    "/api/accounting/internal/record-order-revenue",
+    input,
   );
 }

@@ -1,5 +1,5 @@
 /**
- * Phase 16: accounts strangler — me, tenants particular/store, active tenant.
+ * Phase 16–26: accounts strangler — me, tenants, addresses (Phase 26).
  */
 import http from "node:http";
 import {
@@ -288,11 +288,81 @@ export async function handleOwnedAccounts(
   const path = pathOnly(req.url);
   const method = (req.method || "GET").toUpperCase();
 
-  if (!path.startsWith("/api/accounts")) {
+  const isAccounts = path.startsWith("/api/accounts");
+  const isAddresses =
+    path === "/api/addresses" || path.startsWith("/api/addresses/");
+  if (!isAccounts && !isAddresses) {
     return false;
   }
 
   try {
+    // Phase 26: buyer address book (was Nest users.controller).
+    if (method === "GET" && path === "/api/addresses") {
+      const userId = requireUserId(req);
+      json(
+        res,
+        200,
+        await prisma.address.findMany({
+          where: { userId },
+          orderBy: { isDefault: "desc" },
+        }),
+      );
+      return true;
+    }
+
+    if (method === "POST" && path === "/api/addresses") {
+      const userId = requireUserId(req);
+      const body = await readJsonBody(req);
+      if (typeof body.street !== "string" || !body.street.trim()) {
+        throw new HttpError(400, "street obrigatório");
+      }
+      if (typeof body.number !== "string" || !body.number.trim()) {
+        throw new HttpError(400, "number obrigatório");
+      }
+      if (typeof body.district !== "string" || !body.district.trim()) {
+        throw new HttpError(400, "district obrigatório");
+      }
+      if (typeof body.city !== "string" || !body.city.trim()) {
+        throw new HttpError(400, "city obrigatório");
+      }
+      if (typeof body.state !== "string" || !body.state.trim()) {
+        throw new HttpError(400, "state obrigatório");
+      }
+      if (typeof body.zipCode !== "string" || !body.zipCode.trim()) {
+        throw new HttpError(400, "zipCode obrigatório");
+      }
+      const isDefault = body.isDefault === true;
+      if (isDefault) {
+        await prisma.address.updateMany({
+          where: { userId },
+          data: { isDefault: false },
+        });
+      }
+      json(
+        res,
+        201,
+        await prisma.address.create({
+          data: {
+            userId,
+            label:
+              typeof body.label === "string" && body.label.trim()
+                ? body.label.trim()
+                : "Principal",
+            street: body.street.trim(),
+            number: body.number.trim(),
+            complement:
+              typeof body.complement === "string" ? body.complement : undefined,
+            district: body.district.trim(),
+            city: body.city.trim(),
+            state: body.state.trim(),
+            zipCode: body.zipCode.trim(),
+            isDefault,
+          },
+        }),
+      );
+      return true;
+    }
+
     if (method === "GET" && path === "/api/accounts/me") {
       const userId = requireUserId(req);
       const account = await ensureAccountForUser(userId);

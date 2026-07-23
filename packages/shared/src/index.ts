@@ -438,6 +438,12 @@ export const GATEWAY_ROUTES: GatewayRoute[] = [
     defaultPort: 4109,
   },
   {
+    prefix: "/api/addresses",
+    service: "accounts",
+    envKey: "ACCOUNTS_URL",
+    defaultPort: 4109,
+  },
+  {
     prefix: "/api/shops",
     service: "marketplace",
     envKey: "MARKETPLACE_URL",

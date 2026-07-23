@@ -52,6 +52,5 @@ INTERNAL_SERVICE_SECRET=...
 Flags `=0` ou URL/secret em falta → **inline fallback** (parity Fase 10–24).
 
 ## Fora de âmbito
-- Cliente HTTP Correios MZ (continua sem contrato/API)
-- Reescrever a saga em micro-passos coupon→inventory→orders→pay
-- Mover accounting entries do status fulfill
+- Cliente HTTP Correios inventado (continua bloqueado — ver Fase 26)
+- Extrair dashboard / users admin / reliability

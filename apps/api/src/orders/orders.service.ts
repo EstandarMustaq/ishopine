@@ -805,34 +805,38 @@ export class OrdersService {
           }
         }
 
-        const cashAccount = await tx.accountingAccount.findUnique({
-          where: { code: '1.1.01' },
-        });
-        const revenueAccount = await tx.accountingAccount.findUnique({
-          where: { code: '3.1.01' },
-        });
-
-        if (cashAccount && revenueAccount) {
-          const existing = await tx.accountingEntry.findFirst({
-            where: { orderId: order.id, type: AccountingEntryType.REVENUE },
+        if (
+          !this.remoteEnabled('ACCOUNTING_POST_REMOTE', 'ACCOUNTING_URL')
+        ) {
+          const cashAccount = await tx.accountingAccount.findUnique({
+            where: { code: '1.1.01' },
           });
-          if (!existing) {
-            const entryCount = await tx.accountingEntry.count();
-            await tx.accountingEntry.create({
-              data: {
-                entryNumber: `LC${String(entryCount + 1).padStart(6, '0')}`,
-                description: `Receita do pedido ${order.orderNumber}`,
-                type: AccountingEntryType.REVENUE,
-                status: AccountingEntryStatus.POSTED,
-                amountCents: order.totalCents,
-                debitAccountId: cashAccount.id,
-                creditAccountId: revenueAccount.id,
-                orderId: order.id,
-                createdById: operatorId,
-                reviewedById: operatorId,
-                postedAt: new Date(),
-              },
+          const revenueAccount = await tx.accountingAccount.findUnique({
+            where: { code: '3.1.01' },
+          });
+
+          if (cashAccount && revenueAccount) {
+            const existing = await tx.accountingEntry.findFirst({
+              where: { orderId: order.id, type: AccountingEntryType.REVENUE },
             });
+            if (!existing) {
+              const entryCount = await tx.accountingEntry.count();
+              await tx.accountingEntry.create({
+                data: {
+                  entryNumber: `LC${String(entryCount + 1).padStart(6, '0')}`,
+                  description: `Receita do pedido ${order.orderNumber}`,
+                  type: AccountingEntryType.REVENUE,
+                  status: AccountingEntryStatus.POSTED,
+                  amountCents: order.totalCents,
+                  debitAccountId: cashAccount.id,
+                  creditAccountId: revenueAccount.id,
+                  orderId: order.id,
+                  createdById: operatorId,
+                  reviewedById: operatorId,
+                  postedAt: new Date(),
+                },
+              });
+            }
           }
         }
       }
@@ -878,6 +882,24 @@ export class OrdersService {
           operatorId,
         });
       }
+    }
+
+    if (
+      this.remoteEnabled('ACCOUNTING_POST_REMOTE', 'ACCOUNTING_URL') &&
+      (status === OrderStatus.CONFIRMED ||
+        status === OrderStatus.PROCESSING) &&
+      order.paymentStatus !== PaymentStatus.PAID
+    ) {
+      await this.postInternal(
+        this.config.get<string>('ACCOUNTING_URL')!,
+        '/api/accounting/internal/record-order-revenue',
+        {
+          orderId: id,
+          orderNumber: order.orderNumber,
+          amountCents: order.totalCents,
+          operatorId,
+        },
+      );
     }
 
     if (status === OrderStatus.SHIPPED) {
