@@ -17,7 +17,6 @@ import { authenticator } from 'otplib';
 import * as QRCode from 'qrcode';
 import { PrismaService } from '../prisma/prisma.service';
 import { MailService } from '../mail/mail.service';
-import type { GoogleProfileUser } from './google.strategy';
 import {
   Disable2faDto,
   Enable2faDto,
@@ -586,63 +585,5 @@ export class AuthService {
       ...user,
       role: user.platformRole,
     };
-  }
-
-  async loginOrRegisterGoogle(profile: GoogleProfileUser) {
-    const org = await this.resolveOrganization();
-    const email = profile.email.toLowerCase();
-
-    let user = await this.prisma.user.findFirst({
-      where: {
-        organizationId: org.id,
-        OR: [{ googleId: profile.googleId }, { email }],
-      },
-    });
-
-    if (!user) {
-      user = await this.prisma.user.create({
-        data: {
-          organizationId: org.id,
-          email,
-          name: profile.name,
-          googleId: profile.googleId,
-          avatarUrl: profile.avatarUrl,
-          authProvider: AuthProvider.GOOGLE,
-          platformRole: PlatformRole.BUYER,
-          emailVerifiedAt: profile.emailVerified ? new Date() : new Date(),
-          cart: { create: {} },
-        },
-      });
-    } else {
-      user = await this.prisma.user.update({
-        where: { id: user.id },
-        data: {
-          googleId: user.googleId ?? profile.googleId,
-          avatarUrl: user.avatarUrl ?? profile.avatarUrl,
-          emailVerifiedAt: user.emailVerifiedAt ?? new Date(),
-          lastLoginAt: new Date(),
-          authProvider:
-            user.authProvider === AuthProvider.LOCAL
-              ? AuthProvider.LOCAL
-              : AuthProvider.GOOGLE,
-        },
-      });
-    }
-
-    if (user.totpEnabled) {
-      const session = await this.prisma.authSession.create({
-        data: {
-          userId: user.id,
-          pendingTwoFactor: true,
-          expiresAt: new Date(Date.now() + SESSION_TTL_MS),
-        },
-      });
-      return {
-        requiresTwoFactor: true,
-        sessionToken: session.id,
-      };
-    }
-
-    return this.tokenResponse(user, false);
   }
 }

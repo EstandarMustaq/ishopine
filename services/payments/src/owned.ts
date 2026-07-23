@@ -1,5 +1,5 @@
 /**
- * Phase 11–30: payments owns PaySuite checkout / status / webhook when PAYMENTS_OWNED≠0.
+ * Phase 11–31: payments owns PaySuite + legacy stripe/mpesa aliases when OWNED≠0.
  * On PAID → orders POST /api/orders/internal/settle-paid (ORDERS_URL, else Nest upstream).
  */
 import http from "node:http";
@@ -968,6 +968,63 @@ export async function handleOwnedPayments(
         reason: body.reason,
       });
       json(res, 201, refund);
+      return true;
+    }
+
+    /* Phase 31: legacy aliases → PaySuite (Nest BillingController parity) */
+    if (path === "/api/billing/stripe/checkout" && method === "POST") {
+      const user = verifyUser(req);
+      if (!user) {
+        json(res, 401, { message: "Não autenticado" });
+        return true;
+      }
+      const body = (await readJsonBody(req)) as { orderIds?: string[] };
+      if (!Array.isArray(body.orderIds) || body.orderIds.length === 0) {
+        throw httpError(400, "orderIds obrigatório");
+      }
+      const result = await createPaysuiteCheckout(
+        user.sub,
+        body.orderIds,
+        "credit_card",
+      );
+      json(res, 201, result);
+      return true;
+    }
+
+    if (path === "/api/billing/mpesa/c2b" && method === "POST") {
+      const user = verifyUser(req);
+      if (!user) {
+        json(res, 401, { message: "Não autenticado" });
+        return true;
+      }
+      const body = (await readJsonBody(req)) as {
+        orderIds?: string[];
+        msisdn?: string;
+      };
+      if (!Array.isArray(body.orderIds) || body.orderIds.length === 0) {
+        throw httpError(400, "orderIds obrigatório");
+      }
+      const result = await createPaysuiteCheckout(
+        user.sub,
+        body.orderIds,
+        "mpesa",
+        body.msisdn,
+      );
+      json(res, 201, result);
+      return true;
+    }
+
+    const mpesaStatusMatch = path.match(
+      /^\/api\/billing\/mpesa\/status\/([^/]+)$/,
+    );
+    if (mpesaStatusMatch && method === "GET") {
+      const user = verifyUser(req);
+      if (!user) {
+        json(res, 401, { message: "Não autenticado" });
+        return true;
+      }
+      const result = await syncPaysuiteStatus(user.sub, mpesaStatusMatch[1]);
+      json(res, 200, result);
       return true;
     }
 

@@ -3,16 +3,13 @@ import {
   Controller,
   Get,
   Post,
-  Req,
   Res,
-  ServiceUnavailableException,
   UseGuards,
 } from '@nestjs/common';
 
 import { ConfigService } from '@nestjs/config';
-import { AuthGuard } from '@nestjs/passport';
 import { Throttle } from '@nestjs/throttler';
-import type { Request, Response } from 'express';
+import type { Response } from 'express';
 import { AuthService } from './auth.service';
 import {
   Disable2faDto,
@@ -26,23 +23,18 @@ import {
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { AuthUser } from '../common/decorators/current-user.decorator';
-import type { GoogleProfileUser } from './google.strategy';
 import { clearAuthCookie, setAuthCookie } from './auth-cookie';
 
+/**
+ * Nest auth remnant. Local auth + Google OAuth live on services/identity
+ * (Phase 13–31). Google Passport removed — use IDENTITY_URL.
+ */
 @Controller('auth')
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly config: ConfigService,
   ) {}
-
-  private googleConfigured() {
-    return Boolean(
-      this.config.get<string>('GOOGLE_CLIENT_ID') &&
-        this.config.get<string>('GOOGLE_CLIENT_SECRET') &&
-        this.config.get<string>('GOOGLE_CALLBACK_URL'),
-    );
-  }
 
   private attachSessionCookie(
     res: Response,
@@ -111,57 +103,6 @@ export class AuthController {
   logout(@Res({ passthrough: true }) res: Response) {
     clearAuthCookie(res, this.config);
     return { ok: true };
-  }
-
-  @Get('google')
-  googleEntry(@Res() res: Response) {
-    if (!this.googleConfigured()) {
-      return res.status(503).json({
-        statusCode: 503,
-        message:
-          'Login com Google não configurado. Defina GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET e GOOGLE_CALLBACK_URL.',
-        error: 'Service Unavailable',
-      });
-    }
-    return res.redirect('/api/auth/google/start');
-  }
-
-  @Get('google/start')
-  @UseGuards(AuthGuard('google'))
-  googleStart() {
-  }
-
-  @Get('google/callback')
-  @UseGuards(AuthGuard('google'))
-  async googleCallback(@Req() req: Request, @Res() res: Response) {
-    if (!this.googleConfigured()) {
-      throw new ServiceUnavailableException(
-        'Login com Google não configurado.',
-      );
-    }
-
-    const profile = req.user as GoogleProfileUser;
-    const result = await this.authService.loginOrRegisterGoogle(profile);
-    const webUrl = this.config.get<string>('WEB_URL', 'http://localhost:3000');
-    const cookieDomain = this.config.get<string>('COOKIE_DOMAIN');
-
-    if ('requiresTwoFactor' in result && result.requiresTwoFactor) {
-      const url = new URL('/auth/2fa', webUrl);
-      url.searchParams.set('sessionToken', result.sessionToken);
-      return res.redirect(url.toString());
-    }
-
-    if ('accessToken' in result) {
-      setAuthCookie(res, this.config, result.accessToken);
-      const url = new URL('/auth/callback', webUrl);
-      // Shared-domain SSO: cookie is enough. Keep token for localhost handoff.
-      if (!cookieDomain) {
-        url.searchParams.set('accessToken', result.accessToken);
-      }
-      return res.redirect(url.toString());
-    }
-
-    return res.redirect(`${webUrl}/auth/login?error=google`);
   }
 
   @UseGuards(JwtAuthGuard)

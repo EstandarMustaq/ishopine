@@ -124,7 +124,8 @@ customer               # pode viver em marketplace no início
 | **28** | Platform-ops extract (`:4119`) — users admin + reliability + cron; Correios still blocked |
 | **29** | Platform-security extract (`:4120`) + Correios OpenAPI gate (`docs/contracts/`); no invented HTTP |
 | **30** | Google OAuth → identity; settle-paid → orders; Correios still blocked |
-| **31+** | Correios HTTP adapter when OpenAPI lands; Nest cleanup (Passport/legacy aliases) |
+| **31** | Nest cleanup — legacy stripe/mpesa → payments; remove Google Passport; Correios still blocked |
+| **32+** | Correios HTTP adapter when OpenAPI lands; deeper Nest module retirement |
 
 ## Fora de âmbito (MVP)
 

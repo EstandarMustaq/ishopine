@@ -7,7 +7,7 @@
 | **marketplace** | **owned :4111** | Shops + ads + wishlist (`MARKETPLACE_OWNED`) |
 | **catalog** | **owned :4110** | Categorias + produtos híbridos (`CATALOG_OWNED`) |
 | **orders** | **owned :4101** | Cart + GET + status + checkout + **settle-paid internal**; remote coupon/inventory/label/accounting/wallet/affiliates |
-| **payments** | **owned :4102** | PaySuite checkout/status/webhook/**payouts/refunds** |
+| **payments** | **owned :4102** | PaySuite checkout/status/webhook/**payouts/refunds** + legacy stripe/mpesa |
 | commerce-orchestrator | compose :4100 | Saga: **ORDERS_URL** → **PAYMENTS_URL** (Fase 25) |
 | **wallet** | **owned :4103** | Reads + internal settle (`WALLET_OWNED`) |
 | **billing** | **owned :4104** | Pricing + subscriptions + usage (`BILLING_OWNED`); PaySuite → payments |

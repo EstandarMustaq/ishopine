@@ -26,6 +26,10 @@ import {
 } from './dto/billing.dto';
 import type { PaysuitePaymentMethod } from './paysuite';
 
+/**
+ * Nest billing HTTP remnant. PaySuite + legacy stripe/mpesa live on
+ * services/payments (Phase 11–31). Prefer strangler PAYMENTS_URL.
+ */
 @Controller('billing')
 export class BillingController {
   constructor(private readonly billing: BillingService) {}
@@ -101,41 +105,5 @@ export class BillingController {
         reason: body.reason,
       },
     );
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Post('stripe/checkout')
-  legacyStripe(
-    @CurrentUser() user: AuthUser,
-    @Body() body: { orderIds: string[] },
-  ) {
-    return this.billing.createPaysuiteCheckout(
-      user.id,
-      body.orderIds,
-      'credit_card',
-    );
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Post('mpesa/c2b')
-  legacyMpesa(
-    @CurrentUser() user: AuthUser,
-    @Body() body: { orderIds: string[]; msisdn?: string },
-  ) {
-    return this.billing.createPaysuiteCheckout(
-      user.id,
-      body.orderIds,
-      'mpesa',
-      body.msisdn,
-    );
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Get('mpesa/status/:paymentId')
-  legacyMpesaStatus(
-    @CurrentUser() user: AuthUser,
-    @Param('paymentId') paymentId: string,
-  ) {
-    return this.billing.syncPaysuiteStatus(user.id, paymentId);
   }
 }
