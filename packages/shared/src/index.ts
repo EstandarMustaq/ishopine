@@ -57,6 +57,9 @@ export const PLATFORM_MODULES = [
   "logistics",
   "accounting",
   "comms",
+  "coupons",
+  "inventory",
+  "reviews",
 ] as const;
 
 export type PlatformModule = (typeof PLATFORM_MODULES)[number];
@@ -391,9 +394,12 @@ export const IDEMPOTENCY_SCOPES = {
 /**
  * Gateway strangler route table.
  * More specific prefixes must appear before broader ones.
+ * Optional `pathRe` further restricts a prefix (e.g. product reviews).
  */
 export type GatewayRoute = {
   prefix: string;
+  /** When set, path must also match after the prefix check. */
+  pathRe?: RegExp;
   service:
     | FundamentalService
     | "commerce-orchestrator"
@@ -403,6 +409,9 @@ export type GatewayRoute = {
     | "logistics"
     | "accounting"
     | "comms"
+    | "coupons"
+    | "inventory"
+    | "reviews"
     | "monolith";
   /** Env var holding the service base URL. */
   envKey?: string;
@@ -469,6 +478,14 @@ export const GATEWAY_ROUTES: GatewayRoute[] = [
     service: "catalog",
     envKey: "CATALOG_URL",
     defaultPort: 4110,
+  },
+  /** Phase 24: reviews before broader /api/products → catalog. */
+  {
+    prefix: "/api/products/",
+    pathRe: /^\/api\/products\/[^/]+\/reviews\/?$/,
+    service: "reviews",
+    envKey: "REVIEWS_URL",
+    defaultPort: 4117,
   },
   {
     prefix: "/api/products",
@@ -589,6 +606,18 @@ export const GATEWAY_ROUTES: GatewayRoute[] = [
     service: "comms",
     envKey: "COMMS_URL",
     defaultPort: 4114,
+  },
+  {
+    prefix: "/api/coupons",
+    service: "coupons",
+    envKey: "COUPONS_URL",
+    defaultPort: 4115,
+  },
+  {
+    prefix: "/api/inventory",
+    service: "inventory",
+    envKey: "INVENTORY_URL",
+    defaultPort: 4116,
   },
 ];
 

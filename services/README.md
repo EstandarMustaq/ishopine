@@ -17,5 +17,8 @@
 | **logistics** | **owned :4112** | Zones + shipments + HMAC + **DHL live fail-closed** (`LOGISTICS_OWNED`) |
 | **accounting** | **owned :4113** | Plano de contas + lançamentos (`ACCOUNTING_OWNED`) |
 | **comms** | **owned :4114** | Notifications + conversations + disputes (`COMMS_OWNED`) |
+| **coupons** | **owned :4115** | List/create/validate (`COUPONS_OWNED`); redemption → orders |
+| **inventory** | **owned :4116** | Movements / low-stock / adjust (`INVENTORY_OWNED`); reserve → orders |
+| **reviews** | **owned :4117** | Product reviews (`REVIEWS_OWNED`); gateway `pathRe` before catalog |
 
 Helper: `@ishopine/shared` → `startStranglerProxy`.

@@ -117,7 +117,8 @@ customer               # pode viver em marketplace no início
 | **21** | Accounting extract (ledger owned) |
 | **22** | Comms extract (notifications + messages + disputes owned) |
 | **23** | Live DHL (fail-closed MyDHL) + CDN edge (Cloudinary / CNAME) |
-| **24+** | Coupons / inventory / reviews; Correios when contracted |
+| **24** | Coupons / inventory / reviews extracts (`:4115–4117`) |
+| **25+** | Correios when contracted; deeper checkout saga splits |
 
 ## Fora de âmbito (MVP)
 
