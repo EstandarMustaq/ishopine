@@ -36,3 +36,4 @@ Sem mudança — gate Fase 29; `docs/contracts/` sem OpenAPI.
 - Remover Nest Auth local (fallthrough)
 - Remover BillingService / OrdersService / MailModule
 - Unregister Nest modules wholesale
+- Platform-* Nest HTTP (dashboard/users admin/reliability/cron/security) → **Fase 33**

@@ -9,17 +9,19 @@ import { IdempotencyService } from './idempotency.service';
 import { IdempotencyInterceptor } from './idempotency.interceptor';
 import { ProjectionService } from './projection.service';
 import { OutboxDispatcher } from './outbox.dispatcher';
-import { ReliabilityController } from './reliability.controller';
 
 const isServerless = Boolean(process.env.VERCEL);
 
+/**
+ * Nest reliability engine (Phase 33). HTTP health/sync → platform-ops.
+ * Keep inbox/outbox/projections/dispatcher for Nest billing/commerce/logistics.
+ */
 @Module({
   imports: [
     ...(isServerless ? [] : [ScheduleModule.forRoot()]),
     NotificationsModule,
     DevelopersModule,
   ],
-  controllers: [ReliabilityController],
   providers: [
     InboxService,
     OutboxService,
