@@ -134,7 +134,7 @@ customer               # pode viver em marketplace no início
 | **38** | Nest HTTP retirement — media/developers/feature-flags/logistics; Correios still blocked |
 | **39** | Nest HTTP retirement — auth/orders/cart; Nest edge = health + cron; Correios still blocked |
 | **40** | Nest JWT/AuthModule slim + remnant inventory; Correios still blocked |
-| **40+** | Correios HTTP when OpenAPI lands; Nest DI/service decommission when remotes always-on |
+| **40+** | Nest endgame shell (health + cron→platform-ops); Correios HTTP still gated on OpenAPI |
 ## Fora de âmbito (MVP)
 
 - Admin omnipotente de sellers

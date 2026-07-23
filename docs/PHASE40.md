@@ -39,5 +39,5 @@ Sem mudança — gate Fase 29; ver **Fase 40+** ([PHASE40PLUS.md](./PHASE40PLUS.
 
 ## Fora de âmbito
 - Cliente HTTP Correios
-- Remover DI services / Reliability engine → **Fase 40+**
+- Remover DI services / Reliability engine → **Fase 40+** ([PHASE40PLUS.md](./PHASE40PLUS.md)) — **entregue**
 - Drop unused npm deps (`passport`, `@nestjs/jwt`, …) — opcional follow-up

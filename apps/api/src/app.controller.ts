@@ -7,10 +7,11 @@ export class AppController {
     return {
       ok: true,
       service: 'ishopine-api',
+      mode: 'nest-shell',
+      phase: '40+',
       marketplace: 'iShopine',
       country: 'MZ',
       currency: 'MZN',
-      payments: 'paysuite',
       timestamp: new Date().toISOString(),
     };
   }
