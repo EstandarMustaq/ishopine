@@ -122,7 +122,8 @@ customer               # pode viver em marketplace no início
 | **26** | Remote checkout E2E; addresses→accounts; accounting post remote; Correios still blocked |
 | **27** | Platform-settings / dashboard extract (`:4118`); Correios still blocked |
 | **28** | Platform-ops extract (`:4119`) — users admin + reliability + cron; Correios still blocked |
-| **29+** | Correios HTTP when OpenAPI/contract lands; security extract |
+| **29** | Platform-security extract (`:4120`) + Correios OpenAPI gate (`docs/contracts/`); no invented HTTP |
+| **30+** | Correios HTTP adapter when OpenAPI lands + remaining Nest surfaces |
 
 ## Fora de âmbito (MVP)
 

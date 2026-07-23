@@ -1,8 +1,11 @@
 /**
  * Phase 20–23: logistics core — zones, adapters, shipments, HMAC webhooks.
  * Phase 23: fail-closed DHL Express MyDHL; Correios MZ still maps → MANUAL.
+ * Phase 29: Correios OpenAPI gate (docs/contracts/) — no invented HTTP.
  */
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { existsSync } from "node:fs";
+import { resolve } from "node:path";
 import {
   CarrierCode,
   Prisma,
@@ -48,29 +51,71 @@ export function listCarriers() {
   }));
 }
 
-/** Phase 23–26: partner capability report (no fake Correios). */
+/**
+ * Phase 23–29: Correios MZ stays unavailable until a real OpenAPI/contract
+ * lands in-repo and an adapter is generated from it — never invent HTTP.
+ */
+export function correiosMzOpenApiPath() {
+  const fromEnv = (process.env.CORREIOS_MZ_OPENAPI_PATH || "").trim();
+  if (fromEnv) return resolve(fromEnv);
+  const candidates = [
+    resolve(process.cwd(), "docs/contracts/correios-mz.openapi.yaml"),
+    resolve(process.cwd(), "../../docs/contracts/correios-mz.openapi.yaml"),
+  ];
+  for (const candidate of candidates) {
+    if (existsSync(candidate)) return candidate;
+  }
+  return candidates[0];
+}
+
 export function correiosMzContractStatus() {
   const base = (process.env.CORREIOS_MZ_API_BASE || "").trim();
   const key = (process.env.CORREIOS_MZ_API_KEY || "").trim();
   const secret = (process.env.CORREIOS_MZ_API_SECRET || "").trim();
   const contractedFlag = process.env.CORREIOS_MZ_CONTRACTED === "1";
   const envPresent = Boolean(base && key && secret);
+  const openApiPath = correiosMzOpenApiPath();
+  const openapiPresent = existsSync(openApiPath);
+  /** Adapter ships only after OpenAPI lands — none in repo yet. */
+  const adapterPresent = false;
   return {
     contractedFlag,
     envPresent,
-    /** Live HTTP only when contract docs ship an adapter — never invent rates. */
+    openapiPresent,
+    openApiPath,
+    adapterPresent,
+    /**
+     * Live HTTP only when: contracted + OpenAPI file + credentials + adapter.
+     * Never invent rates/clients.
+     */
     live: false,
+    readyForAdapter: contractedFlag && openapiPresent && envPresent,
     env: [
       "CORREIOS_MZ_CONTRACTED",
       "CORREIOS_MZ_API_BASE",
       "CORREIOS_MZ_API_KEY",
       "CORREIOS_MZ_API_SECRET",
+      "CORREIOS_MZ_OPENAPI_PATH",
     ],
   };
 }
 
 export function listCarrierPartners() {
   const correios = correiosMzContractStatus();
+  let reason: string;
+  if (!correios.openapiPresent) {
+    reason =
+      "Sem OpenAPI/contrato em docs/contracts/correios-mz.openapi.yaml — HTTP bloqueado; mapsTo MANUAL";
+  } else if (!correios.adapterPresent) {
+    reason =
+      "OpenAPI presente, mas adapter HTTP ainda não gerado a partir do contrato — mapsTo MANUAL";
+  } else if (!correios.envPresent) {
+    reason = "OpenAPI+adapter presentes, mas credenciais CORREIOS_MZ_* em falta";
+  } else if (!correios.contractedFlag) {
+    reason = "Definir CORREIOS_MZ_CONTRACTED=1 após contrato assinado";
+  } else {
+    reason = "Contrato completo — ativar live no adapter";
+  }
   return {
     local: listCarrierAdapters()
       .filter((a) => a.code !== CarrierCode.DHL_EXPRESS)
@@ -100,9 +145,11 @@ export function listCarrierPartners() {
         mode: "unavailable" as const,
         contractedFlag: correios.contractedFlag,
         credentialsPresent: correios.envPresent,
-        reason: correios.envPresent
-          ? "Credenciais presentes, mas sem OpenAPI/contrato no monorepo — adapter HTTP não inventado; mapsTo MANUAL"
-          : "Sem API pública/contratada no monorepo — pedidos legacy mapeiam para MANUAL",
+        openapiPresent: correios.openapiPresent,
+        openApiPath: correios.openApiPath,
+        adapterPresent: correios.adapterPresent,
+        readyForAdapter: correios.readyForAdapter,
+        reason,
         mapsTo: "MANUAL",
         env: correios.env,
       },

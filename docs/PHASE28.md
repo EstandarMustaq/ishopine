@@ -41,4 +41,4 @@ DATABASE_URL=...
 - Addresses (accounts `:4109`)
 - Dashboard / settings (platform-settings `:4118`)
 - Inbox/outbox writers + idempotency interceptor (permanecem no Nest)
-- Security module (`/api/security/*`)
+- Security module (`/api/security/*`) → **Fase 29** (`platform-security`)

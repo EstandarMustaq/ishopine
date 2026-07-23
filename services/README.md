@@ -22,6 +22,7 @@
 | **reviews** | **owned :4117** | Product reviews (`REVIEWS_OWNED`); gateway `pathRe` before catalog |
 | **platform-settings** | **owned :4118** | Dashboard overview/charts + store/platform settings |
 | **platform-ops** | **owned :4119** | Users admin + reliability health/sync + cron outbox |
+| **platform-security** | **owned :4120** | Compliance / findings / security sync |
 
 Helper: `@ishopine/shared` → `startStranglerProxy`.
 
