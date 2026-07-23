@@ -56,15 +56,31 @@ const METHODS = new Set<PaysuitePaymentMethod>([
 
 type JwtPayload = { sub: string; tfa?: boolean };
 
+/** Explicit kill-switch while PaySuite merchant quota is pending. */
+export function isPaysuiteEnabled(): boolean {
+  const flag = (process.env.PAYSUITE_ENABLED || "1").trim().toLowerCase();
+  if (flag === "0" || flag === "false" || flag === "off" || flag === "no") {
+    return false;
+  }
+  return true;
+}
+
 let client: PaysuiteClient | null = null;
 const token = process.env.PAYSUITE_TOKEN?.trim();
-if (token) {
+if (isPaysuiteEnabled() && token) {
   client = new PaysuiteClient({
     token,
     baseUrl: process.env.PAYSUITE_BASE_URL,
     timeoutMs: Number(process.env.PAYSUITE_TIMEOUT_MS || 30_000),
     maxRetries: Number(process.env.PAYSUITE_MAX_RETRIES || 3),
   });
+}
+
+function paysuiteUnavailableMessage(): string {
+  if (!isPaysuiteEnabled()) {
+    return "Pagamentos PaySuite temporariamente desactivados (cota comerciante pendente). Checkout indisponível.";
+  }
+  return "PaySuite não configurado. Defina PAYSUITE_TOKEN (painel PaySuite → API Access).";
 }
 
 const orgSlug = process.env.PLATFORM_ORG_SLUG || "ishopine";
@@ -137,11 +153,8 @@ async function createSellerPayout(
   if (input.amountCents <= 0) {
     throw httpError(400, "Valor de payout inválido");
   }
-  if (!client) {
-    throw httpError(
-      503,
-      "PaySuite não configurado. Defina PAYSUITE_TOKEN.",
-    );
+  if (!isPaysuiteEnabled() || !client) {
+    throw httpError(503, paysuiteUnavailableMessage());
   }
   const phone = normalizeMsisdn(input.phone) || input.phone;
   try {
@@ -173,8 +186,8 @@ async function createRefund(
   if (payment.status !== BillingPaymentStatus.PAID) {
     throw httpError(400, "Só é possível reembolsar pagamentos pagos");
   }
-  if (!client) {
-    throw httpError(503, "PaySuite não configurado");
+  if (!isPaysuiteEnabled() || !client) {
+    throw httpError(503, paysuiteUnavailableMessage());
   }
   if (input.amountCents <= 0) {
     throw httpError(400, "Valor de reembolso inválido");
@@ -198,6 +211,7 @@ async function createRefund(
 }
 
 function allowSimulate(): boolean {
+  if (!isPaysuiteEnabled()) return false;
   if (isProd) return false;
   if (process.env.PAYSUITE_SIMULATE === "true") return true;
   return !client;
@@ -468,11 +482,8 @@ async function createPaysuiteCheckout(
     };
   }
 
-  if (!client) {
-    throw httpError(
-      503,
-      "PaySuite não configurado. Defina PAYSUITE_TOKEN (painel PaySuite → API Access).",
-    );
+  if (!isPaysuiteEnabled() || !client) {
+    throw httpError(503, paysuiteUnavailableMessage());
   }
 
   try {
