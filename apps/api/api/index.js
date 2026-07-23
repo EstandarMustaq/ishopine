@@ -1,8 +1,5 @@
 /**
- * Vercel entry. Default: Nest shell (health + cron) until composition is
- * promoted. Set COMPOSITION_BUILD=1 in build to emit composition/api.js and
- * switch this file — see apps/api/README.md and docs/SERVICES.md.
- *
- * Domain ownership lives in services/*; Nest must not re-implement domains.
+ * Production entry — composition edge.
+ * Domain traffic → services/* owned handlers exclusively (no Nest domain).
  */
-module.exports = require("../dist/src/serverless.js");
+module.exports = require("../composition/api.js");

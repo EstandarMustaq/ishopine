@@ -19,14 +19,14 @@ On Vercel, long-running per-service processes are not available. Official produc
 
 `GET /api/health` (composition) → `{ mode: "composition", ownership: "services-exclusive", domains: [...] }`
 
-**Cutover status:** composition is implemented and smoke-tested locally. Production `ishopine-api` remains on the last stable Nest monolith deploy until the composition preview is verified end-to-end (Prisma binaries on Vercel). Do **not** promote a broken composition build — prefer rollback over mixed ownership.
+**Cutover status:** composition is the production entry (`apps/api/api/index.js` → `composition/api.js`). Build vendors Prisma engines + sharp into `composition/node_modules`. Instant rollback: previous Nest monolith deployment on Vercel.
 
 ### Promote checklist
 
-1. Preview deploy of composition returns health with `mode: "composition"`
+1. Preview/prod health returns `mode: "composition"` and `ownership: "services-exclusive"`
 2. `GET /api/products` 200 and `GET /api/auth/me` 401
-3. Switch `apps/api/api/index.js` to `require("../composition/api.js")`
-4. Promote; keep previous deployment as instant rollback
+3. Marketplace still loads against `https://ishopine-api.vercel.app`
+4. On failure → `vercel rollback` to last Nest monolith deploy
 
 ## Local multi-process (optional)
 

@@ -12,7 +12,6 @@ import { PrismaClient } from "@prisma/client";
 import Busboy from "busboy";
 import { v2 as cloudinary } from "cloudinary";
 import jwt from "jsonwebtoken";
-import sharp from "sharp";
 import {
   AUTH_COOKIE_NAME,
   buildMediaUrl,
@@ -102,6 +101,8 @@ function withVariants<T extends { url: string }>(asset: T) {
 }
 
 async function writeLocalVariants(absoluteOriginal: string, publicUrl: string) {
+  // Dynamic import keeps sharp off the cold-start path for non-media routes.
+  const sharp = (await import("sharp")).default;
   const thumbAbs = join(
     process.cwd(),
     localVariantUrl(publicUrl, "thumb").replace(/^\//, ""),
