@@ -5,7 +5,6 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AccountsModule } from './accounts/accounts.module';
 import { AffiliateModule } from './affiliate/affiliate.module';
 import { AppController } from './app.controller';
-import { AuthModule } from './auth/auth.module';
 import { BillingModule } from './billing/billing.module';
 import { CommerceModule } from './commerce/commerce.module';
 import { CronModule } from './cron/cron.module';
@@ -23,8 +22,9 @@ import { ReliabilityModule } from './reliability/reliability.module';
 import { SecurityModule } from './security/security.module';
 
 /**
- * Nest monolith remnant. Auth/orders/cart HTTP retired (Phase 39). Nest HTTP
- * edge is health + cron bridge. Domain services kept for DI/fallthrough.
+ * Nest monolith remnant (Phase 40). HTTP edge = health + cron bridge only.
+ * Auth/JWT stack removed — identity owns /api/auth. Domain services remain
+ * for in-process fallthrough (Billing/commerce/Orders settle, Outbox).
  */
 @Module({
   imports: [
@@ -40,7 +40,6 @@ import { SecurityModule } from './security/security.module';
     CronModule,
     SecurityModule,
     MailModule,
-    AuthModule,
     AccountsModule,
     OrdersModule,
     BillingModule,
