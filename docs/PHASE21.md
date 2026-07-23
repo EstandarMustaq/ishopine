@@ -34,4 +34,5 @@ DATABASE_URL=...
 ## Fora de âmbito
 - Clientes HTTP Correios / DHL
 - Multi-região CDN / PoPs
-- Extrair notifications / messages / disputes / coupons / inventory
+- Extrair notifications / messages / disputes → **Fase 22** ([PHASE22.md](./PHASE22.md))
+- Coupons / inventory / reviews fallthrough

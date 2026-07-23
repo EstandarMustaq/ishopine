@@ -43,3 +43,4 @@ CARRIER_WEBHOOK_SECRET=...
 - Multi-região CDN / PoPs
 - Remover `LogisticsService` do Nest (ainda usado in-process)
 - Accounting ledger → **Fase 21** ([PHASE21.md](./PHASE21.md))
+- Comms → **Fase 22** ([PHASE22.md](./PHASE22.md))

@@ -16,5 +16,6 @@
 | **affiliates** | **owned :4108** | Links/clicks/rewards + internal conversion (`AFFILIATES_OWNED`) |
 | **logistics** | **owned :4112** | Zones + shipments + HMAC webhooks (`LOGISTICS_OWNED`) |
 | **accounting** | **owned :4113** | Plano de contas + lançamentos (`ACCOUNTING_OWNED`) |
+| **comms** | **owned :4114** | Notifications + conversations + disputes (`COMMS_OWNED`) |
 
 Helper: `@ishopine/shared` → `startStranglerProxy`.
