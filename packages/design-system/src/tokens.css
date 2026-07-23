@@ -1,0 +1,109 @@
+/**
+ * iShopine design tokens (CSS custom properties).
+ * Import in app globals: `@import "@ishopine/design-system/tokens.css";`
+ *
+ * Layout note (aligned to current Shopify Admin / screenshots):
+ * - Dark top bar (#1A1A1A)
+ * - Light sidebar (#F1F1F1) with white active pill
+ * - Page background (#F6F6F7), white cards
+ */
+:root {
+  /* Primary */
+  --ds-brand: #008060;
+  --ds-brand-dark: #004c3f;
+
+  /* Accent */
+  --ds-interactive: #0070d9;
+
+  /* Text */
+  --ds-text: #202223;
+  --ds-text-secondary: #6d7175;
+  --ds-text-disabled: #8c9196;
+
+  /* Surfaces */
+  --ds-bg: #f6f6f7;
+  --ds-surface: #ffffff;
+  --ds-border: #c9cccf;
+  --ds-border-subdued: #e4e5e7;
+
+  /* Navigation */
+  --ds-topbar: #1a1a1a;
+  --ds-sidebar: #f1f1f1;
+  --ds-sidebar-active: #ffffff;
+
+  /* Semantic */
+  --ds-success: #008060;
+  --ds-warning: #ffc453;
+  --ds-critical: #d72c0d;
+  --ds-highlight: #eaf4fb;
+
+  /* Radius */
+  --ds-radius-sm: 4px;
+  --ds-radius-md: 8px;
+  --ds-radius-lg: 12px;
+  --ds-radius-full: 9999px;
+
+  /* Space (8px grid) */
+  --ds-space-1: 4px;
+  --ds-space-2: 8px;
+  --ds-space-3: 12px;
+  --ds-space-4: 16px;
+  --ds-space-5: 20px;
+  --ds-space-6: 24px;
+  --ds-space-8: 32px;
+  --ds-space-10: 40px;
+
+  /* Elevation */
+  --ds-shadow-raised: 0 1px 0 rgba(22, 29, 37, 0.05);
+  --ds-shadow-overlay: 0 4px 8px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
+  --ds-shadow-modal: 0 8px 24px rgba(0, 0, 0, 0.15);
+
+  /* Layout */
+  --ds-sidebar-width: 240px;
+  --ds-topbar-height: 56px;
+  --ds-max-width: 1200px;
+
+  /* Typography */
+  --ds-font-sans: ShopifySans, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  --ds-font-code: Menlo, Monaco, Consolas, monospace;
+
+  /* Bridge → existing shadcn/app CSS variables */
+  --background: var(--ds-bg);
+  --foreground: var(--ds-text);
+  --card: var(--ds-surface);
+  --card-foreground: var(--ds-text);
+  --popover: var(--ds-surface);
+  --popover-foreground: var(--ds-text);
+  --primary: var(--ds-brand);
+  --primary-foreground: #ffffff;
+  --secondary: var(--ds-surface);
+  --secondary-foreground: var(--ds-text);
+  --muted: var(--ds-bg);
+  --muted-foreground: var(--ds-text-secondary);
+  --accent: var(--ds-highlight);
+  --accent-foreground: var(--ds-text);
+  --destructive: var(--ds-critical);
+  --border: var(--ds-border-subdued);
+  --input: var(--ds-border);
+  --ring: var(--ds-brand);
+  --radius: var(--ds-radius-md);
+
+  --sidebar: var(--ds-sidebar);
+  --sidebar-foreground: var(--ds-text);
+  --sidebar-primary: var(--ds-brand);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: var(--ds-sidebar-active);
+  --sidebar-accent-foreground: var(--ds-text);
+  --sidebar-border: var(--ds-border-subdued);
+  --sidebar-ring: var(--ds-brand);
+
+  --brand-orange: var(--ds-brand);
+  --brand-orange-hover: var(--ds-brand-dark);
+  --brand-ink: var(--ds-text);
+  --brand-surface: var(--ds-bg);
+  --brand-surface-elevated: var(--ds-surface);
+  --brand-muted: var(--ds-text-secondary);
+  --brand-border: var(--ds-border-subdued);
+  --brand-white: var(--ds-surface);
+}

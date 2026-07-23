@@ -1,0 +1,30 @@
+{
+  "name": "@ishopine/design-system",
+  "version": "0.1.0",
+  "private": true,
+  "description": "iShopine design tokens — Shopify Polaris-inspired (MZ commerce)",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./tokens.css": "./src/tokens.css",
+    "./tailwind-preset": {
+      "types": "./dist/tailwind-preset.d.ts",
+      "default": "./dist/tailwind-preset.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "lint": "echo ok"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5.9.3"
+  },
+  "peerDependencies": {
+    "tailwindcss": "^3.4.0"
+  }
+}

@@ -34,12 +34,12 @@ export function SellerShell({ children }: { children: React.ReactNode }) {
   return (
     <AuthGate sellerAccess>
       <TooltipProvider delayDuration={200}>
-        <div className="flex h-svh overflow-hidden bg-[var(--brand-surface)]">
+        <div className="flex h-svh overflow-hidden bg-[var(--ds-bg)]">
           <div
             className={cn(
               "hidden h-full shrink-0 transition-[width] duration-200 md:block",
-              ready && (collapsed ? "w-[4.25rem]" : "w-56"),
-              !ready && "w-56",
+              ready && (collapsed ? "w-[4.25rem]" : "w-[var(--ds-sidebar-width)]"),
+              !ready && "w-[var(--ds-sidebar-width)]",
             )}
           >
             <SellerSidebar
@@ -50,20 +50,20 @@ export function SellerShell({ children }: { children: React.ReactNode }) {
           </div>
 
           <div className="flex h-full min-w-0 flex-1 flex-col overflow-hidden">
-            <div className="flex shrink-0 items-center gap-3 border-b border-[var(--brand-border)] bg-white px-4 py-2.5">
+            <div className="flex h-[var(--ds-topbar-height)] shrink-0 items-center gap-3 bg-[var(--ds-topbar)] px-4">
               <button
                 type="button"
                 onClick={() => setMobileOpen((v) => !v)}
-                className="flex size-8 items-center justify-center rounded-xl border border-[var(--brand-border)] bg-white text-zinc-700 md:hidden"
+                className="flex size-10 items-center justify-center rounded-[var(--ds-radius-sm)] text-white hover:bg-white/10 md:hidden"
                 aria-label="Menu"
               >
                 ☰
               </button>
-              <div className="min-w-0 flex-1">
+              <div className="min-w-0 flex-1 [&_*]:text-white">
                 <TenantSwitcher />
               </div>
             </div>
-            <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+            <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">
               {children}
             </div>
           </div>

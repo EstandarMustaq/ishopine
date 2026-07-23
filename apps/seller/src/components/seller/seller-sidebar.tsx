@@ -73,8 +73,8 @@ export function SellerSidebar({
   return (
     <aside
       className={cn(
-        "relative flex h-full min-h-0 flex-col border-r border-sidebar-border bg-white text-sidebar-foreground",
-        collapsed ? "w-[4.25rem]" : "w-56",
+        "relative flex h-full min-h-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground",
+        collapsed ? "w-[4.25rem]" : "w-[var(--ds-sidebar-width)]",
         className,
       )}
     >

@@ -1,0 +1,13 @@
+{
+  "name": "@ishopine/database",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Prisma schema home for iShopine (re-exports apps/api/prisma during migration)",
+  "scripts": {
+    "generate": "pnpm --filter @ishopine/api prisma:generate",
+    "migrate": "pnpm --filter @ishopine/api prisma:migrate",
+    "seed": "pnpm --filter @ishopine/api prisma:seed",
+    "push": "pnpm --filter @ishopine/api prisma:push",
+    "lint": "echo ok"
+  }
+}

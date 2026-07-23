@@ -1,0 +1,11 @@
+{
+  "name": "@ishopine/mobile",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Stub — iShopine mobile (Expo / RN) using design-system tokens",
+  "scripts": {
+    "dev": "echo 'mobile app scaffold pending'",
+    "build": "echo 'mobile app scaffold pending'",
+    "lint": "echo ok"
+  }
+}

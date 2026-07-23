@@ -4,6 +4,11 @@ const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  transpilePackages: [
+    "@ishopine/design-system",
+    "@ishopine/ui",
+    "@ishopine/sdk",
+  ],
   images: {
     remotePatterns: [
       {

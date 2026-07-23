@@ -76,12 +76,18 @@ commerce-orchestrator  # checkout → payments → orders → wallet → rewards
 ## Apps
 
 ```
-marketplace.ishopine   # público
-seller.ishopine        # particular + lojas (switcher de tenant)
-affiliate.ishopine
-backoffice.ishopine    # só staff iShopine
-customer               # pode viver em marketplace no início
+marketplace.ishopine   # público          → apps/web (→ marketplace-web)
+seller.ishopine        # particular+lojas → apps/seller (→ seller-dashboard)
+affiliate.ishopine     #                   → apps/affiliate
+backoffice.ishopine    # staff iShopine   → apps/backoffice (→ admin)
+customer               # pode viver em marketplace no início → apps/customer (stub)
+mobile                 # futuro             → apps/mobile (stub)
+api                    # Nest shell 40+     → apps/api
 ```
+
+Packages UI: `@ishopine/design-system`, `@ishopine/ui`, `@ishopine/sdk`,
+`@ishopine/database`, `@ishopine/config` — ver [MONOREPO.md](./MONOREPO.md)
+e [DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md).
 
 ## Strangler
 
