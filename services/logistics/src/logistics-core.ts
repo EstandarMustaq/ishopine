@@ -48,8 +48,29 @@ export function listCarriers() {
   }));
 }
 
-/** Phase 23: partner capability report (no fake Correios/DHL). */
+/** Phase 23–26: partner capability report (no fake Correios). */
+export function correiosMzContractStatus() {
+  const base = (process.env.CORREIOS_MZ_API_BASE || "").trim();
+  const key = (process.env.CORREIOS_MZ_API_KEY || "").trim();
+  const secret = (process.env.CORREIOS_MZ_API_SECRET || "").trim();
+  const contractedFlag = process.env.CORREIOS_MZ_CONTRACTED === "1";
+  const envPresent = Boolean(base && key && secret);
+  return {
+    contractedFlag,
+    envPresent,
+    /** Live HTTP only when contract docs ship an adapter — never invent rates. */
+    live: false,
+    env: [
+      "CORREIOS_MZ_CONTRACTED",
+      "CORREIOS_MZ_API_BASE",
+      "CORREIOS_MZ_API_KEY",
+      "CORREIOS_MZ_API_SECRET",
+    ],
+  };
+}
+
 export function listCarrierPartners() {
+  const correios = correiosMzContractStatus();
   return {
     local: listCarrierAdapters()
       .filter((a) => a.code !== CarrierCode.DHL_EXPRESS)
@@ -77,9 +98,13 @@ export function listCarrierPartners() {
         name: "Correios de Moçambique",
         configured: false,
         mode: "unavailable" as const,
-        reason:
-          "Sem API pública/contratada no monorepo — pedidos legacy mapeiam para MANUAL",
+        contractedFlag: correios.contractedFlag,
+        credentialsPresent: correios.envPresent,
+        reason: correios.envPresent
+          ? "Credenciais presentes, mas sem OpenAPI/contrato no monorepo — adapter HTTP não inventado; mapsTo MANUAL"
+          : "Sem API pública/contratada no monorepo — pedidos legacy mapeiam para MANUAL",
         mapsTo: "MANUAL",
+        env: correios.env,
       },
     ],
   };

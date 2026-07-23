@@ -18,6 +18,7 @@ import {
   listEntries,
   postEntry,
   prisma,
+  recordOrderRevenue,
   summary,
   voidEntry,
 } from "./accounting-core";
@@ -25,6 +26,8 @@ import {
 const jwtSecret = process.env.JWT_SECRET || "";
 const orgSlug = process.env.PLATFORM_ORG_SLUG || "ishopine";
 const isProd = process.env.NODE_ENV === "production";
+const internalSecret =
+  process.env.INTERNAL_SERVICE_SECRET || process.env.CRON_SECRET || "";
 
 type JwtPayload = { sub: string; tfa?: boolean };
 
@@ -57,6 +60,13 @@ function verifyJwt(req: http.IncomingMessage): JwtPayload | null {
   } catch {
     return null;
   }
+}
+
+function verifyInternal(req: http.IncomingMessage): boolean {
+  if (!internalSecret) return false;
+  const auth = req.headers.authorization;
+  if (!auth?.toLowerCase().startsWith("bearer ")) return false;
+  return auth.slice(7).trim() === internalSecret;
 }
 
 function pathOnly(url?: string) {
@@ -317,6 +327,43 @@ export async function handleOwnedAccounting(
           user.id,
           user.platformRole,
         ),
+      );
+      return true;
+    }
+
+    if (
+      method === "POST" &&
+      path === "/api/accounting/internal/record-order-revenue"
+    ) {
+      if (!verifyInternal(req)) {
+        json(res, 401, "Não autorizado");
+        return true;
+      }
+      const body = await readJsonBody(req);
+      if (typeof body.orderId !== "string" || !body.orderId.trim()) {
+        throw new HttpError(400, "orderId obrigatório");
+      }
+      if (typeof body.orderNumber !== "string" || !body.orderNumber.trim()) {
+        throw new HttpError(400, "orderNumber obrigatório");
+      }
+      if (
+        typeof body.amountCents !== "number" ||
+        !Number.isFinite(body.amountCents)
+      ) {
+        throw new HttpError(400, "amountCents obrigatório");
+      }
+      if (typeof body.operatorId !== "string" || !body.operatorId.trim()) {
+        throw new HttpError(400, "operatorId obrigatório");
+      }
+      json(
+        res,
+        200,
+        await recordOrderRevenue({
+          orderId: body.orderId,
+          orderNumber: body.orderNumber,
+          amountCents: body.amountCents,
+          operatorId: body.operatorId,
+        }),
       );
       return true;
     }

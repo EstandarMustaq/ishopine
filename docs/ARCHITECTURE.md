@@ -119,7 +119,8 @@ customer               # pode viver em marketplace no início
 | **23** | Live DHL (fail-closed MyDHL) + CDN edge (Cloudinary / CNAME) |
 | **24** | Coupons / inventory / reviews extracts (`:4115–4117`) |
 | **25** | Checkout saga splits — remote coupon/inventory/label + orchestrator compose |
-| **26+** | Correios when contracted; further domain ownership |
+| **26** | Remote checkout E2E; addresses→accounts; accounting post remote; Correios still blocked |
+| **27+** | Correios HTTP when OpenAPI/contract lands; platform-settings / dashboard |
 
 ## Fora de âmbito (MVP)
 

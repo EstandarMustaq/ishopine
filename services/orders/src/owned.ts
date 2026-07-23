@@ -25,11 +25,13 @@ import {
   hashCheckoutBody,
 } from "./idempotency";
 import {
+  accountingPostRemoteEnabled,
   inventoryReserveRemoteEnabled,
   logisticsLabelRemoteEnabled,
   remoteCreateLabel,
   remoteFulfillStock,
   remoteMarkDelivered,
+  remoteRecordOrderRevenue,
   remoteReleaseStock,
 } from "./remote";
 
@@ -38,6 +40,7 @@ const jwtSecret = process.env.JWT_SECRET || "";
 const orgSlug = process.env.PLATFORM_ORG_SLUG || "ishopine";
 const inventoryRemote = () => inventoryReserveRemoteEnabled();
 const logisticsRemote = () => logisticsLabelRemoteEnabled();
+const accountingRemote = () => accountingPostRemoteEnabled();
 const isProd = process.env.NODE_ENV === "production";
 
 type JwtPayload = {
@@ -450,33 +453,35 @@ async function updateOrderStatus(
           });
         }
       }
-      const cashAccount = await tx.accountingAccount.findUnique({
-        where: { code: "1.1.01" },
-      });
-      const revenueAccount = await tx.accountingAccount.findUnique({
-        where: { code: "3.1.01" },
-      });
-      if (cashAccount && revenueAccount) {
-        const existing = await tx.accountingEntry.findFirst({
-          where: { orderId: order.id, type: AccountingEntryType.REVENUE },
+      if (!accountingRemote()) {
+        const cashAccount = await tx.accountingAccount.findUnique({
+          where: { code: "1.1.01" },
         });
-        if (!existing) {
-          const entryCount = await tx.accountingEntry.count();
-          await tx.accountingEntry.create({
-            data: {
-              entryNumber: `LC${String(entryCount + 1).padStart(6, "0")}`,
-              description: `Receita do pedido ${order.orderNumber}`,
-              type: AccountingEntryType.REVENUE,
-              status: AccountingEntryStatus.POSTED,
-              amountCents: order.totalCents,
-              debitAccountId: cashAccount.id,
-              creditAccountId: revenueAccount.id,
-              orderId: order.id,
-              createdById: operatorId,
-              reviewedById: operatorId,
-              postedAt: new Date(),
-            },
+        const revenueAccount = await tx.accountingAccount.findUnique({
+          where: { code: "3.1.01" },
+        });
+        if (cashAccount && revenueAccount) {
+          const existing = await tx.accountingEntry.findFirst({
+            where: { orderId: order.id, type: AccountingEntryType.REVENUE },
           });
+          if (!existing) {
+            const entryCount = await tx.accountingEntry.count();
+            await tx.accountingEntry.create({
+              data: {
+                entryNumber: `LC${String(entryCount + 1).padStart(6, "0")}`,
+                description: `Receita do pedido ${order.orderNumber}`,
+                type: AccountingEntryType.REVENUE,
+                status: AccountingEntryStatus.POSTED,
+                amountCents: order.totalCents,
+                debitAccountId: cashAccount.id,
+                creditAccountId: revenueAccount.id,
+                orderId: order.id,
+                createdById: operatorId,
+                reviewedById: operatorId,
+                postedAt: new Date(),
+              },
+            });
+          }
         }
       }
     }
@@ -518,6 +523,20 @@ async function updateOrderStatus(
         operatorId,
       });
     }
+  }
+
+  if (
+    accountingRemote() &&
+    (status === OrderStatus.CONFIRMED ||
+      status === OrderStatus.PROCESSING) &&
+    order.paymentStatus !== PaymentStatus.PAID
+  ) {
+    await remoteRecordOrderRevenue({
+      orderId: id,
+      orderNumber: order.orderNumber,
+      amountCents: order.totalCents,
+      operatorId,
+    });
   }
 
   if (status === OrderStatus.SHIPPED) {
