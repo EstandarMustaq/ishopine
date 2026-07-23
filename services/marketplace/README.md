@@ -11,8 +11,8 @@ mercado: lojas, anúncios (home/coleções) e wishlist.
 | `/api/ads` | público + admin CRUD |
 | `/api/wishlist` | JWT |
 
-Reviews de produto (`/api/products/:id/reviews`) ficam no Nest via fallthrough
-do catalog (prefixo `/api/products`).
+Reviews de produto (`/api/products/:id/reviews`) → serviço **reviews**
+(:4117, Fase 24) via gateway `pathRe` antes do catalog.
 
 ```bash
 MARKETPLACE_OWNED=1

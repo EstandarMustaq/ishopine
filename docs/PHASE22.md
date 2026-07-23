@@ -34,5 +34,5 @@ DATABASE_URL=...
 ## Fora de âmbito
 - Clientes HTTP Correios / DHL → **Fase 23** ([PHASE23.md](./PHASE23.md)) (DHL fail-closed; Correios ainda indisponível)
 - Multi-região CDN / PoPs → **Fase 23** (Cloudinary edge + `MEDIA_CDN_HOST`; sem PoP fictícios)
+- Coupons / inventory / reviews → **Fase 24** ([PHASE24.md](./PHASE24.md))
 - Remover creates Nest do outbox
-- Coupons / inventory / reviews fallthrough

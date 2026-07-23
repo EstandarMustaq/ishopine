@@ -1,6 +1,7 @@
 /**
  * Phase 18: marketplace owns shops + ads + wishlist when MARKETPLACE_OWNED≠0.
- * Product reviews stay Nest via catalog fallthrough (/api/products/:id/reviews).
+ * Phase 18: marketplace owns shops/ads/wishlist.
+ * Product reviews owned by reviews service (Phase 24) via gateway pathRe.
  */
 import http from "node:http";
 import {

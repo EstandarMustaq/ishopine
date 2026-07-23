@@ -18,6 +18,7 @@ function resolveTarget(urlPath: string): {
 
   for (const route of GATEWAY_ROUTES) {
     if (!urlPath.startsWith(route.prefix)) continue;
+    if (route.pathRe && !route.pathRe.test(urlPath)) continue;
     const envUrl = route.envKey ? process.env[route.envKey] : undefined;
     if (envUrl) {
       return { target: envUrl.replace(/\/$/, ""), service: route.service };
