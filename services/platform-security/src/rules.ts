@@ -59,6 +59,8 @@ export const SECURITY_RULES = {
 export type SecurityCheckContext = {
   nodeEnv: string;
   jwtSecret?: string;
+  /** When false, PaySuite HIGH checks are skipped (quota pending). */
+  paysuiteEnabled?: boolean;
   paysuiteToken?: string;
   paysuiteWebhookSecret?: string;
   corsOrigin?: string;
@@ -98,7 +100,9 @@ export const SECURITY_CATALOG: SecurityCatalogEntry[] = [
     surface: "billing",
     remediation: "Configurar PAYSUITE_WEBHOOK_SECRET do painel PaySuite.",
     check: (ctx) =>
-      ctx.nodeEnv !== "production" || Boolean(ctx.paysuiteWebhookSecret),
+      ctx.nodeEnv !== "production" ||
+      ctx.paysuiteEnabled === false ||
+      Boolean(ctx.paysuiteWebhookSecret),
   },
   {
     code: "SEC-HIGH-003",
@@ -107,7 +111,10 @@ export const SECURITY_CATALOG: SecurityCatalogEntry[] = [
     description: "Cobranças reais requerem PAYSUITE_TOKEN.",
     surface: "billing",
     remediation: "Obter token em Settings → API Access (paysuite.tech).",
-    check: (ctx) => ctx.nodeEnv !== "production" || Boolean(ctx.paysuiteToken),
+    check: (ctx) =>
+      ctx.nodeEnv !== "production" ||
+      ctx.paysuiteEnabled === false ||
+      Boolean(ctx.paysuiteToken),
   },
   {
     code: "SEC-MED-001",

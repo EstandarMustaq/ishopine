@@ -29,6 +29,16 @@ function checksum(data: unknown): string {
     .slice(0, 32);
 }
 
+function isPaysuiteEnabled(): boolean {
+  const flag = (process.env.PAYSUITE_ENABLED || "1").trim().toLowerCase();
+  return !(
+    flag === "0" ||
+    flag === "false" ||
+    flag === "off" ||
+    flag === "no"
+  );
+}
+
 function buildContext(): SecurityCheckContext {
   const nodeEnv = process.env.NODE_ENV || "development";
   const webUrl = process.env.WEB_URL;
@@ -36,10 +46,12 @@ function buildContext(): SecurityCheckContext {
   const httpsEnforced =
     Boolean(webUrl?.startsWith("https://")) &&
     Boolean(appUrl?.startsWith("https://"));
+  const paysuiteEnabled = isPaysuiteEnabled();
 
   return {
     nodeEnv,
     jwtSecret: process.env.JWT_SECRET,
+    paysuiteEnabled,
     paysuiteToken: process.env.PAYSUITE_TOKEN?.trim(),
     paysuiteWebhookSecret: process.env.PAYSUITE_WEBHOOK_SECRET?.trim(),
     corsOrigin: process.env.CORS_ORIGIN,

@@ -1,0 +1,7 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nextjs",
+  "regions": ["fra1"],
+  "installCommand": "cd ../.. && corepack enable && pnpm install --frozen-lockfile --config.production=false",
+  "buildCommand": "cd ../.. && pnpm --filter @ishopine/customer build"
+}
