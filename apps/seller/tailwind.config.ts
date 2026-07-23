@@ -1,10 +1,13 @@
 import type { Config } from "tailwindcss";
+import designSystemPreset from "@ishopine/design-system/tailwind-preset";
 
 export default {
+  presets: [designSystemPreset],
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
+    "../../packages/ui/src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
     extend: {
@@ -22,8 +25,8 @@ export default {
         primary: {
           DEFAULT: "var(--primary)",
           foreground: "var(--primary-foreground)",
-          hover: "var(--brand-ink-hover)",
-          active: "var(--brand-ink-active)",
+          hover: "var(--ds-brand-dark)",
+          active: "var(--ds-brand-dark)",
         },
         secondary: {
           DEFAULT: "var(--secondary)",
@@ -44,10 +47,9 @@ export default {
         border: "var(--border)",
         input: "var(--input)",
         ring: "var(--ring)",
-        beige: "var(--brand-beige)",
-        taupe: "var(--brand-taupe)",
-        charcoal: "var(--brand-charcoal)",
-        ink: "var(--brand-ink)",
+        taupe: "var(--ds-text-secondary)",
+        charcoal: "var(--ds-text)",
+        ink: "var(--ds-text)",
         sidebar: {
           DEFAULT: "var(--sidebar)",
           foreground: "var(--sidebar-foreground)",
@@ -60,26 +62,16 @@ export default {
         },
       },
       fontFamily: {
-        sans: ["var(--font-outfit)", "ui-sans-serif", "sans-serif"],
-        heading: ["var(--font-outfit)", "ui-sans-serif", "sans-serif"],
+        sans: ["var(--ds-font-sans)"],
+        heading: ["var(--ds-font-sans)"],
       },
       borderRadius: {
-        button: "12px",
-        input: "12px",
-        card: "14px",
-        lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
-      },
-      fontSize: {
-        "ui-xs": ["12px", { lineHeight: "16px" }],
-        "ui-sm": ["13px", { lineHeight: "18px" }],
-        "ui": ["14px", { lineHeight: "20px" }],
-        "ui-md": ["15px", { lineHeight: "22px" }],
-      },
-      boxShadow: {
-        glass: "0 1px 2px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.04)",
-        soft: "0 1px 3px rgba(0,0,0,0.06)",
+        button: "var(--ds-radius-sm)",
+        input: "var(--ds-radius-sm)",
+        card: "var(--ds-radius-md)",
+        lg: "var(--ds-radius-md)",
+        md: "var(--ds-radius-sm)",
+        sm: "var(--ds-radius-sm)",
       },
     },
   },

@@ -1,0 +1,11 @@
+{
+  "name": "@ishopine/customer",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Stub — buyer account app (may live in marketplace-web initially)",
+  "scripts": {
+    "dev": "echo 'customer app scaffold pending'",
+    "build": "echo 'customer app scaffold pending'",
+    "lint": "echo ok"
+  }
+}

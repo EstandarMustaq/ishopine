@@ -1,14 +1,7 @@
 import type { Metadata } from "next";
-import { Outfit } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { SellerShell } from "@/components/seller/seller-shell";
 import "./globals.css";
-
-const outfit = Outfit({
-  subsets: ["latin"],
-  variable: "--font-outfit",
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   title: {
@@ -26,7 +19,7 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="pt-MZ">
-      <body className={`${outfit.variable} font-sans antialiased`}>
+      <body className="font-sans antialiased">
         <SellerShell>{children}</SellerShell>
         <Toaster theme="light" position="top-center" richColors />
       </body>
