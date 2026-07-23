@@ -1,6 +1,6 @@
 /**
- * Phase 13: identity owns local auth / 2FA / session when IDENTITY_OWNED≠0.
- * Google OAuth remains Nest fallthrough.
+ * Phase 13–30: identity owns local auth / 2FA / session + Google OAuth
+ * when IDENTITY_OWNED≠0.
  */
 import { startStranglerProxy } from "@ishopine/shared";
 import { handleOwnedIdentity } from "./owned";

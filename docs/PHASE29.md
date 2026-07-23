@@ -45,3 +45,4 @@ DATABASE_URL=...
 ## Fora de âmbito
 - Cliente HTTP Correios (contrato/OpenAPI ausente)
 - Remover ReliabilityModule / idempotency do Nest
+- Google OAuth / settle-paid fallthrough → **Fase 30**

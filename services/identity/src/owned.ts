@@ -1,6 +1,6 @@
 /**
- * Phase 13: identity owns local auth / 2FA / session when IDENTITY_OWNED≠0.
- * Google OAuth (`/api/auth/google*`) falls through to Nest (Passport).
+ * Phase 13–30: identity owns local auth / 2FA / session + Google OAuth
+ * when IDENTITY_OWNED≠0.
  */
 import http from "node:http";
 import jwt from "jsonwebtoken";
@@ -17,6 +17,14 @@ import {
   verify2fa,
   verifyEmail,
 } from "./auth-core";
+import {
+  exchangeGoogleCode,
+  googleAuthorizeUrl,
+  googleConfigured,
+  loginOrRegisterGoogle,
+  mintGoogleOAuthState,
+  verifyGoogleOAuthState,
+} from "./google-oauth";
 
 const jwtSecret = process.env.JWT_SECRET || "";
 const cookieName = process.env.AUTH_COOKIE_NAME || AUTH_COOKIE_NAME;
@@ -119,7 +127,9 @@ function nestStyleError(status: number, message: string) {
           ? "Bad Request"
           : status === 429
             ? "Too Many Requests"
-            : "Error";
+            : status === 503
+              ? "Service Unavailable"
+              : "Error";
   return { statusCode: status, message, error };
 }
 
@@ -187,6 +197,23 @@ function attachSessionCookie(
   return undefined;
 }
 
+function redirect(
+  res: http.ServerResponse,
+  location: string,
+  extraHeaders?: Record<string, string | string[]>,
+) {
+  res.writeHead(302, { Location: location, ...extraHeaders });
+  res.end();
+}
+
+function queryParam(url: string | undefined, key: string): string | undefined {
+  try {
+    return new URL(url || "/", "http://local").searchParams.get(key) ?? undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 async function requireUser(req: http.IncomingMessage): Promise<string> {
   const payload = verifyJwt(req);
   if (!payload?.sub) {
@@ -202,16 +229,81 @@ export async function handleOwnedIdentity(
   const path = pathOnly(req.url);
   const method = (req.method || "GET").toUpperCase();
 
-  // Google OAuth stays on Nest (Passport strategies + redirects).
-  if (path.startsWith("/api/auth/google")) {
-    return false;
-  }
-
   if (!path.startsWith("/api/auth")) {
     return false;
   }
 
   try {
+    /* ── Google OAuth (Phase 30) ─────────────────────────────── */
+    if (method === "GET" && path === "/api/auth/google") {
+      if (!googleConfigured()) {
+        json(
+          res,
+          503,
+          nestStyleError(
+            503,
+            "Login com Google não configurado. Defina GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET e GOOGLE_CALLBACK_URL.",
+          ),
+        );
+        return true;
+      }
+      redirect(res, "/api/auth/google/start");
+      return true;
+    }
+
+    if (method === "GET" && path === "/api/auth/google/start") {
+      if (!googleConfigured()) {
+        json(
+          res,
+          503,
+          nestStyleError(503, "Login com Google não configurado."),
+        );
+        return true;
+      }
+      const state = mintGoogleOAuthState();
+      redirect(res, googleAuthorizeUrl(state));
+      return true;
+    }
+
+    if (method === "GET" && path === "/api/auth/google/callback") {
+      const webUrl = process.env.WEB_URL || "http://localhost:3000";
+      if (!googleConfigured()) {
+        redirect(res, `${webUrl}/auth/login?error=google`);
+        return true;
+      }
+      const state = queryParam(req.url, "state");
+      const code = queryParam(req.url, "code");
+      const oauthError = queryParam(req.url, "error");
+      if (oauthError || !code || !verifyGoogleOAuthState(state)) {
+        redirect(res, `${webUrl}/auth/login?error=google`);
+        return true;
+      }
+      try {
+        const profile = await exchangeGoogleCode(code);
+        const result = await loginOrRegisterGoogle(profile);
+        if ("requiresTwoFactor" in result && result.requiresTwoFactor) {
+          const url = new URL("/auth/2fa", webUrl);
+          url.searchParams.set("sessionToken", result.sessionToken);
+          redirect(res, url.toString());
+          return true;
+        }
+        if ("accessToken" in result) {
+          const url = new URL("/auth/callback", webUrl);
+          if (!cookieDomain) {
+            url.searchParams.set("accessToken", result.accessToken);
+          }
+          redirect(res, url.toString(), {
+            "Set-Cookie": buildSetCookie(result.accessToken),
+          });
+          return true;
+        }
+      } catch (error) {
+        console.error("[identity] google callback", error);
+      }
+      redirect(res, `${webUrl}/auth/login?error=google`);
+      return true;
+    }
+
     if (method === "POST" && path === "/api/auth/register") {
       if (!throttle(clientKey(req, "register"), 5, 60_000)) {
         json(res, 429, nestStyleError(429, "Demasiados pedidos"));

@@ -26,13 +26,19 @@ import {
 } from "./idempotency";
 import {
   accountingPostRemoteEnabled,
+  affiliatesSettleRemoteEnabled,
+  billingUsageRemoteEnabled,
   inventoryReserveRemoteEnabled,
   logisticsLabelRemoteEnabled,
+  remoteAffiliateConversion,
   remoteCreateLabel,
   remoteFulfillStock,
   remoteMarkDelivered,
   remoteRecordOrderRevenue,
+  remoteRecordUsage,
   remoteReleaseStock,
+  remoteWalletSettleOrder,
+  walletSettleRemoteEnabled,
 } from "./remote";
 
 const prisma = new PrismaClient();
@@ -565,6 +571,79 @@ async function updateOrderStatus(
   return updated;
 }
 
+/**
+ * Phase 30: Nest OrdersService.settlePaidOrders parity — after PaySuite PAID.
+ * Affiliates / wallet / billing usage prefer remotes when configured.
+ */
+async function settlePaidOrders(orderIds: string[]) {
+  for (const id of orderIds) {
+    const order = await prisma.order.findUnique({ where: { id } });
+    if (!order) continue;
+    if (order.paymentStatus === PaymentStatus.PAID) continue;
+
+    await updateOrderStatus(id, OrderStatus.CONFIRMED, order.buyerId);
+
+    if (order.affiliateCode) {
+      try {
+        if (affiliatesSettleRemoteEnabled()) {
+          await remoteAffiliateConversion({
+            code: order.affiliateCode,
+            orderId: order.id,
+            amountCents: order.subtotalCents,
+          });
+        }
+      } catch (error) {
+        console.error("[orders] affiliate conversion failed", order.id, error);
+      }
+    }
+
+    const sellerNetCents = Math.max(
+      0,
+      order.totalCents - order.platformFeeCents,
+    );
+    try {
+      if (walletSettleRemoteEnabled()) {
+        await remoteWalletSettleOrder({
+          orderId: order.id,
+          orderNumber: order.orderNumber,
+          sellerShopId: order.sellerShopId,
+          sellerNetCents,
+          platformFeeCents: order.platformFeeCents,
+        });
+      }
+    } catch (error) {
+      console.error("[orders] wallet settle failed", order.id, error);
+    }
+
+    const tenant = await prisma.tenant.findUnique({
+      where: { shopId: order.sellerShopId },
+    });
+    if (tenant && billingUsageRemoteEnabled()) {
+      try {
+        await remoteRecordUsage({
+          tenantId: tenant.id,
+          metric: "ORDERS",
+          quantity: 1,
+          reference: order.id,
+        });
+      } catch (error) {
+        console.error("[orders] usage record failed", order.id, error);
+      }
+    }
+  }
+}
+
+function assertInternalSecret(req: http.IncomingMessage) {
+  const secret =
+    process.env.INTERNAL_SERVICE_SECRET || process.env.CRON_SECRET || "";
+  if (!secret) {
+    throw httpError(401, "Internal secret not configured");
+  }
+  if (req.headers.authorization !== `Bearer ${secret}`) {
+    throw httpError(401, "Invalid internal secret");
+  }
+}
+
 async function assertCanUpdateStatus(
   jwtUser: JwtPayload,
   orderId: string,
@@ -641,6 +720,19 @@ export async function handleOwnedOrders(
   const method = req.method || "GET";
 
   try {
+    /* Internal settle after PaySuite PAID (Phase 30 — was Nest fallthrough) */
+    if (path === "/api/orders/internal/settle-paid" && method === "POST") {
+      assertInternalSecret(req);
+      const body = (await readJsonBody(req)) as { orderIds?: string[] };
+      if (!Array.isArray(body.orderIds) || body.orderIds.length === 0) {
+        json(res, 200, { ok: false, message: "orderIds obrigatório" });
+        return true;
+      }
+      await settlePaidOrders(body.orderIds);
+      json(res, 200, { ok: true, settled: body.orderIds.length });
+      return true;
+    }
+
     /* Cart */
     if (path === "/api/cart" && method === "GET") {
       const jwtUser = verifyJwt(req);
