@@ -1,32 +1,49 @@
-# Services — estado em produção
+# Services — ownership & production
 
-## Resposta directa
+## Policy (non-negotiable)
 
-**Em Vercel (https://ishopine-api.vercel.app) os microserviços em `services/` NÃO estão a correr como processos separados.**
+1. Every domain service in `services/` is the **exclusive owner** of its routes.
+2. Nest (`apps/api`) is a **shell only** (legacy cron bridge optional) — **no domain logic**.
+3. No inactive, duplicate, or “preparatory” services: if a package exists, it is wired into the production edge.
+4. Strangler cutover means: service owns the domain; monolith **stops** serving it.
 
-O que está live é a **API Nest** (`apps/api`) — um shell/monólito que ainda serve rotas de catálogo/produtos (ex. `GET /api/products` → 200). Health dos stranglers (`/api/auth/health`, `/api/catalog/health`, …) devolve **404** em produção.
+## Production path — composition edge
 
-## O que `services/` é
+On Vercel, long-running per-service processes are not available. Official production entry:
 
-Pasta do monorepo com stranglers locais (ports 4100–4120): identity, catalog, orders, payments, wallet, media, logistics, etc. Funcionam com:
+| Layer | Role |
+|---|---|
+| **`apps/platform-api` / `apps/api` composition** | Composition edge — routes HTTP → `handleOwned*` from each service |
+| **`services/*`** | Exclusive domain implementations |
+| **`apps/gateway`** | Local/container mesh when `STRANGLER_ROUTING=1` + `*_URL` |
+
+`GET /api/health` (composition) → `{ mode: "composition", ownership: "services-exclusive", domains: [...] }`
+
+**Cutover status:** composition is implemented and smoke-tested locally. Production `ishopine-api` remains on the last stable Nest monolith deploy until the composition preview is verified end-to-end (Prisma binaries on Vercel). Do **not** promote a broken composition build — prefer rollback over mixed ownership.
+
+### Promote checklist
+
+1. Preview deploy of composition returns health with `mode: "composition"`
+2. `GET /api/products` 200 and `GET /api/auth/me` 401
+3. Switch `apps/api/api/index.js` to `require("../composition/api.js")`
+4. Promote; keep previous deployment as instant rollback
+
+## Local multi-process (optional)
 
 ```bash
-pnpm dev:identity   # :4107
-pnpm dev:catalog    # :4110
-# … + gateway / STRANGLER_ROUTING=1
+pnpm dev:gateway      # :8080  STRANGLER_ROUTING=1
+pnpm dev:identity     # :4107
+pnpm dev:catalog      # :4110
+# …
 ```
 
-Ver `services/README.md`.
+## Domains owned
 
-## Produção hoje
+identity · accounts · marketplace · catalog · reviews · media · orders · payments · wallet · billing · developers · logistics · accounting · comms · coupons · inventory · affiliates · platform-settings · platform-ops · platform-security
 
-| Camada | Deploy | Estado |
-|---|---|---|
-| Marketplace | Vercel `ishopine` → `apps/marketplace-web` | Live |
-| API Nest | Vercel `ishopine-api` → `apps/api` | Live (produtos/auth via Nest) |
-| Stranglers `services/*` | **Não deployados** no Vercel | Só local / futuro host |
-| PaySuite | `PAYSUITE_ENABLED=0` | Desactivado até cota |
+`commerce-orchestrator` remains a saga composer (HTTP to orders+payments). In composition mode it returns 501 pointing clients to orders/billing until the orchestrator process is hosted separately.
 
-## Próximo passo (quando quiser)
+## PaySuite / Correios
 
-Deploy dos stranglers (Fly/Railway/containers) + gateway à frente, com `*_OWNED=1` e URLs no env. Até lá, o marketplace usa a API Nest.
+- PaySuite: `PAYSUITE_ENABLED=0` until merchant quota
+- Correios: gated until real OpenAPI contract

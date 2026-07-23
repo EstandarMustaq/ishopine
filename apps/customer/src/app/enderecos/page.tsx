@@ -2,7 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { PageHeader, EmptyState, Card, Button as DsButton, Input } from "@ishopine/ui";
+import {
+  PageHeader,
+  EmptyState,
+  Card,
+  Button as DsButton,
+  Input,
+  LoadingState,
+} from "@ishopine/ui";
 import { apiFetch } from "@/lib/api";
 
 type Address = {
@@ -76,11 +83,11 @@ export default function CustomerAddressesPage() {
         description="Moradas de entrega em Moçambique."
       />
       {loading ? (
-        <p className="text-[14px] text-[var(--ds-text-secondary)]">A carregar…</p>
+        <LoadingState label="A carregar endereços" variant="skeleton" />
       ) : addresses.length === 0 ? (
         <EmptyState
           title="Nenhum endereço"
-          description="Adicione uma morada para checkout mais rápido."
+          description="Adicione uma morada para acelerar o checkout."
         />
       ) : (
         <ul className="mb-8 space-y-2">

@@ -1,0 +1,51 @@
+{
+  "name": "@ishopine/platform-api",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Production composition edge — exclusive service domain ownership",
+  "scripts": {
+    "build": "node ./scripts/build.mjs",
+    "dev": "tsx watch src/main.ts",
+    "start": "node dist/main.js",
+    "lint": "echo ok"
+  },
+  "dependencies": {
+    "@ishopine/shared": "workspace:*",
+    "@ishopine/identity": "workspace:*",
+    "@ishopine/affiliates": "workspace:*",
+    "@ishopine/accounts": "workspace:*",
+    "@ishopine/marketplace": "workspace:*",
+    "@ishopine/catalog": "workspace:*",
+    "@ishopine/reviews": "workspace:*",
+    "@ishopine/media": "workspace:*",
+    "@ishopine/orders": "workspace:*",
+    "@ishopine/payments": "workspace:*",
+    "@ishopine/wallet": "workspace:*",
+    "@ishopine/billing": "workspace:*",
+    "@ishopine/developers": "workspace:*",
+    "@ishopine/logistics": "workspace:*",
+    "@ishopine/accounting": "workspace:*",
+    "@ishopine/comms": "workspace:*",
+    "@ishopine/coupons": "workspace:*",
+    "@ishopine/inventory": "workspace:*",
+    "@ishopine/platform-settings": "workspace:*",
+    "@ishopine/platform-ops": "workspace:*",
+    "@ishopine/platform-security": "workspace:*",
+    "@prisma/client": "^6.19.0",
+    "bcryptjs": "^3.0.3",
+    "cloudinary": "^2.10.0",
+    "jsonwebtoken": "^9.0.2",
+    "nodemailer": "^9.0.3",
+    "otplib": "^12.0.1",
+    "qrcode": "^1.5.4",
+    "sharp": "^0.35.0",
+    "uuid": "^14.0.1"
+  },
+  "devDependencies": {
+    "@types/jsonwebtoken": "^9.0.9",
+    "@types/node": "^22.10.0",
+    "esbuild": "^0.28.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.9.3"
+  }
+}

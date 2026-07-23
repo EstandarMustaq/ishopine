@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import { EmptyState, LoadingState } from "@ishopine/ui";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 
@@ -51,19 +52,24 @@ export default function FeatureFlagsPage() {
   }
 
   return (
-    <div className="space-y-6 text-white">
+    <div className="space-y-6 text-[var(--ds-text)]">
       <div>
         <h1 className="text-2xl font-semibold">Feature flags</h1>
-        <p className="mt-1 text-sm text-white/60">
+        <p className="mt-1 text-sm text-[var(--ds-text-secondary)]">
           Controlo global (overrides por tenant/plano via API).
         </p>
       </div>
       {loading ? (
-        <p className="text-sm text-white/50">A carregar…</p>
+        <LoadingState label="A carregar flags" variant="skeleton" />
+      ) : flags.length === 0 ? (
+        <EmptyState
+          title="Sem feature flags"
+          description="As flags configuradas pela plataforma aparecerão aqui."
+        />
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-white/10">
+        <div className="overflow-x-auto rounded-[var(--ds-radius-md)] border border-[var(--ds-border-subdued)] bg-[var(--ds-surface)] shadow-[var(--ds-shadow-raised)]">
           <table className="w-full min-w-[520px] text-left text-sm">
-            <thead className="bg-white/5 text-white/50">
+            <thead className="bg-[var(--ds-bg)] text-[var(--ds-text-secondary)]">
               <tr>
                 <th className="px-4 py-3 font-medium">Key</th>
                 <th className="px-4 py-3 font-medium">Descrição</th>
@@ -73,12 +79,12 @@ export default function FeatureFlagsPage() {
             </thead>
             <tbody>
               {flags.map((f) => (
-                <tr key={f.id} className="border-t border-white/10">
+                <tr key={f.id} className="border-t border-[var(--ds-border-subdued)]">
                   <td className="px-4 py-3 font-mono text-xs">{f.key}</td>
-                  <td className="px-4 py-3 text-white/70">
+                  <td className="px-4 py-3 text-[var(--ds-text-secondary)]">
                     {f.description || "—"}
                     {f.overrides.length > 0 ? (
-                      <span className="ml-2 text-[10px] text-white/40">
+                      <span className="ml-2 text-[10px] text-[var(--ds-text-disabled)]">
                         ({f.overrides.length} overrides)
                       </span>
                     ) : null}
@@ -90,7 +96,6 @@ export default function FeatureFlagsPage() {
                     <Button
                       size="sm"
                       variant="outline"
-                      className="border-white/20 bg-transparent text-white hover:bg-white/10"
                       onClick={() => void toggle(f.key, !f.enabled)}
                     >
                       {f.enabled ? "Desactivar" : "Activar"}

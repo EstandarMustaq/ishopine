@@ -3,7 +3,13 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
-import { PageHeader, EmptyState, IndexTable, Badge as DsBadge } from "@ishopine/ui";
+import {
+  PageHeader,
+  EmptyState,
+  IndexTable,
+  Badge as DsBadge,
+  LoadingState,
+} from "@ishopine/ui";
 import {
   Select,
   SelectContent,
@@ -82,7 +88,7 @@ export default function PainelPedidosPage() {
       />
 
       {loading ? (
-        <p className="text-[14px] text-[var(--ds-text-secondary)]">A carregar…</p>
+        <LoadingState label="A carregar pedidos" variant="skeleton" />
       ) : (
         <IndexTable
           rows={orders}

@@ -45,5 +45,8 @@
     "db:seed": "pnpm --filter @ishopine/api prisma:seed",
     "db:push": "pnpm --filter @ishopine/api prisma:push",
     "lint": "pnpm -r run lint"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.1"
   }
 }

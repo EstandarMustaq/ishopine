@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Check, Copy, Plus } from "lucide-react";
 import { toast } from "sonner";
+import { EmptyState, LoadingState } from "@ishopine/ui";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +20,7 @@ type AffLink = {
 
 export default function AffiliateLinksPage() {
   const [links, setLinks] = useState<AffLink[]>([]);
+  const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState<string | null>(null);
   const [productId, setProductId] = useState("");
   const [creating, setCreating] = useState(false);
@@ -26,11 +28,14 @@ export default function AffiliateLinksPage() {
     process.env.NEXT_PUBLIC_MARKETPLACE_URL || "http://localhost:3000";
 
   async function load() {
+    setLoading(true);
     try {
       const data = await api<AffLink[]>("/affiliate/links");
       setLinks(Array.isArray(data) ? data : []);
     } catch {
       setLinks([]);
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -95,10 +100,13 @@ export default function AffiliateLinksPage() {
         </Button>
       </div>
 
-      {links.length === 0 ? (
-        <p className="rounded-2xl border border-dashed border-[var(--brand-border)] bg-white p-8 text-center text-[var(--brand-muted)]">
-          Ainda não tens links. Cria um com o ID de um produto.
-        </p>
+      {loading ? (
+        <LoadingState label="A carregar links" variant="skeleton" />
+      ) : links.length === 0 ? (
+        <EmptyState
+          title="Sem links de afiliado"
+          description="Crie um link com o ID de um produto para começar a acompanhar cliques."
+        />
       ) : (
         <ul className="space-y-3">
           {links.map((link) => {

@@ -1,17 +1,27 @@
-# @ishopine/api — Nest edge shell (Phase 40+)
+# @ishopine/api
 
-Thin Nest process used as Vercel/local **health + cron proxy** only.
+## Role (Phase 40+)
 
-- `GET /api/health`
-- `GET|POST /api/cron/outbox` → requires `PLATFORM_OPS_URL` (platform-ops owns outbox)
+- **Nest shell**: `GET /api/health` + cron proxy to `platform-ops` only.
+- **Domain logic**: exclusive to `services/*/src/owned.ts` — never re-add Nest domain modules.
 
-All domain APIs are owned by strangler services behind the gateway
-(`STRANGLER_ROUTING=1`). See [docs/PHASE40PLUS.md](../../docs/PHASE40PLUS.md).
+## Production composition (cutover)
+
+`apps/platform-api` + `src/compose.ts` dispatch in-process to owned handlers
+(composition edge). Required on Vercel because 21 long-running processes are
+not available.
+
+Local smoke (with `DATABASE_URL`):
 
 ```bash
-pnpm --filter @ishopine/api dev
-# PLATFORM_OPS_URL=http://127.0.0.1:4119 CRON_SECRET=...
+pnpm --filter @ishopine/shared build
+node apps/api/scripts/build-composition.mjs
+node -e "require('http').createServer(require('./composition/api.js')).listen(4099)"
+curl localhost:4099/api/health   # mode: composition
 ```
 
-Prisma schema for the monorepo remains in `prisma/` (generate for services);
-this Nest app does not boot Prisma Client.
+Promote only after preview returns `ownership: "services-exclusive"` and
+catalog/auth smoke passes. Until then production stays on the last stable
+monolith deploy (rolled back if needed).
+
+See [docs/SERVICES.md](../../docs/SERVICES.md).

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { LoadingState } from "@ishopine/ui";
 import { AuthGate } from "@/components/dashboard/auth-gate";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -84,7 +85,7 @@ function SettingsContent() {
   }
 
   if (loading) {
-    return <p className="text-sm text-taupe">Carregando...</p>;
+    return <LoadingState label="A carregar configurações" variant="skeleton" />;
   }
 
   return (

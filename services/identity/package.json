@@ -27,5 +27,17 @@
     "@types/qrcode": "^1.5.6",
     "tsx": "^4.19.2",
     "typescript": "^5.9.3"
-  }
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/main.d.ts",
+      "default": "./dist/main.js"
+    },
+    "./owned": {
+      "types": "./dist/owned.d.ts",
+      "default": "./dist/owned.js"
+    }
+  },
+  "main": "./dist/main.js",
+  "types": "./dist/main.d.ts"
 }

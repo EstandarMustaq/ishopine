@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Gift } from "lucide-react";
+import { EmptyState, LoadingState } from "@ishopine/ui";
 import { api } from "@/lib/api";
 
 type Reward = {
@@ -27,6 +28,7 @@ type Summary = {
 export default function AffiliateRewardsPage() {
   const [summary, setSummary] = useState<Summary | null>(null);
   const [rewards, setRewards] = useState<Reward[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     Promise.allSettled([
@@ -37,6 +39,7 @@ export default function AffiliateRewardsPage() {
       if (rewardsRes.status === "fulfilled") {
         setRewards(Array.isArray(rewardsRes.value) ? rewardsRes.value : []);
       }
+      setLoading(false);
     });
   }, []);
 
@@ -71,13 +74,14 @@ export default function AffiliateRewardsPage() {
         ))}
       </div>
 
-      {rewards.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-[var(--brand-border)] bg-white p-10 text-center">
-          <Gift className="mx-auto h-8 w-8 text-[var(--brand-orange)]" />
-          <p className="mt-3 text-[var(--brand-muted)]">
-            Sem recompensas ainda. Continua a partilhar os teus links.
-          </p>
-        </div>
+      {loading ? (
+        <LoadingState label="A carregar recompensas" variant="skeleton" />
+      ) : rewards.length === 0 ? (
+        <EmptyState
+          title="Sem recompensas"
+          description="As comissões aparecem aqui quando um comprador paga através dos seus links."
+          icon={<Gift />}
+        />
       ) : (
         <ul className="space-y-2">
           {rewards.map((r) => (

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import { EmptyState, LoadingState } from "@ishopine/ui";
 import { AuthGate } from "@/components/dashboard/auth-gate";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -148,13 +149,13 @@ function CuponsContent() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="PERCENT">Percentual (%)</SelectItem>
-                <SelectItem value="FIXED">Valor fixo (R$)</SelectItem>
+                <SelectItem value="FIXED">Valor fixo (MZN)</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div>
             <Label htmlFor="discountValue">
-              {form.discountType === "PERCENT" ? "Percentual" : "Valor (R$)"}
+              {form.discountType === "PERCENT" ? "Percentual" : "Valor (MZN)"}
             </Label>
             <Input
               id="discountValue"
@@ -168,7 +169,7 @@ function CuponsContent() {
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
           <div>
-            <Label htmlFor="minSubtotal">Mínimo do pedido (R$)</Label>
+            <Label htmlFor="minSubtotal">Mínimo do pedido (MZN)</Label>
             <Input
               id="minSubtotal"
               value={form.minSubtotalCents}
@@ -195,9 +196,17 @@ function CuponsContent() {
 
       <h2 className="mt-10 text-xl font-semibold">Cupons cadastrados</h2>
       {loading ? (
-        <p className="mt-4 text-sm text-taupe">Carregando...</p>
+        <LoadingState
+          label="A carregar cupons"
+          variant="skeleton"
+          className="mt-4"
+        />
       ) : coupons.length === 0 ? (
-        <p className="mt-4 text-sm text-taupe">Nenhum cupom ainda.</p>
+        <EmptyState
+          className="mt-4"
+          title="Sem cupons"
+          description="Crie códigos de desconto para campanhas do marketplace."
+        />
       ) : (
         <ul className="mt-4 space-y-3">
           {coupons.map((c) => (

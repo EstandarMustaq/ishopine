@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { PageHeader, EmptyState, Card } from "@ishopine/ui";
+import { PageHeader, EmptyState, Card, LoadingState } from "@ishopine/ui";
 import { apiFetch } from "@/lib/api";
 import { formatMZN } from "@/lib/format";
 
@@ -34,11 +34,11 @@ export default function CustomerWishlistPage() {
     <div>
       <PageHeader title="Favoritos" description="Produtos que guardou." />
       {loading ? (
-        <p className="text-[14px] text-[var(--ds-text-secondary)]">A carregar…</p>
+        <LoadingState label="A carregar favoritos" variant="skeleton" />
       ) : items.length === 0 ? (
         <EmptyState
-          title="Lista vazia"
-          description="Toque no coração nos produtos do marketplace para guardar."
+          title="Sem favoritos"
+          description="Guarde produtos no marketplace para os encontrar aqui."
           actionLabel="Explorar produtos"
           onAction={() => {
             window.location.href = `${MARKETPLACE}/produtos`;

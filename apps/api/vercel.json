@@ -1,14 +1,14 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
-  "buildCommand": "pnpm exec prisma generate && pnpm exec nest build",
+  "buildCommand": "pnpm exec prisma generate && pnpm exec nest build && node ./scripts/build-composition.mjs",
   "installCommand": "cd ../.. && corepack enable && pnpm install --frozen-lockfile --config.production=false",
   "outputDirectory": "public",
   "rewrites": [{ "source": "/(.*)", "destination": "/api" }],
   "functions": {
     "api/index.js": {
       "maxDuration": 60,
-      "includeFiles": "{dist/**,prisma/**,../../node_modules/.pnpm/@prisma+client@*/**}"
+      "includeFiles": "{dist/**,composition/**,prisma/**,../../node_modules/.pnpm/@prisma+client@*/**,../../node_modules/@prisma/client/**}"
     }
   },
   "crons": [

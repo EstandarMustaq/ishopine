@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { PageHeader, Card, CardTitle } from "@ishopine/ui";
+import { PageHeader, Card, CardTitle, LoadingState } from "@ishopine/ui";
 import { api } from "@/lib/api";
 import { formatMZN } from "@/lib/format";
 import type { DashboardOverview } from "@/lib/types";
@@ -27,7 +27,7 @@ export default function BackofficeHomePage() {
         description="Operabilidade da plataforma — só equipa iShopine."
       />
       {!data ? (
-        <p className="text-[14px] text-[var(--ds-text-secondary)]">A carregar…</p>
+        <LoadingState label="A carregar indicadores" variant="skeleton" />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {[

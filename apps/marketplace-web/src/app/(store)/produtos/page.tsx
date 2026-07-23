@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { EmptyState, ErrorState } from "@ishopine/ui";
 import { ProductCard } from "@/components/products/product-card";
 import { AdBanner } from "@/components/ads/ad-banner";
 import { MercadoSearchBar } from "@/components/search/mercado-search-bar";
@@ -45,7 +46,7 @@ async function getData(params: {
         () => [] as Ad[],
       ),
     ]);
-    return { categories, products, ads };
+    return { categories, products, ads, error: false };
   } catch {
     return {
       categories: [] as Category[],
@@ -54,13 +55,14 @@ async function getData(params: {
         meta: { page: 1, limit: 12, total: 0, totalPages: 1 },
       },
       ads: [] as Ad[],
+      error: true,
     };
   }
 }
 
 export default async function ProductsPage({ searchParams }: ProductsPageProps) {
   const params = await searchParams;
-  const { categories, products, ads } = await getData(params);
+  const { categories, products, ads, error } = await getData(params);
   const currentSort = params.sort ?? "newest";
   const currentCategory = params.category;
 
@@ -151,19 +153,47 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
         ))}
       </div>
 
-      <div className="grid grid-cols-2 gap-x-3 gap-y-8 md:grid-cols-3 lg:grid-cols-4 md:gap-x-4">
-        {products.items.map((product) => (
-          <ProductCard key={product.id} product={product} />
-        ))}
-      </div>
-
-      {products.items.length === 0 && (
-        <p className="py-16 text-center text-sm text-zinc-500">
-          nenhum produto encontrado.
-        </p>
+      {error ? (
+        <ErrorState
+          title="Não foi possível carregar os produtos"
+          description="Atualize a página ou tente novamente em alguns instantes."
+          action={
+            <Link
+              href={hrefFor({})}
+              className="inline-flex min-h-9 items-center justify-center rounded-[var(--ds-radius-sm)] border border-[var(--ds-border)] bg-[var(--ds-surface)] px-4 py-2 text-[14px] font-medium text-[var(--ds-text)] hover:bg-[var(--ds-bg)]"
+            >
+              Atualizar
+            </Link>
+          }
+        />
+      ) : products.items.length === 0 ? (
+        <EmptyState
+          title="Nenhum produto encontrado"
+          description={
+            params.q || currentCategory
+              ? "Ajuste os filtros ou procure por outro termo."
+              : "Os produtos publicados aparecerão nesta página."
+          }
+          action={
+            params.q || currentCategory ? (
+              <Link
+                href="/produtos"
+                className="inline-flex min-h-9 items-center justify-center rounded-[var(--ds-radius-sm)] bg-[var(--ds-brand)] px-4 py-2 text-[14px] font-medium text-white hover:bg-[var(--ds-brand-dark)]"
+              >
+                Limpar filtros
+              </Link>
+            ) : null
+          }
+        />
+      ) : (
+        <div className="grid grid-cols-2 gap-x-3 gap-y-8 md:grid-cols-3 lg:grid-cols-4 md:gap-x-4">
+          {products.items.map((product) => (
+            <ProductCard key={product.id} product={product} />
+          ))}
+        </div>
       )}
 
-      {products.meta.totalPages > 1 && (
+      {!error && products.meta.totalPages > 1 && (
         <div className="mt-10 flex items-center justify-center gap-3">
           {products.meta.page > 1 && (
             <Link

@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import { EmptyState, LoadingState } from "@ishopine/ui";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";
@@ -287,7 +288,43 @@ export default function SellerProductsPage() {
       )}
 
       {loading ? (
-        <p className="mt-8 text-sm text-taupe">Carregando...</p>
+        <LoadingState
+          label="A carregar produtos"
+          variant="skeleton"
+          className="mt-8"
+        />
+      ) : products.length === 0 ? (
+        <EmptyState
+          className="mt-8"
+          title={q ? "Nenhum produto encontrado" : "Ainda sem produtos"}
+          description={
+            q
+              ? "Ajuste a pesquisa ou limpe o campo de busca."
+              : "Crie o primeiro produto para começar a vender no mercado."
+          }
+          action={
+            q ? (
+              <button
+                type="button"
+                className="inline-flex min-h-9 items-center justify-center rounded-[var(--ds-radius-sm)] border border-[var(--ds-border)] bg-[var(--ds-surface)] px-4 py-2 text-[14px] font-medium text-[var(--ds-text)] hover:bg-[var(--ds-bg)]"
+                onClick={() => {
+                  setQ("");
+                  void load();
+                }}
+              >
+                Limpar busca
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="inline-flex min-h-9 items-center justify-center rounded-[var(--ds-radius-sm)] bg-[var(--ds-brand)] px-4 py-2 text-[14px] font-medium text-white hover:bg-[var(--ds-brand-dark)]"
+                onClick={() => setShowForm(true)}
+              >
+                Novo produto
+              </button>
+            )
+          }
+        />
       ) : (
         <div className="mt-8 overflow-x-auto rounded-[12px] border border-border">
           <table className="w-full min-w-[720px] text-left text-sm">
@@ -342,16 +379,6 @@ export default function SellerProductsPage() {
                   </tr>
                 );
               })}
-              {products.length === 0 && (
-                <tr>
-                  <td
-                    colSpan={5}
-                    className="px-4 py-10 text-center text-taupe"
-                  >
-                    Nenhum produto neste tenant. Crie o primeiro.
-                  </td>
-                </tr>
-              )}
             </tbody>
           </table>
         </div>

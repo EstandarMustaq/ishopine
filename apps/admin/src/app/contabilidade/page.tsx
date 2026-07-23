@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import { EmptyState, LoadingState } from "@ishopine/ui";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -136,7 +137,7 @@ export default function PainelContabilidadePage() {
   }
 
   if (loading && entries.length === 0) {
-    return <p className="text-sm text-taupe">Carregando contabilidade...</p>;
+    return <LoadingState label="A carregar contabilidade" variant="skeleton" />;
   }
 
   return (
@@ -204,7 +205,7 @@ export default function PainelContabilidadePage() {
             </Select>
           </div>
           <div>
-            <Label htmlFor="amount">Valor (R$)</Label>
+            <Label htmlFor="amount">Valor (MZN)</Label>
             <Input
               id="amount"
               required
@@ -262,63 +263,64 @@ export default function PainelContabilidadePage() {
         </Button>
       </form>
 
-      <div className="mt-8 overflow-x-auto rounded-[12px] border border-border">
-        <table className="w-full min-w-[720px] text-left text-sm">
-          <thead className="bg-beige text-taupe">
-            <tr>
-              <th className="px-4 py-3 font-medium">Nº</th>
-              <th className="px-4 py-3 font-medium">Descrição</th>
-              <th className="px-4 py-3 font-medium">Valor</th>
-              <th className="px-4 py-3 font-medium">Status</th>
-              <th className="px-4 py-3 font-medium">Data</th>
-              <th className="px-4 py-3 font-medium">Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            {entries.map((entry) => (
-              <tr key={entry.id} className="border-t border-border">
-                <td className="px-4 py-3 font-medium">{entry.entryNumber}</td>
-                <td className="px-4 py-3">{entry.description}</td>
-                <td className="px-4 py-3">{formatMZN(entry.amountCents)}</td>
-                <td className="px-4 py-3">
-                  <Badge variant="secondary">{entry.status}</Badge>
-                </td>
-                <td className="px-4 py-3 text-taupe">
-                  {formatDate(entry.entryDate)}
-                </td>
-                <td className="px-4 py-3">
-                  {isAdmin && entry.status === "DRAFT" && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="mr-2"
-                      onClick={() => postEntry(entry.id)}
-                    >
-                      Postar
-                    </Button>
-                  )}
-                  {isAdmin && entry.status !== "VOID" && (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => voidEntry(entry.id)}
-                    >
-                      Anular
-                    </Button>
-                  )}
-                </td>
-              </tr>
-            ))}
-            {entries.length === 0 && (
+      {entries.length === 0 ? (
+        <EmptyState
+          className="mt-8"
+          title="Sem lançamentos"
+          description="Os lançamentos contabilísticos criados pela equipa aparecerão aqui."
+        />
+      ) : (
+        <div className="mt-8 overflow-x-auto rounded-[12px] border border-border">
+          <table className="w-full min-w-[720px] text-left text-sm">
+            <thead className="bg-beige text-taupe">
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-taupe">
-                  Nenhum lançamento.
-                </td>
+                <th className="px-4 py-3 font-medium">Nº</th>
+                <th className="px-4 py-3 font-medium">Descrição</th>
+                <th className="px-4 py-3 font-medium">Valor</th>
+                <th className="px-4 py-3 font-medium">Status</th>
+                <th className="px-4 py-3 font-medium">Data</th>
+                <th className="px-4 py-3 font-medium">Ações</th>
               </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {entries.map((entry) => (
+                <tr key={entry.id} className="border-t border-border">
+                  <td className="px-4 py-3 font-medium">{entry.entryNumber}</td>
+                  <td className="px-4 py-3">{entry.description}</td>
+                  <td className="px-4 py-3">{formatMZN(entry.amountCents)}</td>
+                  <td className="px-4 py-3">
+                    <Badge variant="secondary">{entry.status}</Badge>
+                  </td>
+                  <td className="px-4 py-3 text-taupe">
+                    {formatDate(entry.entryDate)}
+                  </td>
+                  <td className="px-4 py-3">
+                    {isAdmin && entry.status === "DRAFT" && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="mr-2"
+                        onClick={() => postEntry(entry.id)}
+                      >
+                        Postar
+                      </Button>
+                    )}
+                    {isAdmin && entry.status !== "VOID" && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => voidEntry(entry.id)}
+                      >
+                        Anular
+                      </Button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
