@@ -25,10 +25,14 @@ etiquetas HTML e webhooks HMAC.
 | POST | `/api/logistics/shipments/:id/transit` | JWT + STORE |
 | POST | `/api/logistics/shipments/:id/delivered` | JWT + STORE |
 | GET | `/api/logistics/shipments/:id/label` | HTML público |
+| POST | `/api/logistics/internal/create-label` | Bearer internal (Fase 25) |
+| POST | `/api/logistics/internal/mark-delivered` | Bearer internal (Fase 25) |
 
 ```bash
 LOGISTICS_OWNED=1
 LOGISTICS_URL=http://127.0.0.1:4112
+# LOGISTICS_LABEL_REMOTE=1
+# INTERNAL_SERVICE_SECRET=...
 # DHL_EXPRESS_API_KEY=… DHL_EXPRESS_API_SECRET=… DHL_EXPRESS_ACCOUNT_NUMBER=…
 pnpm --filter @ishopine/logistics dev
 ```

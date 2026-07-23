@@ -12,6 +12,13 @@ import {
   ShopStatus,
 } from "@prisma/client";
 import type { ShippingQuote } from "@ishopine/shared";
+import {
+  couponRedeemRemoteEnabled,
+  inventoryReserveRemoteEnabled,
+  remoteRedeemCoupon,
+  remoteReleaseStock,
+  remoteReserveStock,
+} from "./remote";
 
 const prisma = new PrismaClient();
 const orgSlug = process.env.PLATFORM_ORG_SLUG || "ishopine";
@@ -19,6 +26,8 @@ const logisticsBase =
   process.env.LOGISTICS_URL ||
   process.env.UPSTREAM_API_URL ||
   "http://127.0.0.1:4000";
+const couponRemote = () => couponRedeemRemoteEnabled();
+const inventoryRemote = () => inventoryReserveRemoteEnabled();
 
 export type CheckoutInput = {
   addressId?: string;
@@ -245,6 +254,8 @@ export async function runCheckout(buyerId: string, data: CheckoutInput) {
   const orders = await prisma.$transaction(async (tx) => {
     const createdOrders = [];
     let couponApplied = false;
+    const skipInlineReserve = inventoryRemote();
+    const skipInlineRedeem = couponRemote();
 
     for (const [sellerShopId, items] of byShop) {
       const subtotalCents = items.reduce(
@@ -282,11 +293,13 @@ export async function runCheckout(buyerId: string, data: CheckoutInput) {
       );
       const orderNumber = await nextOrderNumber(tx);
 
-      for (const item of items) {
-        await tx.product.update({
-          where: { id: item.productId },
-          data: { reservedStock: { increment: item.quantity } },
-        });
+      if (!skipInlineReserve) {
+        for (const item of items) {
+          await tx.product.update({
+            where: { id: item.productId },
+            data: { reservedStock: { increment: item.quantity } },
+          });
+        }
       }
 
       const created = await tx.order.create({
@@ -310,7 +323,7 @@ export async function runCheckout(buyerId: string, data: CheckoutInput) {
               note: "Pedido criado no iShopine",
             },
           },
-          ...(coupon && appliedCode
+          ...(!skipInlineRedeem && coupon && appliedCode
             ? {
                 couponRedemptions: {
                   create: {
@@ -368,7 +381,7 @@ export async function runCheckout(buyerId: string, data: CheckoutInput) {
       createdOrders.push(created);
     }
 
-    if (coupon && couponApplied) {
+    if (!skipInlineRedeem && coupon && couponApplied) {
       await tx.coupon.update({
         where: { id: coupon.id },
         data: { usedCount: { increment: 1 } },
@@ -378,6 +391,62 @@ export async function runCheckout(buyerId: string, data: CheckoutInput) {
     await tx.cartItem.deleteMany({ where: { cartId: cart.id } });
     return createdOrders;
   });
+
+  // Phase 25: remote side-effects (fail-closed) after order rows exist.
+  try {
+    if (inventoryRemote()) {
+      for (const order of orders) {
+        await remoteReserveStock({
+          orderId: order.id,
+          orderNumber: order.orderNumber,
+          items: order.items.map((item) => ({
+            productId: item.productId,
+            quantity: item.quantity,
+          })),
+          operatorId: buyerId,
+        });
+      }
+    }
+
+    if (couponRemote() && coupon) {
+      const redeemed = orders.find((o) => o.couponCode && o.discountCents > 0);
+      if (redeemed?.couponCode) {
+        await remoteRedeemCoupon({
+          code: redeemed.couponCode,
+          orderId: redeemed.id,
+          amountCents: redeemed.discountCents,
+          subtotalCents: redeemed.subtotalCents,
+        });
+      }
+    }
+  } catch (error) {
+    // Best-effort compensate: release any remote reserves, cancel orders.
+    if (inventoryRemote()) {
+      for (const order of orders) {
+        try {
+          await remoteReleaseStock({
+            orderId: order.id,
+            orderNumber: order.orderNumber,
+            items: order.items.map((item) => ({
+              productId: item.productId,
+              quantity: item.quantity,
+            })),
+            operatorId: buyerId,
+          });
+        } catch {
+          // ignore compensate errors
+        }
+      }
+    }
+    await prisma.order.updateMany({
+      where: { id: { in: orders.map((o) => o.id) } },
+      data: {
+        status: OrderStatus.CANCELLED,
+        cancelledAt: new Date(),
+      },
+    });
+    throw error;
+  }
 
   const result = {
     orders,

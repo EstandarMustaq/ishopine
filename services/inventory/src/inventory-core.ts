@@ -112,3 +112,169 @@ export function lowStock(threshold = 5) {
     orderBy: { stock: "asc" },
   });
 }
+
+/**
+ * Phase 25: checkout reserve — bumps reservedStock only (Nest parity).
+ * Idempotent via RESERVE movement with reference=orderId + productId.
+ */
+export async function reserveStock(input: {
+  orderId: string;
+  orderNumber: string;
+  items: Array<{ productId: string; quantity: number }>;
+  operatorId?: string;
+}) {
+  const results = [];
+  for (const item of input.items) {
+    if (item.quantity <= 0) {
+      throw new HttpError(400, "quantity deve ser positiva");
+    }
+    const existing = await prisma.inventoryMovement.findFirst({
+      where: {
+        productId: item.productId,
+        type: InventoryMovementType.RESERVE,
+        reference: input.orderId,
+      },
+    });
+    if (existing) {
+      results.push({ productId: item.productId, alreadyReserved: true });
+      continue;
+    }
+
+    const product = await prisma.product.findUnique({
+      where: { id: item.productId },
+    });
+    if (!product) throw new HttpError(404, "Produto não encontrado");
+    const available = product.stock - product.reservedStock;
+    if (available < item.quantity) {
+      throw new HttpError(
+        400,
+        `Produto ${product.name} sem estoque suficiente`,
+      );
+    }
+
+    await prisma.$transaction(async (tx) => {
+      await tx.product.update({
+        where: { id: item.productId },
+        data: { reservedStock: { increment: item.quantity } },
+      });
+      await tx.inventoryMovement.create({
+        data: {
+          productId: item.productId,
+          type: InventoryMovementType.RESERVE,
+          quantity: item.quantity,
+          reason: `Reserva checkout pedido ${input.orderNumber}`,
+          reference: input.orderId,
+          operatorId: input.operatorId,
+        },
+      });
+    });
+    results.push({ productId: item.productId, alreadyReserved: false });
+  }
+  return { orderId: input.orderId, items: results };
+}
+
+/** Cancel/refund — release reservedStock + RELEASE movement. */
+export async function releaseStock(input: {
+  orderId: string;
+  orderNumber: string;
+  items: Array<{ productId: string; quantity: number }>;
+  operatorId?: string;
+}) {
+  const results = [];
+  for (const item of input.items) {
+    if (item.quantity <= 0) {
+      throw new HttpError(400, "quantity deve ser positiva");
+    }
+    const existing = await prisma.inventoryMovement.findFirst({
+      where: {
+        productId: item.productId,
+        type: InventoryMovementType.RELEASE,
+        reference: input.orderId,
+      },
+    });
+    if (existing) {
+      results.push({ productId: item.productId, alreadyReleased: true });
+      continue;
+    }
+
+    await prisma.$transaction(async (tx) => {
+      await tx.product.update({
+        where: { id: item.productId },
+        data: { reservedStock: { decrement: item.quantity } },
+      });
+      await tx.inventoryMovement.create({
+        data: {
+          productId: item.productId,
+          type: InventoryMovementType.RELEASE,
+          quantity: item.quantity,
+          reason: `Liberação por cancelamento do pedido ${input.orderNumber}`,
+          reference: input.orderId,
+          operatorId: input.operatorId,
+        },
+      });
+    });
+    results.push({ productId: item.productId, alreadyReleased: false });
+  }
+  return { orderId: input.orderId, items: results };
+}
+
+/** Confirm/process — stock + reservedStock down + OUT movement. */
+export async function fulfillStock(input: {
+  orderId: string;
+  orderNumber: string;
+  items: Array<{ productId: string; quantity: number }>;
+  operatorId?: string;
+}) {
+  const results = [];
+  for (const item of input.items) {
+    if (item.quantity <= 0) {
+      throw new HttpError(400, "quantity deve ser positiva");
+    }
+    const existing = await prisma.inventoryMovement.findFirst({
+      where: {
+        productId: item.productId,
+        type: InventoryMovementType.OUT,
+        reference: input.orderId,
+      },
+    });
+    if (existing) {
+      results.push({ productId: item.productId, alreadyFulfilled: true });
+      continue;
+    }
+
+    const product = await prisma.product.findUnique({
+      where: { id: item.productId },
+    });
+    if (!product) throw new HttpError(404, "Produto não encontrado");
+    if (product.stock < item.quantity) {
+      throw new HttpError(400, "Estoque insuficiente para fulfilmiento");
+    }
+
+    await prisma.$transaction(async (tx) => {
+      await tx.product.update({
+        where: { id: item.productId },
+        data: {
+          stock: { decrement: item.quantity },
+          reservedStock: { decrement: item.quantity },
+          status:
+            product.stock - item.quantity <= 0 &&
+            product.status === ProductStatus.ACTIVE
+              ? ProductStatus.OUT_OF_STOCK
+              : product.status,
+        },
+      });
+      await tx.inventoryMovement.create({
+        data: {
+          productId: item.productId,
+          type: InventoryMovementType.OUT,
+          quantity: item.quantity,
+          reason: `Saída por pedido ${input.orderNumber}`,
+          reference: input.orderId,
+          operatorId: input.operatorId,
+        },
+      });
+    });
+    results.push({ productId: item.productId, alreadyFulfilled: false });
+  }
+  return { orderId: input.orderId, items: results };
+}

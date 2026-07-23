@@ -1,3 +1,8 @@
+/**
+ * Phase 25: commerce-orchestrator composes owned orders + payments when URLs set.
+ * Saga: validate → create_orders → create_payment → done.
+ * Correios remains unavailable (no fake carrier client).
+ */
 import http from "node:http";
 import { randomBytes } from "node:crypto";
 import type {
@@ -8,8 +13,14 @@ import type {
 } from "@ishopine/shared";
 
 const port = Number(process.env.PORT || 4100);
-const upstream = (
+const upstreamFallback = (
   process.env.UPSTREAM_API_URL || "http://127.0.0.1:4000"
+).replace(/\/$/, "");
+const ordersBase = (
+  process.env.ORDERS_URL || upstreamFallback
+).replace(/\/$/, "");
+const paymentsBase = (
+  process.env.PAYMENTS_URL || upstreamFallback
 ).replace(/\/$/, "");
 
 type Json = Record<string, unknown>;
@@ -32,7 +43,8 @@ async function readJson(req: http.IncomingMessage): Promise<Json> {
   return JSON.parse(raw) as Json;
 }
 
-async function upstreamFetch(
+async function serviceFetch(
+  base: string,
   path: string,
   init: {
     method?: string;
@@ -48,7 +60,7 @@ async function upstreamFetch(
   if (init.authorization) headers.Authorization = init.authorization;
   if (init.idempotencyKey) headers["Idempotency-Key"] = init.idempotencyKey;
 
-  const res = await fetch(`${upstream}${path}`, {
+  const res = await fetch(`${base}${path}`, {
     method: init.method || "GET",
     headers,
     body: init.body !== undefined ? JSON.stringify(init.body) : undefined,
@@ -117,7 +129,7 @@ async function runCheckoutSaga(
   const orderMethod =
     command.paymentMethod || mapOrderMethod(command.paysuiteMethod);
 
-  const ordersRes = await upstreamFetch("/api/orders/checkout", {
+  const ordersRes = await serviceFetch(ordersBase, "/api/orders/checkout", {
     method: "POST",
     authorization,
     idempotencyKey: idempotencyKey
@@ -142,7 +154,7 @@ async function runCheckoutSaga(
     return { status: ordersRes.status, result: { ...ordersRes.body, sagaId, steps } };
   }
 
-  steps[1] = step("create_orders", "ok");
+  steps[1] = step("create_orders", "ok", `via ${ordersBase}`);
 
   const ordersRaw = ordersRes.body.orders;
   const orders = Array.isArray(ordersRaw)
@@ -157,18 +169,22 @@ async function runCheckoutSaga(
   const orderIds = orders.map((o) => o.id);
   const totalCents = Number(ordersRes.body.totalCents || 0);
 
-  const payRes = await upstreamFetch("/api/billing/paysuite/checkout", {
-    method: "POST",
-    authorization,
-    idempotencyKey: idempotencyKey
-      ? `${idempotencyKey}:payment`
-      : undefined,
-    body: {
-      orderIds,
-      method: command.paysuiteMethod,
-      msisdn: command.msisdn,
+  const payRes = await serviceFetch(
+    paymentsBase,
+    "/api/billing/paysuite/checkout",
+    {
+      method: "POST",
+      authorization,
+      idempotencyKey: idempotencyKey
+        ? `${idempotencyKey}:payment`
+        : undefined,
+      body: {
+        orderIds,
+        method: command.paysuiteMethod,
+        msisdn: command.msisdn,
+      },
     },
-  });
+  );
 
   if (payRes.status >= 400) {
     steps[2] = step(
@@ -190,7 +206,7 @@ async function runCheckoutSaga(
     };
   }
 
-  steps[2] = step("create_payment", "ok");
+  steps[2] = step("create_payment", "ok", `via ${paymentsBase}`);
   steps[3] = step("done", "ok");
 
   const result: CheckoutSagaResult = {
@@ -242,7 +258,9 @@ const server = http.createServer(async (req, res) => {
       JSON.stringify({
         ok: true,
         service: "commerce-orchestrator",
-        upstream,
+        upstream: upstreamFallback,
+        ordersBase,
+        paymentsBase,
         mode: "strangler-compose",
       }),
     );
@@ -288,6 +306,6 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(port, () => {
   console.log(
-    `[commerce-orchestrator] :${port} → compose ${upstream} (strangler)`,
+    `[commerce-orchestrator] :${port} → orders ${ordersBase} · payments ${paymentsBase} (fallback ${upstreamFallback})`,
   );
 });

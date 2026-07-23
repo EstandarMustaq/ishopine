@@ -47,6 +47,6 @@ DATABASE_URL=...
 ```
 
 ## Fora de âmbito
-- Mover redemption de cupão / stock mutations do checkout para estes serviços
+- Mover redemption de cupão / stock mutations → **Fase 25** ([PHASE25.md](./PHASE25.md))
 - Correios HTTP (continua indisponível — ver Fase 23)
 - Inventar PoPs CDN

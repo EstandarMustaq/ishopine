@@ -13,14 +13,19 @@ import { AUTH_COOKIE_NAME, TENANT_HEADER } from "@ishopine/shared";
 import {
   HttpError,
   adjust,
+  fulfillStock,
   listMovements,
   lowStock,
   prisma,
+  releaseStock,
+  reserveStock,
 } from "./inventory-core";
 
 const jwtSecret = process.env.JWT_SECRET || "";
 const orgSlug = process.env.PLATFORM_ORG_SLUG || "ishopine";
 const isProd = process.env.NODE_ENV === "production";
+const internalSecret =
+  process.env.INTERNAL_SERVICE_SECRET || process.env.CRON_SECRET || "";
 
 type JwtPayload = { sub: string; tfa?: boolean };
 
@@ -52,6 +57,13 @@ function verifyJwt(req: http.IncomingMessage): JwtPayload | null {
   } catch {
     return null;
   }
+}
+
+function verifyInternal(req: http.IncomingMessage): boolean {
+  if (!internalSecret) return false;
+  const auth = req.headers.authorization;
+  if (!auth?.toLowerCase().startsWith("bearer ")) return false;
+  return auth.slice(7).trim() === internalSecret;
 }
 
 function headerValue(
@@ -266,6 +278,58 @@ export async function handleOwnedInventory(
           operatorId: user.id,
         }),
       );
+      return true;
+    }
+
+    if (
+      method === "POST" &&
+      (path === "/api/inventory/internal/reserve" ||
+        path === "/api/inventory/internal/release" ||
+        path === "/api/inventory/internal/fulfill")
+    ) {
+      if (!verifyInternal(req)) {
+        json(res, 401, "Não autorizado");
+        return true;
+      }
+      const body = await readJsonBody(req);
+      if (typeof body.orderId !== "string" || !body.orderId.trim()) {
+        throw new HttpError(400, "orderId obrigatório");
+      }
+      if (typeof body.orderNumber !== "string" || !body.orderNumber.trim()) {
+        throw new HttpError(400, "orderNumber obrigatório");
+      }
+      if (!Array.isArray(body.items) || body.items.length === 0) {
+        throw new HttpError(400, "items obrigatório");
+      }
+      const items: Array<{ productId: string; quantity: number }> = [];
+      for (const raw of body.items) {
+        if (!raw || typeof raw !== "object") {
+          throw new HttpError(400, "item inválido");
+        }
+        const row = raw as Record<string, unknown>;
+        if (typeof row.productId !== "string" || !row.productId) {
+          throw new HttpError(400, "productId obrigatório");
+        }
+        if (typeof row.quantity !== "number" || !Number.isFinite(row.quantity)) {
+          throw new HttpError(400, "quantity obrigatório");
+        }
+        items.push({ productId: row.productId, quantity: row.quantity });
+      }
+      const operatorId =
+        typeof body.operatorId === "string" ? body.operatorId : undefined;
+      const payload = {
+        orderId: body.orderId,
+        orderNumber: body.orderNumber,
+        items,
+        operatorId,
+      };
+      if (path.endsWith("/reserve")) {
+        json(res, 200, await reserveStock(payload));
+      } else if (path.endsWith("/release")) {
+        json(res, 200, await releaseStock(payload));
+      } else {
+        json(res, 200, await fulfillStock(payload));
+      }
       return true;
     }
 

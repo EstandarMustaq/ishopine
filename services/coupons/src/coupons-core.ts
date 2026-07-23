@@ -71,3 +71,80 @@ export async function validateCoupon(code: string, subtotalCents: number) {
     couponId: coupon.id,
   };
 }
+
+/**
+ * Phase 25: redeem after order create (idempotent on couponId+orderId).
+ * Fail-closed for exhausted / invalid coupons.
+ */
+export async function redeemCoupon(input: {
+  code: string;
+  orderId: string;
+  amountCents: number;
+  subtotalCents: number;
+}) {
+  if (input.amountCents < 0) {
+    throw new HttpError(400, "amountCents inválido");
+  }
+  const order = await prisma.order.findUnique({
+    where: { id: input.orderId },
+    select: { id: true },
+  });
+  if (!order) throw new HttpError(404, "Pedido não encontrado");
+
+  const coupon = await prisma.coupon.findUnique({
+    where: { code: input.code.trim().toUpperCase() },
+  });
+  if (!coupon || !coupon.isActive) {
+    throw new HttpError(404, "Cupom inválido");
+  }
+
+  const existing = await prisma.couponRedemption.findUnique({
+    where: {
+      couponId_orderId: {
+        couponId: coupon.id,
+        orderId: input.orderId,
+      },
+    },
+  });
+  if (existing) {
+    return {
+      couponId: coupon.id,
+      code: coupon.code,
+      discountCents: existing.amountCents,
+      alreadyRedeemed: true as const,
+    };
+  }
+
+  const validated = await validateCoupon(input.code, input.subtotalCents);
+  const amountCents =
+    input.amountCents > 0 ? input.amountCents : validated.discountCents;
+
+  const redemption = await prisma.$transaction(async (tx) => {
+    const fresh = await tx.coupon.findUnique({
+      where: { id: validated.couponId },
+    });
+    if (!fresh?.isActive) throw new HttpError(404, "Cupom inválido");
+    if (fresh.maxUses != null && fresh.usedCount >= fresh.maxUses) {
+      throw new HttpError(400, "Cupom esgotado");
+    }
+    const created = await tx.couponRedemption.create({
+      data: {
+        couponId: fresh.id,
+        orderId: input.orderId,
+        amountCents,
+      },
+    });
+    await tx.coupon.update({
+      where: { id: fresh.id },
+      data: { usedCount: { increment: 1 } },
+    });
+    return created;
+  });
+
+  return {
+    couponId: validated.couponId,
+    code: validated.code,
+    discountCents: redemption.amountCents,
+    alreadyRedeemed: false as const,
+  };
+}
