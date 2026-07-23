@@ -7,7 +7,6 @@ import { AffiliateModule } from './affiliate/affiliate.module';
 import { AppController } from './app.controller';
 import { AuthModule } from './auth/auth.module';
 import { BillingModule } from './billing/billing.module';
-import { CartModule } from './cart/cart.module';
 import { CommerceModule } from './commerce/commerce.module';
 import { CronModule } from './cron/cron.module';
 import { PricingModule } from './pricing/pricing.module';
@@ -24,9 +23,8 @@ import { ReliabilityModule } from './reliability/reliability.module';
 import { SecurityModule } from './security/security.module';
 
 /**
- * Nest monolith remnant. Finance HTTP retired (Phase 37); media/developers/
- * logistics HTTP retired (Phase 38). Services kept for Nest DI/fallthrough
- * (OutboxDispatcher, Orders settle). Auth/orders/cart HTTP remnant.
+ * Nest monolith remnant. Auth/orders/cart HTTP retired (Phase 39). Nest HTTP
+ * edge is health + cron bridge. Domain services kept for DI/fallthrough.
  */
 @Module({
   imports: [
@@ -44,7 +42,6 @@ import { SecurityModule } from './security/security.module';
     MailModule,
     AuthModule,
     AccountsModule,
-    CartModule,
     OrdersModule,
     BillingModule,
     AffiliateModule,
