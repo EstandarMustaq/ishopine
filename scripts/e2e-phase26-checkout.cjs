@@ -7,7 +7,7 @@
  * Loads secrets from apps/api/.env when present.
  *
  * Usage:
- *   node scripts/e2e-phase26-checkout.mjs
+ *   node scripts/e2e-phase26-checkout.cjs
  */
 const fs = require("node:fs");
 const path = require("node:path");
