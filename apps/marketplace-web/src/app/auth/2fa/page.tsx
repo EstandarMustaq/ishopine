@@ -85,7 +85,7 @@ function TwoFactorForm() {
       <p className="mt-6 text-center text-sm text-[var(--brand-taupe)]">
         <Link
           href="/entrar"
-          className="font-semibold text-[var(--brand-orange)]"
+          className="font-semibold text-[var(--ds-brand)]"
         >
           Voltar ao login
         </Link>

@@ -123,7 +123,7 @@ function LoginForm() {
       </p>
 
       {googleError && (
-        <p className="mt-4 rounded-xl bg-[var(--brand-orange-soft)] px-3 py-2 text-sm text-[var(--brand-charcoal)]">
+        <p className="mt-4 rounded-xl bg-[rgba(0,128,96,0.1)] px-3 py-2 text-sm text-[var(--brand-charcoal)]">
           Não foi possível entrar com Google. Tente e-mail e senha.
         </p>
       )}
@@ -169,7 +169,7 @@ function LoginForm() {
             />
             <button
               type="button"
-              className="text-xs font-semibold text-[var(--brand-orange)] underline-offset-2 hover:underline"
+              className="text-xs font-semibold text-[var(--ds-brand)] underline-offset-2 hover:underline"
               onClick={() => {
                 setSessionToken(null);
                 setCode("");
@@ -211,7 +211,7 @@ function LoginForm() {
         Não tem conta?{" "}
         <Link
           href="/cadastro"
-          className="font-semibold text-[var(--brand-orange)]"
+          className="font-semibold text-[var(--ds-brand)]"
         >
           Cadastre-se
         </Link>

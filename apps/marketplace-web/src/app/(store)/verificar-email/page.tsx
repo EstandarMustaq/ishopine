@@ -107,7 +107,7 @@ function VerifyEmailForm() {
       </p>
 
       {devCode && (
-        <p className="mt-4 rounded-xl border border-[var(--brand-border)] bg-[var(--brand-orange-soft)] px-3 py-2 text-sm text-[var(--brand-charcoal)]">
+        <p className="mt-4 rounded-xl border border-[var(--brand-border)] bg-[rgba(0,128,96,0.1)] px-3 py-2 text-sm text-[var(--brand-charcoal)]">
           Código de desenvolvimento:{" "}
           <span className="font-mono font-semibold tracking-widest">
             {devCode}
@@ -153,7 +153,7 @@ function VerifyEmailForm() {
       <p className="mt-6 text-center text-sm text-[var(--brand-taupe)]">
         <Link
           href="/entrar"
-          className="font-semibold text-[var(--brand-orange)]"
+          className="font-semibold text-[var(--ds-brand)]"
         >
           Voltar ao login
         </Link>

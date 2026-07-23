@@ -2,8 +2,8 @@
   <rect width="96" height="96" rx="22" fill="url(#app-bg)"/>
   <defs>
     <linearGradient id="app-bg" x1="8" y1="8" x2="88" y2="88" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#FF8A33"/>
-      <stop offset="1" stop-color="#FF6A00"/>
+      <stop stop-color="#00A67D"/>
+      <stop offset="1" stop-color="#008060"/>
     </linearGradient>
   </defs>
   <g transform="translate(8,8) scale(0.833)">

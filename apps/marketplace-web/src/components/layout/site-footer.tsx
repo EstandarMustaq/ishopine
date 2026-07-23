@@ -52,7 +52,7 @@ export function SiteFooter() {
           <BrandLogo variant="wordmark" showSlogan={false} />
           <p className="mt-3 max-w-sm text-[12px] font-semibold uppercase tracking-[0.14em] text-[var(--brand-charcoal)]">
             O marketplace{" "}
-            <span className="text-[var(--brand-orange)]">livre</span> de
+            <span className="text-[var(--ds-brand)]">livre</span> de
             Moçambique
           </p>
           <p className="mt-2 max-w-sm text-[13px] text-[var(--brand-taupe)]">

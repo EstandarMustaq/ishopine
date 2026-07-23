@@ -44,11 +44,7 @@ https://ishopine-api.vercel.app
 
 ## Demo logins (after seed)
 
-Password for all: `IShopine@2026`
-
-- `admin@ishopine.com` — backoffice
-- `vendedor1@ishopine.com` — seller
-- `comprador@ishopine.com` — buyer
+Seed **não cria** contas demo. Registe via `/cadastro` ou Google OAuth.
 
 ## SMTP note
 

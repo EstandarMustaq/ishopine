@@ -2,6 +2,6 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
   "installCommand": "pnpm install",
-  "buildCommand": "pnpm --filter @ishopine/web build",
-  "ignoreCommand": "git diff --quiet HEAD^ HEAD -- apps/web package.json pnpm-lock.yaml vercel.json"
+  "buildCommand": "pnpm --filter @ishopine/marketplace-web build",
+  "ignoreCommand": "git diff --quiet HEAD^ HEAD -- apps/marketplace-web package.json pnpm-lock.yaml vercel.json"
 }

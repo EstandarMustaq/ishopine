@@ -63,7 +63,7 @@ export default async function HomePage() {
         <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/75 via-zinc-900/25 to-zinc-900/10" />
         <div className="relative z-10 flex min-h-[88svh] flex-col justify-end px-4 pb-14 pt-28 sm:min-h-[92svh] sm:px-8 sm:pb-20 lg:px-16">
           <div className="animate-hero-in max-w-xl">
-            <p className="text-[13px] font-semibold uppercase tracking-[0.14em] text-white/80">
+            <p className="text-[13px] font-semibold uppercase tracking-[0.14em] text-[var(--ds-brand)]">
               iShopine
             </p>
             <h1 className="animate-hero-in-delay mt-3 text-4xl font-bold leading-[1.05] tracking-tight text-white sm:text-5xl md:text-6xl">
@@ -77,17 +77,17 @@ export default async function HomePage() {
               <Button
                 asChild
                 size="lg"
-                className="rounded-full font-semibold"
+                className="rounded-[var(--ds-radius-sm)] bg-[var(--ds-brand)] font-semibold text-white hover:bg-[var(--ds-brand-dark)]"
               >
-                <Link href={heroAd?.linkUrl || "/produtos"}>explorar mercado</Link>
+                <Link href={heroAd?.linkUrl || "/produtos"}>Explorar mercado</Link>
               </Button>
               <Button
                 asChild
                 size="lg"
                 variant="outline"
-                className="rounded-full border-white/35 bg-transparent text-white hover:bg-white/10 hover:text-white"
+                className="rounded-[var(--ds-radius-sm)] border-white/35 bg-transparent text-white hover:bg-white/10 hover:text-white"
               >
-                <Link href="/vender">abrir loja</Link>
+                <Link href="/vender">Abrir loja</Link>
               </Button>
             </div>
           </div>

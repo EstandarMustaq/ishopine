@@ -10,16 +10,16 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "rounded-full bg-[var(--brand-orange)] px-3.5 py-2 text-white shadow-soft hover:bg-[var(--brand-orange-hover)] active:bg-[var(--brand-orange-hover)]",
+          "rounded-full bg-[var(--ds-brand)] px-3.5 py-2 text-white shadow-soft hover:bg-[var(--ds-brand-dark)] active:bg-[var(--ds-brand-dark)]",
         outline:
           "rounded-full border-[var(--brand-border)] bg-white text-[var(--brand-charcoal)] shadow-sm hover:bg-[var(--brand-surface)] hover:text-foreground aria-expanded:bg-[var(--brand-surface)]",
         secondary:
-          "rounded-full bg-[var(--brand-orange-soft)] text-[var(--brand-orange)] hover:bg-[#ffe4cc] aria-expanded:bg-[var(--brand-orange-soft)]",
+          "rounded-full bg-[rgba(0,128,96,0.1)] text-[var(--ds-brand)] hover:bg-[rgba(0,128,96,0.16)] aria-expanded:bg-[rgba(0,128,96,0.1)]",
         ghost:
           "rounded-full text-[var(--brand-charcoal)] hover:bg-[var(--brand-surface)] hover:text-[var(--brand-ink)] aria-expanded:bg-[var(--brand-surface)]",
         destructive:
           "rounded-full bg-destructive/10 text-destructive hover:bg-destructive/15 focus-visible:border-destructive/40 focus-visible:ring-destructive/20",
-        link: "rounded-full text-[var(--brand-orange)] underline-offset-4 hover:underline",
+        link: "rounded-full text-[var(--ds-brand)] underline-offset-4 hover:underline",
       },
       size: {
         default: "h-9 gap-1.5 min-h-9",

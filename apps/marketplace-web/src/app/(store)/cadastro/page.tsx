@@ -124,7 +124,7 @@ export default function RegisterPage() {
         Já tem conta?{" "}
         <Link
           href="/entrar"
-          className="font-semibold text-[var(--brand-orange)]"
+          className="font-semibold text-[var(--ds-brand)]"
         >
           Entrar
         </Link>

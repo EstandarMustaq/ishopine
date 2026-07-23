@@ -203,7 +203,7 @@ function SearchOverlay({
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={placeholder}
-              className="h-11 rounded-full border-zinc-200 bg-zinc-50 pl-10 text-[15px] focus-visible:ring-[var(--brand-orange)]"
+              className="h-11 rounded-full border-zinc-200 bg-zinc-50 pl-10 text-[15px] focus-visible:ring-[var(--ds-brand)]"
               aria-label={
                 mode === "products" ? "Buscar produtos" : "Buscar lojas"
               }
@@ -221,7 +221,7 @@ function SearchOverlay({
             className={cn(
               "inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-[13px] font-semibold transition-colors",
               mode === "products"
-                ? "bg-[var(--brand-orange)] text-white"
+                ? "bg-[var(--ds-brand)] text-white"
                 : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200",
             )}
           >
@@ -234,7 +234,7 @@ function SearchOverlay({
             className={cn(
               "inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-[13px] font-semibold transition-colors",
               mode === "shops"
-                ? "bg-[var(--brand-orange)] text-white"
+                ? "bg-[var(--ds-brand)] text-white"
                 : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200",
             )}
           >

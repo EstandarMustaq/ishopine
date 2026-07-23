@@ -33,11 +33,11 @@ import { useAuthStore } from "@/lib/auth-store";
 import { cn } from "@/lib/utils";
 
 const navLinks = [
-  { href: "/produtos", label: "mercado", icon: Package },
-  { href: "/lojas", label: "lojas", icon: Store },
-  { href: "/vender", label: "vender", icon: CircleDollarSign },
-  { href: "/carrinho", label: "carrinho", icon: ShoppingBag },
-  { href: "/conta", label: "conta", icon: User },
+  { href: "/produtos", label: "Mercado", icon: Package },
+  { href: "/lojas", label: "Lojas", icon: Store },
+  { href: "/vender", label: "Vender", icon: CircleDollarSign },
+  { href: "/carrinho", label: "Carrinho", icon: ShoppingBag },
+  { href: "/conta", label: "Conta", icon: User },
 ];
 
 export function SiteHeader() {
@@ -217,7 +217,7 @@ export function SiteHeader() {
             >
               <Link href="/entrar" aria-label="Entrar">
                 <LogIn className="size-3.5 shrink-0" />
-                <span>entrar</span>
+                <span>Entrar</span>
               </Link>
             </Button>
           )}

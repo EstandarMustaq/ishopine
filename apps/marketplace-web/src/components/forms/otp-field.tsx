@@ -47,7 +47,7 @@ export function OtpField({
               index={index}
               className={cn(
                 "size-10 rounded-xl border border-[var(--brand-border)] text-[15px] font-semibold shadow-none first:rounded-xl first:border-l last:rounded-xl sm:size-11",
-                "data-[active=true]:border-[var(--brand-orange)] data-[active=true]:ring-2 data-[active=true]:ring-[var(--brand-orange)]/25",
+                "data-[active=true]:border-[var(--ds-brand)] data-[active=true]:ring-2 data-[active=true]:ring-[var(--ds-brand)]/25",
               )}
             />
           ))}

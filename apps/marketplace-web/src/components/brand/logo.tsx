@@ -29,7 +29,7 @@ export function BrandLogo({
           className="size-7"
         />
         <span className="text-[17px] font-bold tracking-tight sm:text-xl">
-          <span className="text-[var(--brand-orange)]">i</span>
+          <span className="text-[var(--ds-brand)]">i</span>
           <span className="text-[var(--brand-charcoal)]">Shopine</span>
         </span>
       </span>
@@ -63,7 +63,7 @@ export function BrandLogo({
 export function BrandWordmark({ className }: { className?: string }) {
   return (
     <span className={cn("font-bold tracking-tight", className)}>
-      <span className="text-[var(--brand-orange)]">i</span>
+      <span className="text-[var(--ds-brand)]">i</span>
       <span className="text-[var(--brand-charcoal)]">Shopine</span>
     </span>
   );

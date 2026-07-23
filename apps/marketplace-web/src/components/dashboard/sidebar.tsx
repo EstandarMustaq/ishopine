@@ -134,7 +134,7 @@ export function DashboardSidebar({
           />
           {!collapsed && (
             <span className="text-[15px] font-bold tracking-tight">
-              <span className="text-[var(--brand-orange)]">i</span>
+              <span className="text-[var(--ds-brand)]">i</span>
               <span className="text-[var(--brand-charcoal)]">Shopine</span>
             </span>
           )}
@@ -160,8 +160,8 @@ export function DashboardSidebar({
                   "flex items-center gap-2 rounded-lg px-2.5 py-2 text-[13px] font-medium transition-colors duration-200",
                   collapsed && "justify-center px-2",
                   active
-                    ? "bg-[var(--brand-orange)] text-white shadow-soft"
-                    : "text-zinc-600 hover:bg-[var(--brand-orange-soft)] hover:text-[var(--brand-charcoal)]",
+                    ? "bg-[var(--ds-brand)] text-white shadow-soft"
+                    : "text-zinc-600 hover:bg-[rgba(0,128,96,0.1)] hover:text-[var(--brand-charcoal)]",
                 )}
               >
                 <Icon className="size-3.5 shrink-0 opacity-80" />

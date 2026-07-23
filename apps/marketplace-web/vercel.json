@@ -28,5 +28,5 @@
     }
   ],
   "installCommand": "cd ../.. && corepack enable && pnpm install --frozen-lockfile --config.production=false",
-  "buildCommand": "cd ../.. && pnpm --filter @ishopine/web build"
+  "buildCommand": "cd ../.. && pnpm --filter @ishopine/marketplace-web build"
 }

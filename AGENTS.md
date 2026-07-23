@@ -1,13 +1,9 @@
 # iShopine — agent notes
 
 - Product: **iShopine** (`ishopine.com`) — marketplace for Mozambique (MZN). Not operated by Nkateko.
-- Packages: `@ishopine/api` (NestJS), `@ishopine/web` (Next.js on Vercel).
-- Payments: **PaySuite** (`apps/api/src/billing/paysuite/`). Methods: `mpesa`, `emola`, `credit_card`.
-- Reliability (rigid): inbox `(source,messageKey)`, outbox poll 750ms, `Idempotency-Key`, read projections — see `apps/api/src/reliability/rules.ts`.
-- Security sync: `POST /api/security/sync` — catalog LOW/MEDIUM/HIGH/CRITICAL — `apps/api/src/security/rules.ts`.
-- PaySuite: set `PAYSUITE_ENABLED=0` until merchant quota is approved. Live needs `PAYSUITE_ENABLED=1` + `PAYSUITE_TOKEN` + `PAYSUITE_WEBHOOK_SECRET`. `PAYSUITE_SIMULATE=true` only locally (never production).
-- Env checklist: `docs/ENV.md`.
-- Demo: `IShopine@2026` / `admin@ishopine.com`.
-- Deploy: web → Vercel `ishopine` (`apps/web`) → https://ishopine.vercel.app  
-  API → Vercel `ishopine-api` (`apps/api` serverless) → https://ishopine-api.vercel.app  
+- Packages: `@ishopine/api` (NestJS), `@ishopine/marketplace-web` (Next.js on Vercel).
+- Payments: **PaySuite** — `PAYSUITE_ENABLED=0` until merchant quota; live needs token + webhook secret.
+- Env checklist: `docs/ENV.md`. Production status: `docs/DEPLOY_PRODUCTION.md`.
+- Deploy: marketplace → Vercel `ishopine` (`apps/marketplace-web`) → https://ishopine.vercel.app  
+  API → Vercel `ishopine-api` (`apps/api`) → https://ishopine-api.vercel.app  
   Set `NEXT_PUBLIC_API_URL=https://ishopine-api.vercel.app`. DB: Neon. Cron: `/api/cron/outbox` + `CRON_SECRET`.
