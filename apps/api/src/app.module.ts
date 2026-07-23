@@ -11,7 +11,6 @@ import { AuthModule } from './auth/auth.module';
 import { BillingModule } from './billing/billing.module';
 import { CartModule } from './cart/cart.module';
 import { CatalogModule } from './catalog/catalog.module';
-import { CouponsModule } from './coupons/coupons.module';
 import { CommerceModule } from './commerce/commerce.module';
 import { CronModule } from './cron/cron.module';
 import { PricingModule } from './pricing/pricing.module';
@@ -20,21 +19,21 @@ import { WalletModule } from './wallet/wallet.module';
 import { FeatureFlagsModule } from './feature-flags/feature-flags.module';
 import { DevelopersModule } from './developers/developers.module';
 import { LogisticsModule } from './logistics/logistics.module';
-import { DisputesModule } from './disputes/disputes.module';
-import { InventoryModule } from './inventory/inventory.module';
 import { MailModule } from './mail/mail.module';
-import { MessagesModule } from './messages/messages.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { OrdersModule } from './orders/orders.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ReliabilityModule } from './reliability/reliability.module';
-import { ReviewsModule } from './reviews/reviews.module';
 import { SecurityModule } from './security/security.module';
 import { ShopsModule } from './shops/shops.module';
 import { UploadsModule } from './uploads/uploads.module';
 import { UsersModule } from './users/users.module';
 import { WishlistModule } from './wishlist/wishlist.module';
 
+/**
+ * Nest monolith remnant. Coupons/inventory/reviews/comms HTTP retired (Phase 34)
+ * — owned by stranglers. NotificationsModule kept for OutboxDispatcher DI.
+ */
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -57,17 +56,12 @@ import { WishlistModule } from './wishlist/wishlist.module';
     CartModule,
     OrdersModule,
     BillingModule,
-    InventoryModule,
     AccountingModule,
     AffiliateModule,
     AdsModule,
     UploadsModule,
     WishlistModule,
-    ReviewsModule,
     NotificationsModule,
-    MessagesModule,
-    CouponsModule,
-    DisputesModule,
     CommerceModule,
     WalletModule,
     PricingModule,
