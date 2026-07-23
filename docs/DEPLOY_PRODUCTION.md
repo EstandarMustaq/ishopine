@@ -10,6 +10,9 @@
 | Seller | https://ishopine-seller.vercel.app |
 | Admin | https://ishopine-admin.vercel.app |
 | Affiliate | https://ishopine-affiliate.vercel.app |
+| Mobile | https://ishopine-mobile.vercel.app |
+
+Matriz completa (domínios + owners): [LAUNCH.md](./LAUNCH.md).
 
 
 ## Configured (not committed)
