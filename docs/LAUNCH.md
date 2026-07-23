@@ -24,6 +24,11 @@
 - Marketplace login supports `?next=customer` → handoff to customer app
 - Localhost uses one-time `?token=`; production uses cookie SSO (`COOKIE_DOMAIN`)
 
+## Environment & secrets
+
+See **[ENV.md](./ENV.md)** — checklist of credentials you provide vs secrets we generate.
+PaySuite stays off (`PAYSUITE_ENABLED=0`) until merchant quota is approved.
+
 ## Deploy notes
 
 - Root `vercel.json` still builds `@ishopine/web` by default
@@ -33,3 +38,4 @@
 ## Out of scope (still gated)
 
 - Correios HTTP clients require OpenAPI under `docs/contracts/` (not invented)
+- PaySuite live charges until `PAYSUITE_ENABLED=1` + token + webhook secret
