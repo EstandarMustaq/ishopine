@@ -21,7 +21,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
 const links = [
-  { href: "/", label: "Operabilidade", icon: LayoutDashboard, exact: true },
+  { href: "/", label: "Home", icon: LayoutDashboard, exact: true },
   { href: "/observability", label: "Observability", icon: Activity },
   { href: "/anuncios", label: "Anúncios", icon: Megaphone },
   { href: "/contabilidade", label: "Contabilidade", icon: Receipt },
@@ -29,7 +29,7 @@ const links = [
   { href: "/feature-flags", label: "Flags", icon: Flag },
   { href: "/usuarios", label: "Utilizadores", icon: Users },
   { href: "/cupons", label: "Cupões", icon: Ticket },
-  { href: "/configuracoes", label: "Configurações", icon: Settings },
+  { href: "/configuracoes", label: "Definições", icon: Settings },
 ];
 
 export function BackofficeSidebar({
@@ -49,66 +49,63 @@ export function BackofficeSidebar({
   return (
     <aside
       className={cn(
-        "flex h-full flex-col border-r bg-[#1A1A1A] text-white",
-        collapsed ? "w-[4.25rem]" : "w-56",
+        "flex h-full flex-col border-r border-[var(--ds-border-subdued)] bg-[var(--ds-sidebar)] text-[var(--ds-text)]",
+        collapsed ? "w-[4.25rem]" : "w-[var(--ds-sidebar-width)]",
         className,
       )}
     >
-      <div className="border-b border-white/10 px-3 py-4">
+      <div className={cn("border-b border-[var(--ds-border-subdued)] px-3 py-4", collapsed && "px-2")}>
         <Link href="/" className="flex items-center gap-2">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/brand/ishopine-mark.svg" alt="" className="size-7 invert" />
-          {!collapsed && (
-            <span className="text-[13px] font-bold">
-              backoffice
-            </span>
-          )}
+          <span className="flex size-8 items-center justify-center rounded-[var(--ds-radius-sm)] bg-[var(--ds-brand)] text-[12px] font-bold text-white">
+            iS
+          </span>
+          {!collapsed ? (
+            <span className="text-[14px] font-semibold">Admin</span>
+          ) : null}
         </Link>
-        {!collapsed && (
-          <p className="mt-1 text-[10px] text-white/50">
-            EquipaiShopine · ops only
-          </p>
-        )}
       </div>
-      <nav className="flex-1 space-y-0.5 p-2">
-        {links.map((link) => {
-          const active = link.exact
-            ? pathname === "/"
-            : pathname.startsWith(link.href);
-          const Icon = link.icon;
+      <nav className="flex-1 space-y-0.5 overflow-y-auto p-2">
+        {links.map((item) => {
+          const active = item.exact
+            ? pathname === item.href
+            : pathname.startsWith(item.href);
+          const Icon = item.icon;
           return (
             <Link
-              key={link.href}
-              href={link.href}
+              key={item.href}
+              href={item.href}
               className={cn(
-                "flex items-center gap-2 rounded-lg px-2.5 py-2 text-[13px] font-medium",
-                collapsed && "justify-center",
+                "flex min-h-11 items-center gap-2 rounded-[var(--ds-radius-sm)] px-3 py-2 text-[14px] transition-colors",
                 active
-                  ? "bg-[var(--brand-orange)] text-white"
-                  : "text-white/70 hover:bg-white/10 hover:text-white",
+                  ? "bg-[var(--ds-sidebar-active)] font-medium shadow-[var(--ds-shadow-raised)]"
+                  : "hover:bg-black/[0.04]",
+                collapsed && "justify-center px-2",
               )}
+              title={item.label}
             >
-              <Icon className="size-3.5" />
-              {!collapsed && link.label}
+              <Icon className="size-4 shrink-0" />
+              {!collapsed ? <span>{item.label}</span> : null}
             </Link>
           );
         })}
       </nav>
-      <div className="flex gap-1 border-t border-white/10 p-2">
-        <Button variant="ghost" size="icon-sm" onClick={onToggle} className="text-white hover:bg-white/10">
-          {collapsed ? <ChevronRight /> : <ChevronLeft />}
+      <div className="flex items-center gap-1 border-t border-[var(--ds-border-subdued)] p-2">
+        <Button variant="ghost" size="icon" onClick={onToggle} aria-label="Recolher">
+          {collapsed ? <ChevronRight className="size-4" /> : <ChevronLeft className="size-4" />}
         </Button>
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          className="text-white hover:bg-white/10"
-          onClick={() => {
-            logout();
-            window.location.href = `${marketplaceUrl}/entrar`;
-          }}
-        >
-          <LogOut />
-        </Button>
+        {!collapsed ? (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="ml-auto"
+            onClick={() => {
+              logout();
+              window.location.href = `${marketplaceUrl}/entrar?next=backoffice`;
+            }}
+          >
+            <LogOut className="size-4" />
+          </Button>
+        ) : null}
       </div>
     </aside>
   );

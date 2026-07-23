@@ -186,10 +186,16 @@ export function SiteHeader() {
           {mounted && user ? (
             <div className="hidden items-center gap-1 sm:flex">
               <Button variant="ghost" size="sm" asChild>
-                <Link href="/conta">
+                <a
+                  href={
+                    accessToken
+                      ? appHandoffUrl("customer", accessToken, "/")
+                      : "/conta"
+                  }
+                >
                   <User className="mr-1 size-3.5" />
                   {user.name.split(" ")[0]}
-                </Link>
+                </a>
               </Button>
               <Button
                 variant="outline"

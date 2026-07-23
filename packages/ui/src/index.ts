@@ -14,4 +14,9 @@ export {
   type AdminShellProps,
   type NavItem,
 } from "./admin-shell";
+export { Banner, type BannerTone } from "./banner";
+export {
+  IndexTable,
+  type IndexColumn,
+} from "./index-table";
 export { cn } from "./lib/cn";

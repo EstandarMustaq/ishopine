@@ -2,13 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { PageHeader, Card, CardTitle } from "@ishopine/ui";
 import { api } from "@/lib/api";
 import { formatMZN } from "@/lib/format";
-import type { DashboardCharts, DashboardOverview } from "@/lib/types";
+import type { DashboardOverview } from "@/lib/types";
 
 export default function BackofficeHomePage() {
   const [data, setData] = useState<DashboardOverview | null>(null);
-  const [charts, setCharts] = useState<DashboardCharts | null>(null);
 
   useEffect(() => {
     api<DashboardOverview>("/dashboard/overview")
@@ -16,60 +16,34 @@ export default function BackofficeHomePage() {
       .catch((e) =>
         toast.error(e instanceof Error ? e.message : "Erro ao carregar"),
       );
-    api<DashboardCharts>("/dashboard/charts")
-      .then(setCharts)
-      .catch(() => setCharts(null));
   }, []);
+
+  const kpis = data?.kpis;
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-[var(--brand-charcoal)]">
-        Operabilidade
-      </h1>
-      <p className="mt-1 text-sm text-[var(--brand-taupe)]">
-        Métricas da plataforma — acesso exclusivo equipa iShopine.
-      </p>
-
+      <PageHeader
+        title="Home"
+        description="Operabilidade da plataforma — só equipa iShopine."
+      />
       {!data ? (
-        <p className="mt-8 text-sm text-taupe">Carregando…</p>
+        <p className="text-[14px] text-[var(--ds-text-secondary)]">A carregar…</p>
       ) : (
-        <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {[
-            {
-              label: "GMV",
-              value: formatMZN(data.kpis.gmvCents ?? 0),
-            },
-            {
-              label: "Pedidos",
-              value: String(data.kpis.orderCount),
-            },
-            {
-              label: "Lojas activas",
-              value: String(data.kpis.activeShops ?? 0),
-            },
-            {
-              label: "Produtos activos",
-              value: String(data.kpis.activeProducts),
-            },
-          ].map((card) => (
-            <div
-              key={card.label}
-              className="rounded-2xl border bg-white p-5 shadow-soft"
-            >
-              <p className="text-xs uppercase tracking-wide text-taupe">
-                {card.label}
+            { label: "GMV", value: formatMZN(kpis?.gmvCents ?? 0) },
+            { label: "Pedidos", value: String(kpis?.orderCount ?? "—") },
+            { label: "Lojas", value: String(kpis?.activeShops ?? kpis?.shopCount ?? "—") },
+            { label: "Vendedores", value: String(kpis?.sellerCount ?? "—") },
+          ].map((c) => (
+            <Card key={c.label}>
+              <p className="text-[12px] font-medium uppercase tracking-wide text-[var(--ds-text-secondary)]">
+                {c.label}
               </p>
-              <p className="mt-2 text-2xl font-bold">{card.value}</p>
-            </div>
+              <CardTitle className="mt-2 text-[22px]">{c.value}</CardTitle>
+            </Card>
           ))}
         </div>
-      )}
-
-      {charts && (
-        <p className="mt-8 text-sm text-taupe">
-          Série 30 dias: {charts.series.length} pontos · estados de pedido:{" "}
-          {charts.ordersByStatus.length}
-        </p>
       )}
     </div>
   );

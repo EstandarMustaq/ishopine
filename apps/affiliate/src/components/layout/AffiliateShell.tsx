@@ -28,23 +28,22 @@ export function AffiliateShell({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthGate affiliateAccess>
-      <div className="min-h-screen bg-[var(--brand-surface)]">
-        <header className="sticky top-0 z-40 border-b border-[var(--brand-border)] bg-white/90 backdrop-blur-md">
-          <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
+      <div className="min-h-screen bg-[var(--ds-bg)]">
+        <header className="sticky top-0 z-40 bg-[var(--ds-topbar)] text-white">
+          <div className="mx-auto flex h-[var(--ds-topbar-height)] max-w-5xl items-center justify-between px-4">
             <Link href="/" className="flex items-center gap-2">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/brand/ishopine-mark.svg" alt="" className="h-8 w-8" />
-              <span className="text-lg font-semibold text-[var(--brand-ink)]">
+              <span className="flex size-8 items-center justify-center rounded-full bg-[var(--ds-brand)] text-[12px] font-bold">
+                AF
+              </span>
+              <span className="text-[15px] font-semibold tracking-tight">
                 Afiliados
               </span>
             </Link>
-            <div className="flex items-center gap-3 text-sm">
-              <span className="hidden text-[var(--brand-muted)] sm:inline">
-                {user?.name}
-              </span>
+            <div className="flex items-center gap-3 text-[13px]">
+              <span className="hidden text-white/70 sm:inline">{user?.name}</span>
               <a
                 href={MARKETPLACE_URL}
-                className="inline-flex items-center gap-1 text-[var(--brand-muted)] hover:text-[var(--brand-ink)]"
+                className="inline-flex items-center gap-1 text-white/70 hover:text-white"
               >
                 <ExternalLink className="h-3.5 w-3.5" />
                 Mercado
@@ -55,7 +54,7 @@ export function AffiliateShell({ children }: { children: React.ReactNode }) {
                   logout();
                   window.location.href = `${MARKETPLACE_URL}/entrar`;
                 }}
-                className="text-[var(--brand-muted)] hover:text-red-600"
+                className="text-white/70 hover:text-white"
                 aria-label="Sair"
               >
                 <LogOut className="h-4 w-4" />
@@ -74,20 +73,20 @@ export function AffiliateShell({ children }: { children: React.ReactNode }) {
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-sm transition-colors",
+                    "inline-flex min-h-10 items-center gap-1.5 whitespace-nowrap rounded-[var(--ds-radius-sm)] px-3 py-1.5 text-[14px] transition-colors",
                     active
-                      ? "bg-[var(--brand-orange)] text-white"
-                      : "text-[var(--brand-muted)] hover:bg-[var(--brand-orange-soft)] hover:text-[var(--brand-ink)]",
+                      ? "bg-white/15 font-medium text-white"
+                      : "text-white/70 hover:bg-white/10 hover:text-white",
                   )}
                 >
-                  <Icon className="h-3.5 w-3.5" />
+                  <Icon className="h-4 w-4" />
                   {item.label}
                 </Link>
               );
             })}
           </nav>
         </header>
-        <main className="mx-auto max-w-5xl px-4 py-8">{children}</main>
+        <main className="mx-auto max-w-5xl px-4 py-6">{children}</main>
       </div>
     </AuthGate>
   );
