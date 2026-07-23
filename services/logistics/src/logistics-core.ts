@@ -1,6 +1,6 @@
 /**
- * Phase 20: logistics core — zones, adapters, shipments, HMAC webhooks.
- * No Correios/DHL theater; real FLAT/FREE/PICKUP/MANUAL + ShippingRateZone.
+ * Phase 20–23: logistics core — zones, adapters, shipments, HMAC webhooks.
+ * Phase 23: fail-closed DHL Express MyDHL; Correios MZ still maps → MANUAL.
  */
 import { createHmac, timingSafeEqual } from "node:crypto";
 import {
@@ -12,6 +12,7 @@ import {
   TenantType,
 } from "@prisma/client";
 import type { ShippingQuote, ShippingQuoteRequest } from "@ishopine/shared";
+import { isDhlExpressConfigured } from "./carriers/dhl-express.adapter";
 import { getCarrierAdapter, listCarrierAdapters } from "./carriers/registry";
 import type { ZoneRate } from "./carriers/types";
 import { HttpError } from "./http-error";
@@ -42,7 +43,46 @@ export function listCarriers() {
     code: a.code,
     name: a.name,
     method: a.method,
+    live:
+      a.code === CarrierCode.DHL_EXPRESS ? isDhlExpressConfigured() : false,
   }));
+}
+
+/** Phase 23: partner capability report (no fake Correios/DHL). */
+export function listCarrierPartners() {
+  return {
+    local: listCarrierAdapters()
+      .filter((a) => a.code !== CarrierCode.DHL_EXPRESS)
+      .map((a) => ({
+        code: a.code,
+        name: a.name,
+        method: a.method,
+        mode: "local" as const,
+      })),
+    live: [
+      {
+        code: "DHL_EXPRESS",
+        name: "DHL Express (MyDHL API)",
+        configured: isDhlExpressConfigured(),
+        mode: "http" as const,
+        docs: "https://developer.dhl.com/api-reference/dhl-express-mydhl-api",
+        env: [
+          "DHL_EXPRESS_API_KEY",
+          "DHL_EXPRESS_API_SECRET",
+          "DHL_EXPRESS_ACCOUNT_NUMBER",
+        ],
+      },
+      {
+        code: "CORREIOS_MZ",
+        name: "Correios de Moçambique",
+        configured: false,
+        mode: "unavailable" as const,
+        reason:
+          "Sem API pública/contratada no monorepo — pedidos legacy mapeiam para MANUAL",
+        mapsTo: "MANUAL",
+      },
+    ],
+  };
 }
 
 async function platformShipping() {
@@ -137,7 +177,7 @@ export async function quote(
       input.destinationDistrict,
       input.weightKg,
     );
-    const q = adapter.quote({
+    const q = await adapter.quote({
       request: input,
       zone,
       platform,

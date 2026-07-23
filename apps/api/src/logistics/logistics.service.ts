@@ -15,6 +15,7 @@ import type { ShippingQuote, ShippingQuoteRequest } from '@ishopine/shared';
 import { PrismaService } from '../prisma/prisma.service';
 import { OutboxService } from '../reliability/outbox.service';
 import { getCarrierAdapter, listCarrierAdapters } from './carriers/registry';
+import { isDhlExpressConfigured } from './carriers/dhl-express.adapter';
 import type { ZoneRate } from './carriers/types';
 
 const WEBHOOK_STATUSES = new Set<ShipmentStatus>([
@@ -39,7 +40,46 @@ export class LogisticsService {
       code: a.code,
       name: a.name,
       method: a.method,
+      live:
+        a.code === CarrierCode.DHL_EXPRESS ? isDhlExpressConfigured() : false,
     }));
+  }
+
+  /** Phase 23: partner capability report (no fake Correios). */
+  listCarrierPartners() {
+    return {
+      local: listCarrierAdapters()
+        .filter((a) => a.code !== CarrierCode.DHL_EXPRESS)
+        .map((a) => ({
+          code: a.code,
+          name: a.name,
+          method: a.method,
+          mode: 'local' as const,
+        })),
+      live: [
+        {
+          code: 'DHL_EXPRESS',
+          name: 'DHL Express (MyDHL API)',
+          configured: isDhlExpressConfigured(),
+          mode: 'http' as const,
+          docs: 'https://developer.dhl.com/api-reference/dhl-express-mydhl-api',
+          env: [
+            'DHL_EXPRESS_API_KEY',
+            'DHL_EXPRESS_API_SECRET',
+            'DHL_EXPRESS_ACCOUNT_NUMBER',
+          ],
+        },
+        {
+          code: 'CORREIOS_MZ',
+          name: 'Correios de Moçambique',
+          configured: false,
+          mode: 'unavailable' as const,
+          reason:
+            'Sem API pública/contratada no monorepo — pedidos legacy mapeiam para MANUAL',
+          mapsTo: 'MANUAL',
+        },
+      ],
+    };
   }
 
   private async platformShipping() {
@@ -133,7 +173,7 @@ export class LogisticsService {
         input.destinationDistrict,
         input.weightKg,
       );
-      const q = adapter.quote({
+      const q = await adapter.quote({
         request: input,
         zone,
         platform,

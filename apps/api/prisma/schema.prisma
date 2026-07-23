@@ -1479,6 +1479,8 @@ enum CarrierCode {
   FREE_THRESHOLD
   STORE_PICKUP
   MANUAL
+  /// Live DHL Express via MyDHL API (Phase 23) — only quoted when credentials set.
+  DHL_EXPRESS
 }
 
 enum ShipmentStatus {

@@ -1,5 +1,6 @@
 import { CarrierCode } from "@prisma/client";
 import type { CarrierAdapter } from "./types";
+import { dhlExpressAdapter } from "./dhl-express.adapter";
 import { flatRateAdapter } from "./flat-rate.adapter";
 import { freeThresholdAdapter } from "./free-threshold.adapter";
 import { manualAdapter } from "./manual.adapter";
@@ -10,6 +11,7 @@ const ADAPTERS: CarrierAdapter[] = [
   flatRateAdapter,
   storePickupAdapter,
   manualAdapter,
+  dhlExpressAdapter,
 ];
 
 const BY_CODE = new Map<CarrierCode, CarrierAdapter>(

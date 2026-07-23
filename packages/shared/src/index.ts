@@ -162,7 +162,8 @@ export type CarrierCode =
   | "FLAT_RATE"
   | "FREE_THRESHOLD"
   | "STORE_PICKUP"
-  | "MANUAL";
+  | "MANUAL"
+  | "DHL_EXPRESS";
 
 export type ShipmentStatus =
   | "PENDING"
@@ -174,7 +175,7 @@ export type ShipmentStatus =
   | "RETURNED";
 
 export type ShippingQuote = {
-  method: "FLAT" | "FREE" | "PICKUP" | "CUSTOM";
+  method: "FLAT" | "FREE" | "PICKUP" | "CUSTOM" | "EXPRESS";
   carrierCode?: CarrierCode | string;
   label: string;
   amountCents: number;
@@ -223,16 +224,78 @@ export function localVariantUrl(
 /**
  * Absolutize relative media paths behind CDN / public API base.
  * Env: MEDIA_PUBLIC_BASE_URL (e.g. https://cdn.ishopine.com or https://api.ishopine.com).
+ * Phase 23: MEDIA_CDN_HOST rewrites delivery host (Cloudinary CNAME / edge).
  */
 export function publicMediaUrl(
   url: string,
   baseUrl: string | undefined = process.env.MEDIA_PUBLIC_BASE_URL,
 ): string {
-  if (!url || !baseUrl) return url;
-  if (/^https?:\/\//i.test(url)) return url;
-  const base = baseUrl.replace(/\/$/, "");
-  if (url.startsWith("/")) return `${base}${url}`;
-  return `${base}/${url}`;
+  if (!url) return url;
+  let out = url;
+  if (!/^https?:\/\//i.test(out)) {
+    if (!baseUrl) return out;
+    const base = baseUrl.replace(/\/$/, "");
+    out = out.startsWith("/") ? `${base}${out}` : `${base}/${out}`;
+  }
+  return applyCdnHostRewrite(out);
+}
+
+/**
+ * Rewrite Cloudinary / public media host to a real CDN CNAME when configured.
+ * Uses Cloudinary's global edge network (real multi-PoP) — does not invent PoPs.
+ *
+ * Env:
+ * - MEDIA_CDN_HOST — e.g. cdn.ishopine.com (CNAME → Cloudinary private CDN)
+ * - CLOUDINARY_CLOUD_NAME — optional; only rewrite matching cloudinary delivery URLs
+ */
+export function applyCdnHostRewrite(url: string): string {
+  const cdnHost = (process.env.MEDIA_CDN_HOST || "").trim().replace(/\/$/, "");
+  if (!cdnHost || !url) return url;
+  try {
+    const u = new URL(url);
+    const isCloudinary =
+      u.hostname.endsWith("cloudinary.com") ||
+      u.hostname.endsWith("cloudinary.com.");
+    const isPublicBase = (() => {
+      const base = process.env.MEDIA_PUBLIC_BASE_URL;
+      if (!base) return false;
+      try {
+        return new URL(base).hostname === u.hostname;
+      } catch {
+        return false;
+      }
+    })();
+    if (!isCloudinary && !isPublicBase) return url;
+    const host = cdnHost.replace(/^https?:\/\//i, "");
+    u.protocol = "https:";
+    u.host = host;
+    return u.toString();
+  } catch {
+    return url;
+  }
+}
+
+/** Phase 23: report configured CDN delivery (ops truth, not a fake PoP map). */
+export function mediaCdnStatus() {
+  const provider = (process.env.UPLOAD_PROVIDER || "local").toLowerCase();
+  const publicBase = process.env.MEDIA_PUBLIC_BASE_URL || null;
+  const cdnHost = process.env.MEDIA_CDN_HOST || null;
+  const cloudinaryCloud = process.env.CLOUDINARY_CLOUD_NAME || null;
+  return {
+    provider,
+    publicBaseUrl: publicBase,
+    cdnHost,
+    cloudinaryCloud,
+    /** Cloudinary delivery uses their global edge (real multi-PoP CDN). */
+    edge:
+      provider === "cloudinary" || Boolean(cdnHost)
+        ? "cloudinary-global-edge"
+        : publicBase
+          ? "custom-public-base"
+          : "origin-local",
+    note:
+      "Multi-PoP geography is provided by the CDN vendor (Cloudinary / your CNAME target). iShopine does not invent PoP lists.",
+  };
 }
 
 export function buildMediaUrl(
@@ -252,8 +315,11 @@ export function buildMediaUrl(
     }
     return publicMediaUrl(local);
   }
-  // Cloudinary delivery URL: insert transform segment after /upload/
-  if (!url.includes("res.cloudinary.com") || !url.includes("/upload/")) {
+  // Cloudinary (or CNAME that keeps /upload/): insert transform segment.
+  const canTransform =
+    url.includes("/upload/") &&
+    (url.includes("cloudinary.com") || Boolean(process.env.MEDIA_CDN_HOST));
+  if (!canTransform) {
     return publicMediaUrl(url);
   }
   const parts: string[] = [];
@@ -265,7 +331,8 @@ export function buildMediaUrl(
   if (parts.length === 0) {
     parts.push("q_auto", "f_auto");
   }
-  return url.replace("/upload/", `/upload/${parts.join(",")}/`);
+  const transformed = url.replace("/upload/", `/upload/${parts.join(",")}/`);
+  return publicMediaUrl(transformed);
 }
 
 export type WalletOwnerType = "ACCOUNT" | "TENANT" | "PLATFORM";

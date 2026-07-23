@@ -13,6 +13,7 @@ import {
   getShipment,
   handleCarrierWebhook,
   listCarriers,
+  listCarrierPartners,
   listShipments,
   markDelivered,
   markInTransit,
@@ -169,6 +170,11 @@ export async function handleOwnedLogistics(
   try {
     if (method === "GET" && path === "/api/logistics/carriers") {
       json(res, 200, listCarriers());
+      return true;
+    }
+
+    if (method === "GET" && path === "/api/logistics/partners") {
+      json(res, 200, listCarrierPartners());
       return true;
     }
 

@@ -116,7 +116,8 @@ customer               # pode viver em marketplace no início
 | **20** | Logistics extract (zones + shipments + HMAC webhooks owned) |
 | **21** | Accounting extract (ledger owned) |
 | **22** | Comms extract (notifications + messages + disputes owned) |
-| **23+** | Live carrier partners, multi-region CDN |
+| **23** | Live DHL (fail-closed MyDHL) + CDN edge (Cloudinary / CNAME) |
+| **24+** | Coupons / inventory / reviews; Correios when contracted |
 
 ## Fora de âmbito (MVP)
 
