@@ -25,9 +25,9 @@ import { SecurityModule } from './security/security.module';
 import { UploadsModule } from './uploads/uploads.module';
 
 /**
- * Nest monolith remnant. Accounts/affiliate/accounting HTTP retired
- * (Phase 36) — owned by stranglers. AccountsService/TenantGuard +
- * AffiliateService kept for Nest DI. NotificationsModule for OutboxDispatcher.
+ * Nest monolith remnant. Finance HTTP retired (Phase 37) — wallet/billing/
+ * pricing/subscriptions/commerce owned by stranglers. Services kept for Nest
+ * DI/fallthrough. NotificationsModule for OutboxDispatcher.
  */
 @Module({
   imports: [

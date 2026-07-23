@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
-import { AccountsModule } from '../accounts/accounts.module';
-import { WalletController } from './wallet.controller';
 import { WalletService } from './wallet.service';
 
+/**
+ * Nest wallet remnant (Phase 37). HTTP → wallet strangler (:4103).
+ * WalletService kept for Nest OrdersService settle fallback.
+ */
 @Module({
-  imports: [AccountsModule],
-  controllers: [WalletController],
   providers: [WalletService],
   exports: [WalletService],
 })
