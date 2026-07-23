@@ -15,7 +15,8 @@ Porta **4102**. Prefixo `/api/billing/paysuite` + legacy `/stripe` · `/mpesa`.
 | POST | `/mpesa/c2b` | JWT → PaySuite `mpesa` (Fase 31) |
 | GET | `/mpesa/status/:paymentId` | JWT (Fase 31) |
 
-On `payment.success` / PAID → `ORDERS_URL` `POST /api/orders/internal/settle-paid`.
+On `payment.success` / PAID → `ORDERS_URL` `POST /api/orders/internal/settle-paid`
+(Nest HTTP settle removed in Fase 32 — set `ORDERS_URL`).
 
 ## Proxy
 

@@ -40,3 +40,4 @@ GOOGLE_CALLBACK_URL=http://127.0.0.1:4107/api/auth/google/callback
 - Cliente HTTP Correios
 - Extrair Nest Mail (sem HTTP)
 - Apagar Nest Auth/Billing modules inteiros
+- Remover Nest PaySuite HTTP + settle-paid → **Fase 32**
