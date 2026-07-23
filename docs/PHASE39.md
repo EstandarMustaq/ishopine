@@ -33,5 +33,4 @@ Sem mudança — gate Fase 29; `docs/contracts/` sem OpenAPI.
 ## Fora de âmbito
 - Cliente HTTP Correios
 - Remover AuthModule / JwtStrategy → **Fase 40** ([PHASE40.md](./PHASE40.md))
-- Remover OrdersService / finance DI fallthrough → **Fase 40+** ([PHASE40PLUS.md](./PHASE40PLUS.md))
-- Decommission completo do monólito Nest → **Fase 40+**
+- Nest DI / Reliability endgame → **Fase 40+** ([PHASE40PLUS.md](./PHASE40PLUS.md)) — **entregue**

@@ -1,45 +1,57 @@
-# Fase 40+ — Roadmap (Correios + Nest endgame)
+# Fase 40+ — Nest endgame (migração definitiva) + Correios gate
 
 ## Objectivo
 
-Trabalho **bloqueado** ou de longo prazo depois da extracção strangler
-(Fases 0–40). Não inventar HTTP Correios nem decommission prematuro.
+Concluir a **migração definitiva** do monólito Nest: zero DI de domínio,
+zero motor de outbox in-process. O edge Nest é só health + proxy de cron.
+Correios HTTP permanece **bloqueado** até OpenAPI real em `docs/contracts/`.
 
-## 1. Correios de Moçambique (HTTP adapter)
+## Entregue — Nest endgame
 
-**Gate:** [docs/contracts/README.md](./contracts/README.md)
+### Removido de `apps/api`
+- Todos os módulos de domínio / fallthrough: accounts, affiliate, orders,
+  wallet, billing, commerce, subscriptions, pricing, logistics, developers,
+  feature-flags, notifications, mail, security, reliability, prisma (Nest)
+- Fallback `nest-inline` do cron outbox
 
-Checklist (todos obrigatórios):
-
-1. Contrato comercial/API assinado com Correios MZ
-2. OpenAPI em `docs/contracts/correios-mz.openapi.yaml`
-   (ou `CORREIOS_MZ_OPENAPI_PATH`)
-3. Adapter gerado **a partir desse OpenAPI** em
-   `services/logistics/src/carriers/`
-4. Env: `CORREIOS_MZ_CONTRACTED=1` + `CORREIOS_MZ_API_*`
-5. Partners report: `mode: "http"` / `configured: true` / `live: true`
-
-Até lá: `mode: "unavailable"`, `mapsTo: "MANUAL"`, `live: false`.
-
-## 2. Nest DI / service decommission
-
-Quando **todos** os settles/checkouts forem sempre remotos em produção
-(`*_REMOTE≠0` + URLs always set) e o cron Vercel apontar só a
-`PLATFORM_OPS_URL`:
-
-| Remnant | Exit criteria |
+### Nest shell restante
+| Path | Comportamento |
 |---|---|
-| OrdersService settle fallthrough | Orders always owns settle; Billing/commerce never call Nest |
-| Wallet/Affiliate/Subscriptions/Logistics Nest services | No Nest callers |
-| BillingService / CommerceService | Orchestrator + payments only |
-| AccountsService / TenantGuard | No Nest module needs in-process tenant resolve |
-| NotificationsService / DevelopersService / Mail | Outbox fully on platform-ops (or dedicated worker) |
-| Reliability engine in Nest | platform-ops owns dispatcher; Nest cron bridge deleted |
-| `apps/api` Nest app | Optional: replace with tiny health/cron worker or retire Vercel Nest entry |
+| `GET /api/health` | `{ ok, mode: "nest-shell", phase: "40+" }` |
+| `GET\|POST /api/cron/outbox` | Proxy obrigatório → `PLATFORM_OPS_URL` + `CRON_SECRET` |
 
-## 3. Explicitly out of scope until gates clear
+Sem `PLATFORM_OPS_URL` → `503` (não há motor Nest).
 
-- Invented Correios quote/label clients
-- Multi-país / multi-currency
-- Admin omnipotente de sellers
-- Rewriting stranglers without production traffic proof
+### Produção
+```bash
+STRANGLER_ROUTING=1
+# … todas as *_URL dos stranglers …
+PLATFORM_OPS_URL=http://127.0.0.1:4119   # obrigatório para Vercel cron Nest
+UPSTREAM_API_URL=http://127.0.0.1:4000   # só health (+ cron bridge)
+CRON_SECRET=...
+```
+
+Schema Prisma continua em `apps/api/prisma/` (fonte partilhada pelos serviços).
+O processo Nest **não** abre Prisma Client.
+
+### Vercel
+`apps/api/vercel.json` mantém cron em `/api/cron/outbox` → shell Nest →
+platform-ops. Alternativa futura: apontar o cron Vercel directamente a
+platform-ops / gateway e retirar o deploy Nest.
+
+## Correios MZ (ainda gated)
+
+**Não entregue HTTP.** Checklist inalterado:
+
+1. Contrato comercial/API assinado
+2. `docs/contracts/correios-mz.openapi.yaml` (ou `CORREIOS_MZ_OPENAPI_PATH`)
+3. Adapter gerado **desse** OpenAPI em `services/logistics/src/carriers/`
+4. `CORREIOS_MZ_CONTRACTED=1` + credenciais
+5. Partners: `mode: "http"` / `live: true`
+
+Até lá: `unavailable` / `MANUAL` / `live: false`.
+
+## Fora de âmbito (esta fase)
+- Inventar cliente HTTP Correios
+- Remover `apps/api` do monorepo / Vercel (opcional pós-produção)
+- Limpeza npm (`passport`, `@nestjs/jwt`, `sharp`, …) — follow-up

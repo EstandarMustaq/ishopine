@@ -4,14 +4,15 @@ import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import type { NextFunction, Request, Response } from 'express';
 import helmet from 'helmet';
-import { join } from 'path';
 import { randomBytes } from 'crypto';
 import { AppModule } from './app.module';
 
+/**
+ * Phase 40+: thin Nest edge (health + cron proxy). No /uploads static —
+ * media strangler owns uploads. No Prisma boot.
+ */
 export async function createApp(): Promise<NestExpressApplication> {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
-    rawBody: true,
-  });
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const config = app.get(ConfigService);
   const isProd = config.get<string>('NODE_ENV') === 'production';
 
@@ -25,11 +26,7 @@ export async function createApp(): Promise<NestExpressApplication> {
               imgSrc: ["'self'", 'data:', 'https:'],
               scriptSrc: ["'self'"],
               styleSrc: ["'self'", "'unsafe-inline'"],
-              connectSrc: [
-                "'self'",
-                'https://paysuite.tech',
-                'https://paysuite.co.mz',
-              ],
+              connectSrc: ["'self'"],
             },
           }
         : false,
@@ -70,24 +67,8 @@ export async function createApp(): Promise<NestExpressApplication> {
       'Idempotency-Key',
       'X-Request-Id',
       'x-tenant-id',
-      'x-carrier-signature',
     ],
-    exposedHeaders: ['X-Request-Id', 'X-Idempotent-Replayed'],
-  });
-
-  app.useStaticAssets(join(process.cwd(), 'uploads'), {
-    prefix: '/uploads/',
-    setHeaders: (res, filePath) => {
-      // UUID filenames are content-addressed — safe for long immutable cache.
-      if (/\.(webp|jpe?g|png|gif|avif|svg)$/i.test(filePath)) {
-        res.setHeader(
-          'Cache-Control',
-          'public, max-age=31536000, immutable',
-        );
-      } else {
-        res.setHeader('Cache-Control', 'public, max-age=86400');
-      }
-    },
+    exposedHeaders: ['X-Request-Id'],
   });
 
   app.use((req: Request, res: Response, next: NextFunction) => {
