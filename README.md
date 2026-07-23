@@ -56,10 +56,10 @@ Webhook URL no painel: `https://<api>/api/billing/paysuite/webhook`
 ```bash
 pnpm install
 cp apps/api/.env.example apps/api/.env
-cp apps/web/.env.example apps/web/.env.local
+cp apps/marketplace-web/.env.example apps/marketplace-web/.env.local
 pnpm db:push && pnpm db:seed
 pnpm --filter @ishopine/api start:dev
-pnpm --filter @ishopine/web dev
+pnpm --filter @ishopine/marketplace-web dev
 ```
 
 - Marketplace: http://localhost:3000  
@@ -95,9 +95,9 @@ Admin: `GET /api/reliability/health`, `POST /api/reliability/sync`, `GET /api/se
 ## Deploy Vercel (web)
 
 ```bash
-# Na raiz do monorepo (ou apps/web)
+# Na raiz do monorepo (ou apps/marketplace-web)
 npx vercel link --yes
-# Project root directory: apps/web
+# Project root directory: apps/marketplace-web
 npx vercel --yes          # preview
 npx vercel --prod --yes   # produção
 ```

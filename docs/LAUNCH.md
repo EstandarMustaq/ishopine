@@ -4,38 +4,24 @@
 
 | App | Port | Command |
 |---|---|---|
-| Marketplace (`apps/web`) | 3000 | `pnpm dev:web` |
-| Seller | 3001 | `pnpm dev:seller` |
-| Backoffice | 3002 | `pnpm dev:backoffice` |
+| Marketplace (`apps/marketplace-web`) | 3000 | `pnpm dev:marketplace-web` |
+| Seller (`apps/seller-dashboard`) | 3001 | `pnpm dev:seller-dashboard` |
+| Admin (`apps/admin`) | 3002 | `pnpm dev:admin` |
 | Affiliate | 3003 | `pnpm dev:affiliate` |
-| Customer account | 3004 | `pnpm dev:customer` |
-| Mobile web (PWA) | 3005 | `pnpm dev:mobile` |
+| Customer | 3004 | `pnpm dev:customer` |
+| Mobile web | 3005 | `pnpm dev:mobile` |
 | Nest API shell | 4000 | `pnpm dev:api` |
-| Gateway + stranglers | 4100+ | see `docs/MONOREPO.md` |
 
 ## Design system
 
-- Tokens: `@ishopine/design-system` — Brand Green `#008060`, top bar `#1A1A1A`, sidebar `#F1F1F1`
-- UI: `@ishopine/ui` — AdminShell, PageHeader, IndexTable, Banner, Button, Card, EmptyState, Badge
-- Docs: [DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md)
+Brand Green `#008060` · top bar `#1A1A1A` · sidebar `#F1F1F1` — see [DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md).
 
-## Auth handoff
+## Environment
 
-- Marketplace login supports `?next=customer` → handoff to customer app
-- Localhost uses one-time `?token=`; production uses cookie SSO (`COOKIE_DOMAIN`)
+See [ENV.md](./ENV.md) and [DEPLOY_PRODUCTION.md](./DEPLOY_PRODUCTION.md).
+PaySuite: `PAYSUITE_ENABLED=0` until merchant quota.
 
-## Environment & secrets
+## Seed
 
-See **[ENV.md](./ENV.md)** (credentials checklist) and **[DEPLOY_PRODUCTION.md](./DEPLOY_PRODUCTION.md)** (live URLs + Google redirect).
-PaySuite stays off (`PAYSUITE_ENABLED=0`) until merchant quota is approved.
-
-## Deploy notes
-
-- Root `vercel.json` still builds `@ishopine/web` by default
-- Deploy customer / mobile / seller / backoffice / affiliate as separate Vercel projects (same monorepo, different root directories)
-- Set `NEXT_PUBLIC_*_URL` and `CORS_ORIGIN` for all frontends
-
-## Out of scope (still gated)
-
-- Correios HTTP clients require OpenAPI under `docs/contracts/` (not invented)
-- PaySuite live charges until `PAYSUITE_ENABLED=1` + token + webhook secret
+`pnpm db:seed` bootstraps org + categories + shipping zones only — **no demo users**.
+Register via `/cadastro` or Google OAuth.
