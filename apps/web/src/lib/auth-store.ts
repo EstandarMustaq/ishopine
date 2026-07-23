@@ -92,6 +92,12 @@ export function resolvePostLogin(
   const canSell =
     Boolean(user.canSell) || role === "SELLER" || isStaff;
 
+  if (next === "customer") {
+    return {
+      kind: "external",
+      href: appHandoffUrl("customer", accessToken, "/"),
+    };
+  }
   if (next === "affiliate") {
     return {
       kind: "external",

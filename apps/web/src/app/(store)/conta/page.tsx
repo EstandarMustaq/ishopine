@@ -68,6 +68,13 @@ export default function AccountPage() {
       <p className="mt-2 text-sm text-taupe">{user.email}</p>
 
       <div className="mt-4 flex flex-wrap gap-2">
+        {accessToken ? (
+          <Button asChild size="sm">
+            <a href={appHandoffUrl("customer", accessToken, "/")}>
+              Abrir conta V2
+            </a>
+          </Button>
+        ) : null}
         {accessToken &&
           (user.canSell ||
             user.platformRole === "SELLER" ||

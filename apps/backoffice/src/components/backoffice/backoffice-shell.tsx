@@ -30,12 +30,12 @@ export function BackofficeShell({ children }: { children: React.ReactNode }) {
   return (
     <AuthGate staffAccess>
       <TooltipProvider delayDuration={200}>
-        <div className="flex h-svh overflow-hidden bg-[var(--brand-surface)]">
+        <div className="flex h-svh overflow-hidden bg-[var(--ds-bg)]">
           <div
             className={cn(
               "hidden h-full shrink-0 transition-[width] duration-200 md:block",
-              ready && (collapsed ? "w-[4.25rem]" : "w-56"),
-              !ready && "w-56",
+              ready && (collapsed ? "w-[4.25rem]" : "w-[var(--ds-sidebar-width)]"),
+              !ready && "w-[var(--ds-sidebar-width)]",
             )}
           >
             <BackofficeSidebar
@@ -45,17 +45,26 @@ export function BackofficeShell({ children }: { children: React.ReactNode }) {
             />
           </div>
           <div className="flex h-full min-w-0 flex-1 flex-col overflow-hidden">
-            <div className="flex shrink-0 items-center border-b border-[var(--brand-border)] bg-white px-4 py-3 md:hidden">
+            <div className="flex h-[var(--ds-topbar-height)] shrink-0 items-center gap-3 bg-[var(--ds-topbar)] px-4 text-white">
               <button
                 type="button"
                 onClick={() => setMobileOpen((v) => !v)}
-                className="rounded-xl border px-3 py-1.5 text-sm"
+                className="flex size-10 items-center justify-center rounded-[var(--ds-radius-sm)] hover:bg-white/10 md:hidden"
+                aria-label="Menu"
               >
-                Menu
+                ☰
               </button>
-              <span className="ml-3 text-sm font-semibold">Backoffice</span>
+              <span className="text-[15px] font-semibold tracking-tight">
+                iShopine Admin
+              </span>
+              <span className="ml-auto hidden text-[13px] text-white/70 sm:inline">
+                Staff
+              </span>
+              <span className="flex size-8 items-center justify-center rounded-full bg-[var(--ds-brand)] text-[12px] font-semibold">
+                IS
+              </span>
             </div>
-            <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+            <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">
               {children}
             </div>
           </div>
@@ -64,9 +73,10 @@ export function BackofficeShell({ children }: { children: React.ReactNode }) {
               <button
                 type="button"
                 className="fixed inset-0 z-20 bg-black/30 md:hidden"
+                aria-label="Fechar menu"
                 onClick={() => setMobileOpen(false)}
               />
-              <div className="fixed inset-y-0 left-0 z-30 w-56 md:hidden">
+              <div className="fixed inset-y-0 left-0 z-30 w-[var(--ds-sidebar-width)] md:hidden">
                 <BackofficeSidebar
                   collapsed={false}
                   onToggle={() => setMobileOpen(false)}

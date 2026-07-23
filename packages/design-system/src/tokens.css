@@ -100,10 +100,13 @@
 
   --brand-orange: var(--ds-brand);
   --brand-orange-hover: var(--ds-brand-dark);
+  --brand-orange-soft: rgba(0, 128, 96, 0.1);
   --brand-ink: var(--ds-text);
   --brand-surface: var(--ds-bg);
   --brand-surface-elevated: var(--ds-surface);
   --brand-muted: var(--ds-text-secondary);
+  --brand-charcoal: var(--ds-text);
   --brand-border: var(--ds-border-subdued);
   --brand-white: var(--ds-surface);
+  --brand-taupe: var(--ds-text-secondary);
 }

@@ -63,15 +63,15 @@ export default async function HomePage() {
         <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/75 via-zinc-900/25 to-zinc-900/10" />
         <div className="relative z-10 flex min-h-[88svh] flex-col justify-end px-4 pb-14 pt-28 sm:min-h-[92svh] sm:px-8 sm:pb-20 lg:px-16">
           <div className="animate-hero-in max-w-xl">
-            <p className="inline-flex rounded-full bg-[var(--brand-orange)] px-3 py-1 text-[12px] font-bold lowercase text-white">
-              ishopine
+            <p className="text-[13px] font-semibold uppercase tracking-[0.14em] text-white/80">
+              iShopine
             </p>
-            <h1 className="animate-hero-in-delay mt-4 text-4xl font-bold lowercase leading-[1.05] tracking-tight text-white sm:text-5xl md:text-6xl">
-              {heroAd?.title || "mercado livre"}
+            <h1 className="animate-hero-in-delay mt-3 text-4xl font-bold leading-[1.05] tracking-tight text-white sm:text-5xl md:text-6xl">
+              {heroAd?.title || "Mercado de Moçambique"}
             </h1>
             <p className="animate-hero-in-delay-2 mt-3 max-w-md text-[15px] leading-relaxed text-white/80 sm:text-base">
               {heroAd?.subtitle ||
-                "venda e pague com m-pesa, e-mola ou cartão."}
+                "Venda e pague com M-Pesa, e-Mola ou cartão."}
             </p>
             <div className="animate-hero-in-delay-2 mt-7 flex flex-wrap gap-2.5">
               <Button

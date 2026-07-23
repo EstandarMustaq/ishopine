@@ -3,12 +3,16 @@ import { cn } from "./lib/cn";
 
 export function Card({
   className,
+  padding = "default",
   ...props
-}: React.HTMLAttributes<HTMLDivElement>) {
+}: React.HTMLAttributes<HTMLDivElement> & {
+  padding?: "default" | "none";
+}) {
   return (
     <div
       className={cn(
-        "rounded-[var(--ds-radius-md)] border border-[var(--ds-border-subdued)] bg-[var(--ds-surface)] p-5 shadow-[var(--ds-shadow-raised)]",
+        "rounded-[var(--ds-radius-md)] border border-[var(--ds-border-subdued)] bg-[var(--ds-surface)] shadow-[var(--ds-shadow-raised)]",
+        padding === "default" ? "p-5" : "p-0",
         className,
       )}
       {...props}
