@@ -26,7 +26,7 @@
 
 ## Environment & secrets
 
-See **[ENV.md](./ENV.md)** — checklist of credentials you provide vs secrets we generate.
+See **[ENV.md](./ENV.md)** (credentials checklist) and **[DEPLOY_PRODUCTION.md](./DEPLOY_PRODUCTION.md)** (live URLs + Google redirect).
 PaySuite stays off (`PAYSUITE_ENABLED=0`) until merchant quota is approved.
 
 ## Deploy notes
