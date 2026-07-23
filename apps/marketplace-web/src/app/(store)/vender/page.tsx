@@ -37,7 +37,7 @@ export default function VenderPage() {
         ) : (
           <>
             <Button asChild size="lg">
-              <Link href="/cadastro">Criar conta e vender</Link>
+              <Link href="/cadastro?next=seller">Criar conta e vender</Link>
             </Button>
             <Button asChild variant="outline" size="lg">
               <Link href={`/entrar?next=seller`}>Já tenho conta</Link>

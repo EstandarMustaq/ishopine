@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";
@@ -10,8 +10,9 @@ import { Input } from "@/components/ui/input";
 import { api, DEV_CODE_STORAGE_KEY, getGoogleAuthUrl } from "@/lib/api";
 import type { RegisterResult } from "@/lib/types";
 
-export default function RegisterPage() {
+function RegisterForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -40,9 +41,12 @@ export default function RegisterPage() {
       }
 
       toast.success(data.message || "Conta criada. Verifique seu e-mail.");
-      router.push(
-        `/verificar-email?email=${encodeURIComponent(data.email || form.email)}`,
-      );
+      const next = searchParams.get("next");
+      const qs = new URLSearchParams({
+        email: data.email || form.email,
+      });
+      if (next) qs.set("next", next);
+      router.push(`/verificar-email?${qs.toString()}`);
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Falha no cadastro",
@@ -54,7 +58,9 @@ export default function RegisterPage() {
 
   return (
     <div className="mx-auto flex min-h-[70vh] max-w-md flex-col justify-center px-4 py-12">
-      <p className="text-[18px] font-bold tracking-[-0.02em] text-[var(--ds-text)]">iShopine</p>
+      <p className="text-[18px] font-bold tracking-[-0.02em] text-[var(--ds-text)]">
+        iShopine
+      </p>
       <p className="mt-3 text-sm text-[var(--brand-taupe)]">
         Crie a sua conta para comprar e vender
       </p>
@@ -122,12 +128,30 @@ export default function RegisterPage() {
       <p className="mt-6 text-center text-sm text-[var(--brand-taupe)]">
         Já tem conta?{" "}
         <Link
-          href="/entrar"
+          href={
+            searchParams.get("next")
+              ? `/entrar?next=${encodeURIComponent(searchParams.get("next")!)}`
+              : "/entrar"
+          }
           className="font-semibold text-[var(--ds-brand)]"
         >
           Entrar
         </Link>
       </p>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-[40vh] items-center justify-center text-sm text-[var(--brand-taupe)]">
+          Carregando...
+        </div>
+      }
+    >
+      <RegisterForm />
+    </Suspense>
   );
 }

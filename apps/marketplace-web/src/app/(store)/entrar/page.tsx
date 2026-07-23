@@ -92,7 +92,10 @@ function LoginForm() {
           sessionStorage.setItem(DEV_CODE_STORAGE_KEY, data.devCode);
         }
         toast.message(data.message ?? "Verifique seu e-mail antes de continuar.");
-        router.push(`/verificar-email?email=${encodeURIComponent(data.email)}`);
+        const next = searchParams.get("next");
+        const qs = new URLSearchParams({ email: data.email });
+        if (next) qs.set("next", next);
+        router.push(`/verificar-email?${qs.toString()}`);
         return;
       }
 
