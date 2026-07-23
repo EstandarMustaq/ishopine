@@ -49,18 +49,18 @@ export function BackofficeSidebar({
   return (
     <aside
       className={cn(
-        "flex h-full flex-col border-r border-[var(--ds-border-subdued)] bg-[var(--ds-sidebar)] text-[var(--ds-text)]",
+        "flex h-full flex-col bg-[var(--ds-sidebar)] text-[var(--ds-sidebar-text)]",
         collapsed ? "w-[4.25rem]" : "w-[var(--ds-sidebar-width)]",
         className,
       )}
     >
-      <div className={cn("border-b border-[var(--ds-border-subdued)] px-3 py-4", collapsed && "px-2")}>
+      <div className={cn("border-b border-white/10 px-3 py-4", collapsed && "px-2")}>
         <Link href="/" className="flex items-center gap-2">
-          <span className="flex size-8 items-center justify-center rounded-[var(--ds-radius-sm)] bg-[var(--ds-brand)] text-[12px] font-bold text-white">
-            iS
+          <span className="text-[15px] font-semibold tracking-tight text-white">
+            {collapsed ? "iS" : "iShopine"}
           </span>
           {!collapsed ? (
-            <span className="text-[14px] font-semibold">Admin</span>
+            <span className="text-[12px] text-[var(--ds-sidebar-muted)]">Admin</span>
           ) : null}
         </Link>
       </div>
@@ -77,8 +77,8 @@ export function BackofficeSidebar({
               className={cn(
                 "flex min-h-11 items-center gap-2 rounded-[var(--ds-radius-sm)] px-3 py-2 text-[14px] transition-colors",
                 active
-                  ? "bg-[var(--ds-sidebar-active)] font-medium shadow-[var(--ds-shadow-raised)]"
-                  : "hover:bg-black/[0.04]",
+                  ? "bg-[var(--ds-sidebar-active)] font-medium text-white"
+                  : "text-[var(--ds-sidebar-muted)] hover:bg-white/10 hover:text-white",
                 collapsed && "justify-center px-2",
               )}
               title={item.label}
@@ -89,15 +89,21 @@ export function BackofficeSidebar({
           );
         })}
       </nav>
-      <div className="flex items-center gap-1 border-t border-[var(--ds-border-subdued)] p-2">
-        <Button variant="ghost" size="icon" onClick={onToggle} aria-label="Recolher">
+      <div className="flex items-center gap-1 border-t border-white/10 p-2">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onToggle}
+          aria-label="Recolher"
+          className="text-[var(--ds-sidebar-muted)] hover:bg-white/10 hover:text-white"
+        >
           {collapsed ? <ChevronRight className="size-4" /> : <ChevronLeft className="size-4" />}
         </Button>
         {!collapsed ? (
           <Button
             variant="ghost"
             size="sm"
-            className="ml-auto"
+            className="ml-auto text-[var(--ds-sidebar-muted)] hover:bg-white/10 hover:text-white"
             onClick={() => {
               logout();
               window.location.href = `${marketplaceUrl}/entrar?next=backoffice`;

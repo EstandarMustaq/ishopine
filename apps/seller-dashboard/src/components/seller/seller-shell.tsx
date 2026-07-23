@@ -50,16 +50,16 @@ export function SellerShell({ children }: { children: React.ReactNode }) {
           </div>
 
           <div className="flex h-full min-w-0 flex-1 flex-col overflow-hidden">
-            <div className="flex h-[var(--ds-topbar-height)] shrink-0 items-center gap-3 bg-[var(--ds-topbar)] px-4">
+            <div className="flex h-[var(--ds-topbar-height)] shrink-0 items-center gap-3 border-b border-[var(--ds-topbar-border)] bg-[var(--ds-topbar)] px-4">
               <button
                 type="button"
                 onClick={() => setMobileOpen((v) => !v)}
-                className="flex size-10 items-center justify-center rounded-[var(--ds-radius-sm)] text-white hover:bg-white/10 md:hidden"
+                className="flex size-10 items-center justify-center rounded-[var(--ds-radius-sm)] text-[var(--ds-text)] hover:bg-[var(--ds-bg)] md:hidden"
                 aria-label="Menu"
               >
                 ☰
               </button>
-              <div className="min-w-0 flex-1 [&_*]:text-white">
+              <div className="min-w-0 flex-1">
                 <TenantSwitcher />
               </div>
             </div>

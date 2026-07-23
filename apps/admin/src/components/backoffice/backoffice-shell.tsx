@@ -45,22 +45,22 @@ export function BackofficeShell({ children }: { children: React.ReactNode }) {
             />
           </div>
           <div className="flex h-full min-w-0 flex-1 flex-col overflow-hidden">
-            <div className="flex h-[var(--ds-topbar-height)] shrink-0 items-center gap-3 bg-[var(--ds-topbar)] px-4 text-white">
+            <div className="flex h-[var(--ds-topbar-height)] shrink-0 items-center gap-3 border-b border-[var(--ds-topbar-border)] bg-[var(--ds-topbar)] px-4">
               <button
                 type="button"
                 onClick={() => setMobileOpen((v) => !v)}
-                className="flex size-10 items-center justify-center rounded-[var(--ds-radius-sm)] hover:bg-white/10 md:hidden"
+                className="flex size-10 items-center justify-center rounded-[var(--ds-radius-sm)] text-[var(--ds-text)] hover:bg-[var(--ds-bg)] md:hidden"
                 aria-label="Menu"
               >
                 ☰
               </button>
-              <span className="text-[15px] font-semibold tracking-tight">
+              <span className="text-[15px] font-semibold tracking-tight text-[var(--ds-text)]">
                 iShopine Admin
               </span>
-              <span className="ml-auto hidden text-[13px] text-white/70 sm:inline">
+              <span className="ml-auto hidden text-[13px] text-[var(--ds-text-secondary)] sm:inline">
                 Staff
               </span>
-              <span className="flex size-8 items-center justify-center rounded-full bg-[var(--ds-brand)] text-[12px] font-semibold">
+              <span className="flex size-8 items-center justify-center rounded-[var(--ds-radius-full)] bg-[var(--ds-brand)] text-[12px] font-semibold text-white">
                 IS
               </span>
             </div>

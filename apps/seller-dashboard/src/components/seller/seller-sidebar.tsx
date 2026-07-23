@@ -88,19 +88,12 @@ export function SellerSidebar({
           href="/"
           className={cn("flex items-center gap-2", collapsed && "justify-center")}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/brand/ishopine-mark.svg"
-            alt=""
-            className={cn(collapsed ? "size-7" : "size-8")}
-          />
+          <span className="text-[15px] font-semibold tracking-tight text-[var(--ds-sidebar-text)]">
+            {collapsed ? "iS" : "iShopine"}
+          </span>
           {!collapsed && (
-            <span className="text-[15px] font-bold tracking-tight">
-              <span className="text-[var(--brand-orange)]">i</span>
-              <span className="text-[var(--brand-charcoal)]">Shopine</span>
-              <span className="ml-1 text-[11px] font-semibold text-[var(--brand-taupe)]">
-                seller
-              </span>
+            <span className="text-[11px] font-medium text-[var(--ds-sidebar-muted)]">
+              seller
             </span>
           )}
         </Link>
@@ -126,8 +119,8 @@ export function SellerSidebar({
                   "flex items-center gap-2 rounded-lg px-2.5 py-2 text-[13px] font-medium transition-colors",
                   collapsed && "justify-center px-2",
                   isActive
-                    ? "bg-[var(--brand-orange)] text-white shadow-soft"
-                    : "text-zinc-600 hover:bg-[var(--brand-orange-soft)] hover:text-[var(--brand-charcoal)]",
+                    ? "bg-[var(--ds-sidebar-active)] text-white"
+                    : "text-[var(--ds-sidebar-muted)] hover:bg-[var(--ds-sidebar-active)] hover:text-[var(--ds-sidebar-text)]",
                 )}
               >
                 <Icon className="size-3.5 shrink-0 opacity-80" />

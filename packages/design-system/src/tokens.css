@@ -1,11 +1,11 @@
 /**
- * iShopine design tokens (CSS custom properties).
- * Import in app globals: `@import "@ishopine/design-system/tokens.css";`
+ * iShopine design tokens — Shopify Polaris-inspired.
+ * Import: `@import "@ishopine/design-system/tokens.css";`
  *
- * Layout note (aligned to current Shopify Admin / screenshots):
- * - Dark top bar (#1A1A1A)
- * - Light sidebar (#F1F1F1) with white active pill
- * - Page background (#F6F6F7), white cards
+ * Navigation (this spec):
+ * - Top bar white (#FFFFFF), 56px, border-bottom #E4E5E7
+ * - Sidebar dark (#1A1A1A), 240px — dashboards
+ * - Page canvas #F6F6F7, white cards
  */
 :root {
   /* Primary */
@@ -26,10 +26,13 @@
   --ds-border: #c9cccf;
   --ds-border-subdued: #e4e5e7;
 
-  /* Navigation */
-  --ds-topbar: #1a1a1a;
-  --ds-sidebar: #f1f1f1;
-  --ds-sidebar-active: #ffffff;
+  /* Navigation — Polaris Admin chrome */
+  --ds-topbar: #ffffff;
+  --ds-topbar-border: #e4e5e7;
+  --ds-sidebar: #1a1a1a;
+  --ds-sidebar-text: #ffffff;
+  --ds-sidebar-muted: rgba(255, 255, 255, 0.7);
+  --ds-sidebar-active: #2c2c2c;
 
   /* Semantic */
   --ds-success: #008060;
@@ -68,7 +71,7 @@
     sans-serif;
   --ds-font-code: Menlo, Monaco, Consolas, monospace;
 
-  /* Bridge → existing shadcn/app CSS variables */
+  /* Bridge → shadcn / legacy */
   --background: var(--ds-bg);
   --foreground: var(--ds-text);
   --card: var(--ds-surface);
@@ -87,17 +90,18 @@
   --border: var(--ds-border-subdued);
   --input: var(--ds-border);
   --ring: var(--ds-brand);
-  --radius: var(--ds-radius-md);
+  --radius: var(--ds-radius-sm);
 
   --sidebar: var(--ds-sidebar);
-  --sidebar-foreground: var(--ds-text);
+  --sidebar-foreground: var(--ds-sidebar-text);
   --sidebar-primary: var(--ds-brand);
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: var(--ds-sidebar-active);
-  --sidebar-accent-foreground: var(--ds-text);
-  --sidebar-border: var(--ds-border-subdued);
+  --sidebar-accent-foreground: var(--ds-sidebar-text);
+  --sidebar-border: #2c2c2c;
   --sidebar-ring: var(--ds-brand);
 
+  /* Legacy aliases (no orange) */
   --brand-orange: var(--ds-brand);
   --brand-orange-hover: var(--ds-brand-dark);
   --brand-orange-soft: rgba(0, 128, 96, 0.1);

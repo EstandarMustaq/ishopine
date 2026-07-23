@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   },
   description: "Painel do vendedor iShopine — particular e lojas",
   icons: {
-    icon: [{ url: "/brand/ishopine-icon.svg", type: "image/svg+xml" }],
+    icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
   },
 };
 
