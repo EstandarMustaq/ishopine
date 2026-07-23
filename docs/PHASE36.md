@@ -18,7 +18,7 @@ Retirar HTTP Nest já owned por accounts / affiliates / accounting —
 ### Kept on Nest
 - `AccountsModule` — service + tenant guard for Nest authz
 - `AffiliateModule` — service for `OrdersService` settle fallback
-- Wallet/billing/media/developers/logistics HTTP (próximas fases)
+- Wallet/billing HTTP → **Fase 37** ([PHASE37.md](./PHASE37.md)); media/developers/logistics (seguintes)
 - Auth, orders/cart, NotificationsService, Reliability engine
 
 ### Production path

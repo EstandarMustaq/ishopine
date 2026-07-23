@@ -20,7 +20,7 @@ Retirar HTTP Nest já owned por media / developers / logistics —
 - `FeatureFlagsService` — `OnModuleInit` default flag upsert
 - `LogisticsService` — Nest OrdersService quote/label fallthrough
 - Auth / orders / cart HTTP remnant
-- Finance services (Phase 37 controllers — separate PR if still open)
+- Finance **services** (Phase 37 controllers already retired)
 
 ### Production path
 ```bash
@@ -40,4 +40,4 @@ Logistics Nest carriers registry unchanged (DHL live path only when configured).
 - Cliente HTTP Correios
 - Remover Nest Auth / orders / cart HTTP
 - Remover DevelopersService / LogisticsService / FeatureFlagsService
-- Remover Nest finance controllers → **Fase 37** ([PHASE37.md](./PHASE37.md) / PR #53)
+- Finance Nest HTTP already retired in **Fase 37** ([PHASE37.md](./PHASE37.md))

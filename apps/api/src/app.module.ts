@@ -24,9 +24,9 @@ import { ReliabilityModule } from './reliability/reliability.module';
 import { SecurityModule } from './security/security.module';
 
 /**
- * Nest monolith remnant. Media/developers/logistics HTTP retired (Phase 38)
- * — owned by stranglers. DevelopersService kept for OutboxDispatcher;
- * LogisticsService for Orders fallthrough. UploadsModule removed (media owned).
+ * Nest monolith remnant. Finance HTTP retired (Phase 37); media/developers/
+ * logistics HTTP retired (Phase 38). Services kept for Nest DI/fallthrough
+ * (OutboxDispatcher, Orders settle). Auth/orders/cart HTTP remnant.
  */
 @Module({
   imports: [
