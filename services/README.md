@@ -21,6 +21,7 @@
 | **inventory** | **owned :4116** | Movements / low-stock / adjust (`INVENTORY_OWNED`); reserve → orders |
 | **reviews** | **owned :4117** | Product reviews (`REVIEWS_OWNED`); gateway `pathRe` before catalog |
 | **platform-settings** | **owned :4118** | Dashboard overview/charts + store/platform settings |
+| **platform-ops** | **owned :4119** | Users admin + reliability health/sync + cron outbox |
 
 Helper: `@ishopine/shared` → `startStranglerProxy`.
 

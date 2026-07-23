@@ -121,7 +121,8 @@ customer               # pode viver em marketplace no início
 | **25** | Checkout saga splits — remote coupon/inventory/label + orchestrator compose |
 | **26** | Remote checkout E2E; addresses→accounts; accounting post remote; Correios still blocked |
 | **27** | Platform-settings / dashboard extract (`:4118`); Correios still blocked |
-| **28+** | Correios HTTP when OpenAPI/contract lands; users admin / reliability |
+| **28** | Platform-ops extract (`:4119`) — users admin + reliability + cron; Correios still blocked |
+| **29+** | Correios HTTP when OpenAPI/contract lands; security extract |
 
 ## Fora de âmbito (MVP)
 
