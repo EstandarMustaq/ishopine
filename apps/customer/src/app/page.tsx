@@ -2,7 +2,15 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { PageHeader, Card, CardTitle, CardDescription, EmptyState, Banner } from "@ishopine/ui";
+import {
+  PageHeader,
+  Card,
+  CardTitle,
+  CardDescription,
+  EmptyState,
+  Banner,
+  LoadingState,
+} from "@ishopine/ui";
 import { apiFetch } from "@/lib/api";
 import { formatMZN, formatDateTime } from "@/lib/format";
 import { useAuthStore } from "@/lib/auth-store";
@@ -76,7 +84,9 @@ export default function CustomerHomePage() {
 
       <div className="mt-8">
         <h2 className="mb-3 text-[16px] font-semibold">Últimos pedidos</h2>
-        {!loading && orders.length === 0 ? (
+        {loading ? (
+          <LoadingState label="A carregar últimos pedidos" variant="skeleton" />
+        ) : orders.length === 0 ? (
           <EmptyState
             title="Ainda sem pedidos"
             description="Quando comprar no marketplace, os pedidos aparecem aqui."

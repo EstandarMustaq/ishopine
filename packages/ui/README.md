@@ -9,7 +9,7 @@ Requires `@ishopine/design-system/tokens.css` in the app.
 - `Button` — primary / secondary / destructive / plain / dark
 - `Card`, `CardHeader`, `CardTitle`, `CardDescription`
 - `Input`, `Badge`
-- `PageHeader`, `EmptyState`
+- `PageHeader`, `EmptyState`, `LoadingState`, `ErrorState`, `SuccessBanner`
 - `AdminShell` — dark top bar + light sidebar + content canvas
 
 ```tsx

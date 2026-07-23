@@ -29,21 +29,21 @@ export function AffiliateShell({ children }: { children: React.ReactNode }) {
   return (
     <AuthGate affiliateAccess>
       <div className="min-h-screen bg-[var(--ds-bg)]">
-        <header className="sticky top-0 z-40 bg-[var(--ds-topbar)] text-white">
+        <header className="sticky top-0 z-40 border-b border-[var(--ds-topbar-border)] bg-[var(--ds-topbar)] text-[var(--ds-text)]">
           <div className="mx-auto flex h-[var(--ds-topbar-height)] max-w-5xl items-center justify-between px-4">
             <Link href="/" className="flex items-center gap-2">
-              <span className="flex size-8 items-center justify-center rounded-full bg-[var(--ds-brand)] text-[12px] font-bold">
-                AF
-              </span>
               <span className="text-[15px] font-semibold tracking-tight">
+                iShopine
+              </span>
+              <span className="text-[13px] text-[var(--ds-text-secondary)]">
                 Afiliados
               </span>
             </Link>
             <div className="flex items-center gap-3 text-[13px]">
-              <span className="hidden text-white/70 sm:inline">{user?.name}</span>
+              <span className="hidden text-[var(--ds-text-secondary)] sm:inline">{user?.name}</span>
               <a
                 href={MARKETPLACE_URL}
-                className="inline-flex items-center gap-1 text-white/70 hover:text-white"
+                className="inline-flex items-center gap-1 text-[var(--ds-text-secondary)] hover:text-[var(--ds-text)]"
               >
                 <ExternalLink className="h-3.5 w-3.5" />
                 Mercado
@@ -54,7 +54,7 @@ export function AffiliateShell({ children }: { children: React.ReactNode }) {
                   logout();
                   window.location.href = `${MARKETPLACE_URL}/entrar`;
                 }}
-                className="text-white/70 hover:text-white"
+                className="rounded-[var(--ds-radius-sm)] p-2 text-[var(--ds-text-secondary)] hover:bg-[var(--ds-bg)] hover:text-[var(--ds-text)]"
                 aria-label="Sair"
               >
                 <LogOut className="h-4 w-4" />
@@ -75,8 +75,8 @@ export function AffiliateShell({ children }: { children: React.ReactNode }) {
                   className={cn(
                     "inline-flex min-h-10 items-center gap-1.5 whitespace-nowrap rounded-[var(--ds-radius-sm)] px-3 py-1.5 text-[14px] transition-colors",
                     active
-                      ? "bg-white/15 font-medium text-white"
-                      : "text-white/70 hover:bg-white/10 hover:text-white",
+                      ? "bg-[var(--ds-bg)] font-medium text-[var(--ds-text)]"
+                      : "text-[var(--ds-text-secondary)] hover:bg-[var(--ds-bg)] hover:text-[var(--ds-text)]",
                   )}
                 >
                   <Icon className="h-4 w-4" />

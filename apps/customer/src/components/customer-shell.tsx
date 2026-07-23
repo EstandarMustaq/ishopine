@@ -8,9 +8,9 @@ import {
   Home,
   LogOut,
   MapPin,
-  Package,
   ShoppingBag,
 } from "lucide-react";
+import { LoadingState } from "@ishopine/ui";
 import { apiFetch } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
 import { cn } from "@/lib/utils";
@@ -21,7 +21,7 @@ const MARKETPLACE =
 
 const NAV = [
   { href: "/", label: "Resumo", icon: Home },
-  { href: "/pedidos", label: "Pedidos", icon: Package },
+  { href: "/pedidos", label: "Pedidos", icon: ShoppingBag },
   { href: "/enderecos", label: "Endereços", icon: MapPin },
   { href: "/favoritos", label: "Favoritos", icon: Heart },
 ];
@@ -72,8 +72,8 @@ export function CustomerShell({ children }: { children: React.ReactNode }) {
 
   if (!ready) {
     return (
-      <div className="flex min-h-svh items-center justify-center bg-[var(--ds-bg)] text-[14px] text-[var(--ds-text-secondary)]">
-        A carregar conta…
+      <div className="flex min-h-svh items-center justify-center bg-[var(--ds-bg)] px-4">
+        <LoadingState label="A carregar conta" className="w-full max-w-sm" />
       </div>
     );
   }
@@ -84,22 +84,22 @@ export function CustomerShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-svh flex-col bg-[var(--ds-bg)]">
-      <header className="bg-[var(--ds-topbar)] text-white">
+      <header className="border-b border-[var(--ds-topbar-border)] bg-[var(--ds-topbar)] text-[var(--ds-text)]">
         <div className="mx-auto flex h-[var(--ds-topbar-height)] max-w-5xl items-center gap-3 px-4">
-          <Link href="/" className="text-[15px] font-semibold">
+          <Link href="/" className="text-[15px] font-semibold tracking-tight">
             iShopine
           </Link>
-          <span className="text-white/50">/</span>
-          <span className="text-[13px] text-white/80">Minha conta</span>
+          <span className="text-[var(--ds-border)]">/</span>
+          <span className="text-[13px] text-[var(--ds-text-secondary)]">Minha conta</span>
           <div className="ml-auto flex items-center gap-3">
             <a
               href={MARKETPLACE}
-              className="hidden items-center gap-1 text-[13px] text-white/70 hover:text-white sm:inline-flex"
+              className="hidden items-center gap-1 text-[13px] text-[var(--ds-text-secondary)] hover:text-[var(--ds-text)] sm:inline-flex"
             >
               <ShoppingBag className="size-3.5" />
               Continuar a comprar
             </a>
-            <span className="flex size-8 items-center justify-center rounded-full bg-[var(--ds-brand)] text-[12px] font-semibold">
+            <span className="flex size-8 items-center justify-center rounded-[var(--ds-radius-full)] bg-[var(--ds-brand)] text-[12px] font-semibold text-white">
               {(user?.name || "C")
                 .split(" ")
                 .map((p) => p[0])
@@ -110,7 +110,7 @@ export function CustomerShell({ children }: { children: React.ReactNode }) {
             <button
               type="button"
               aria-label="Sair"
-              className="text-white/70 hover:text-white"
+              className="rounded-[var(--ds-radius-sm)] p-2 text-[var(--ds-text-secondary)] hover:bg-[var(--ds-bg)] hover:text-[var(--ds-text)]"
               onClick={() => {
                 logout();
                 window.location.href = `${MARKETPLACE}/entrar`;
@@ -134,8 +134,8 @@ export function CustomerShell({ children }: { children: React.ReactNode }) {
                 className={cn(
                   "inline-flex min-h-10 items-center gap-1.5 rounded-[var(--ds-radius-sm)] px-3 py-1.5 text-[14px]",
                   active
-                    ? "bg-white/15 font-medium"
-                    : "text-white/70 hover:bg-white/10",
+                    ? "bg-[var(--ds-bg)] font-medium text-[var(--ds-text)]"
+                    : "text-[var(--ds-text-secondary)] hover:bg-[var(--ds-bg)] hover:text-[var(--ds-text)]",
                 )}
               >
                 <Icon className="size-4" />

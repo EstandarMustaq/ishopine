@@ -8,7 +8,7 @@
   "functions": {
     "api/index.js": {
       "maxDuration": 60,
-      "includeFiles": "{dist/**,prisma/**,../../node_modules/.pnpm/@prisma+client@*/**}"
+      "includeFiles": "{dist/**,composition/**,prisma/**,../../node_modules/.pnpm/@prisma+client@*/**,../../node_modules/@prisma/client/**}"
     }
   },
   "crons": [

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import { EmptyState, LoadingState } from "@ishopine/ui";
 import { Button } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -224,9 +225,12 @@ export default function PainelAnunciosPage() {
       </form>
 
       <div className="mt-8 space-y-3">
-        {loading && <p className="text-sm text-taupe">Carregando…</p>}
+        {loading && <LoadingState label="A carregar anúncios" variant="skeleton" />}
         {!loading && ads.length === 0 && (
-          <p className="text-sm text-taupe">Nenhum anúncio ainda.</p>
+          <EmptyState
+            title="Sem anúncios"
+            description="Crie uma faixa para publicar nos espaços comerciais do marketplace."
+          />
         )}
         {ads.map((ad) => (
           <div

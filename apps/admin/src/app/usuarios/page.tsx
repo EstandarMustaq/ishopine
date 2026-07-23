@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import { EmptyState, LoadingState } from "@ishopine/ui";
 import { AuthGate } from "@/components/dashboard/auth-gate";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -97,7 +98,17 @@ function UsersContent() {
       </p>
 
       {loading ? (
-        <p className="mt-8 text-sm text-taupe">Carregando...</p>
+        <LoadingState
+          label="A carregar utilizadores"
+          variant="skeleton"
+          className="mt-8"
+        />
+      ) : users.length === 0 ? (
+        <EmptyState
+          className="mt-8"
+          title="Sem utilizadores"
+          description="As contas criadas no iShopine aparecerão nesta lista."
+        />
       ) : (
         <div className="mt-8 overflow-x-auto rounded-[12px] border border-border">
           <table className="w-full min-w-[640px] text-left text-sm">

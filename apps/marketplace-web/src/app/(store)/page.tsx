@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { EmptyState } from "@ishopine/ui";
 import { Button } from "@/components/ui/button";
 import { ProductCard } from "@/components/products/product-card";
 import { AdBanner, AdStrip } from "@/components/ads/ad-banner";
@@ -168,13 +169,19 @@ export default async function HomePage() {
               <ProductCard key={product.id} product={product} />
             ))}
             {featured.length === 0 ? (
-              <p className="col-span-full text-[14px] text-[var(--ds-text-secondary)]">
-                Ainda sem produtos em destaque.{" "}
-                <Link href="/vender" className="font-medium text-[var(--ds-interactive)]">
-                  Abra a sua loja
-                </Link>
-                .
-              </p>
+              <EmptyState
+                className="col-span-full py-10"
+                title="Sem produtos em destaque"
+                description="Quando houver produtos em destaque, eles aparecerão aqui."
+                action={
+                  <Link
+                    href="/produtos"
+                    className="inline-flex min-h-9 items-center justify-center rounded-[var(--ds-radius-sm)] border border-[var(--ds-border)] bg-[var(--ds-surface)] px-4 py-2 text-[14px] font-medium text-[var(--ds-text)] hover:bg-[var(--ds-bg)]"
+                  >
+                    Ver mercado
+                  </Link>
+                }
+              />
             ) : null}
           </div>
         </div>
@@ -234,16 +241,19 @@ export default async function HomePage() {
                 </HorizontalCatalogItem>
               ))}
               {shops.length === 0 ? (
-                <p className="text-[14px] text-[var(--ds-text-secondary)]">
-                  Ainda não há lojas.{" "}
-                  <Link
-                    href="/vender"
-                    className="font-medium text-[var(--ds-interactive)]"
-                  >
-                    Seja o primeiro
-                  </Link>
-                  .
-                </p>
+                <EmptyState
+                  className="w-[280px] py-8"
+                  title="Sem lojas publicadas"
+                  description="As lojas ativas aparecerão nesta área."
+                  action={
+                    <Link
+                      href="/vender"
+                      className="inline-flex min-h-9 items-center justify-center rounded-[var(--ds-radius-sm)] border border-[var(--ds-border)] bg-[var(--ds-surface)] px-4 py-2 text-[14px] font-medium text-[var(--ds-text)] hover:bg-[var(--ds-bg)]"
+                    >
+                      Abrir loja
+                    </Link>
+                  }
+                />
               ) : null}
             </HorizontalCatalog>
           </div>

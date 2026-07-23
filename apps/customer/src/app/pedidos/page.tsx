@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { PageHeader, EmptyState, IndexTable } from "@ishopine/ui";
+import { PageHeader, EmptyState, IndexTable, LoadingState } from "@ishopine/ui";
 import { apiFetch } from "@/lib/api";
 import { formatMZN, formatDateTime } from "@/lib/format";
 import type { Order, Paginated } from "@/lib/types";
@@ -25,7 +25,7 @@ export default function CustomerOrdersPage() {
     <div>
       <PageHeader title="Pedidos" description="Histórico de compras na iShopine." />
       {loading ? (
-        <p className="text-[14px] text-[var(--ds-text-secondary)]">A carregar…</p>
+        <LoadingState label="A carregar pedidos" variant="skeleton" />
       ) : (
         <IndexTable
           rows={orders}
