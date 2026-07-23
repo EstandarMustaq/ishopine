@@ -38,6 +38,6 @@ Logistics Nest carriers registry unchanged (DHL live path only when configured).
 
 ## Fora de âmbito
 - Cliente HTTP Correios
-- Remover Nest Auth / orders / cart HTTP
+- Auth / orders / cart HTTP → **Fase 39** ([PHASE39.md](./PHASE39.md))
 - Remover DevelopersService / LogisticsService / FeatureFlagsService
 - Finance Nest HTTP already retired in **Fase 37** ([PHASE37.md](./PHASE37.md))
