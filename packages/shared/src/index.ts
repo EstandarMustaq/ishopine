@@ -60,6 +60,7 @@ export const PLATFORM_MODULES = [
   "coupons",
   "inventory",
   "reviews",
+  "platform-settings",
 ] as const;
 
 export type PlatformModule = (typeof PLATFORM_MODULES)[number];
@@ -412,6 +413,7 @@ export type GatewayRoute = {
     | "coupons"
     | "inventory"
     | "reviews"
+    | "platform-settings"
     | "monolith";
   /** Env var holding the service base URL. */
   envKey?: string;
@@ -624,6 +626,24 @@ export const GATEWAY_ROUTES: GatewayRoute[] = [
     service: "inventory",
     envKey: "INVENTORY_URL",
     defaultPort: 4116,
+  },
+  {
+    prefix: "/api/dashboard",
+    service: "platform-settings",
+    envKey: "PLATFORM_SETTINGS_URL",
+    defaultPort: 4118,
+  },
+  {
+    prefix: "/api/store/settings",
+    service: "platform-settings",
+    envKey: "PLATFORM_SETTINGS_URL",
+    defaultPort: 4118,
+  },
+  {
+    prefix: "/api/platform/settings",
+    service: "platform-settings",
+    envKey: "PLATFORM_SETTINGS_URL",
+    defaultPort: 4118,
   },
 ];
 

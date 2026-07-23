@@ -20,6 +20,7 @@
 | **coupons** | **owned :4115** | List/create/validate (`COUPONS_OWNED`); redemption → orders |
 | **inventory** | **owned :4116** | Movements / low-stock / adjust (`INVENTORY_OWNED`); reserve → orders |
 | **reviews** | **owned :4117** | Product reviews (`REVIEWS_OWNED`); gateway `pathRe` before catalog |
+| **platform-settings** | **owned :4118** | Dashboard overview/charts + store/platform settings |
 
 Helper: `@ishopine/shared` → `startStranglerProxy`.
 
