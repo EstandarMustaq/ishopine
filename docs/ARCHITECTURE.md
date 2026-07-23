@@ -129,7 +129,8 @@ customer               # pode viver em marketplace no início
 | **33** | Nest HTTP retirement — platform-settings/ops/security surfaces; Correios still blocked |
 | **34** | Nest HTTP retirement — coupons/inventory/reviews/comms; Correios still blocked |
 | **35** | Nest HTTP retirement — marketplace (shops/ads/wishlist) + catalog; Correios still blocked |
-| **36+** | Correios HTTP adapter when OpenAPI lands; further Nest surface retirement |
+| **36** | Nest HTTP retirement — accounts/affiliate/accounting; Correios still blocked |
+| **37+** | Correios HTTP adapter when OpenAPI lands; further Nest surface retirement |
 
 ## Fora de âmbito (MVP)
 

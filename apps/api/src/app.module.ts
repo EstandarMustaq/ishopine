@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
-import { AccountingModule } from './accounting/accounting.module';
 import { AccountsModule } from './accounts/accounts.module';
 import { AffiliateModule } from './affiliate/affiliate.module';
 import { AppController } from './app.controller';
@@ -24,11 +23,11 @@ import { PrismaModule } from './prisma/prisma.module';
 import { ReliabilityModule } from './reliability/reliability.module';
 import { SecurityModule } from './security/security.module';
 import { UploadsModule } from './uploads/uploads.module';
-import { UsersModule } from './users/users.module';
 
 /**
- * Nest monolith remnant. Marketplace/catalog HTTP retired (Phase 35) —
- * owned by stranglers. NotificationsModule kept for OutboxDispatcher DI.
+ * Nest monolith remnant. Accounts/affiliate/accounting HTTP retired
+ * (Phase 36) — owned by stranglers. AccountsService/TenantGuard +
+ * AffiliateService kept for Nest DI. NotificationsModule for OutboxDispatcher.
  */
 @Module({
   imports: [
@@ -46,11 +45,9 @@ import { UsersModule } from './users/users.module';
     MailModule,
     AuthModule,
     AccountsModule,
-    UsersModule,
     CartModule,
     OrdersModule,
     BillingModule,
-    AccountingModule,
     AffiliateModule,
     UploadsModule,
     NotificationsModule,
